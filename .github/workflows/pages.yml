@@ -64,3 +64,11 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Bing, Yandex u.a. über neue/geänderte Seiten informieren (IndexNow); Fehler hier stoppen nichts
+      - name: Suchmaschinen benachrichtigen (IndexNow)
+        continue-on-error: true
+        run: |
+          sleep 45
+          curl -sf "${{ steps.deployment.outputs.page_url }}data/indexnow.json" -o indexnow.json || { echo "keine IndexNow-Liste"; exit 0; }
+          curl -s -o /dev/null -w "IndexNow: HTTP %{http_code}\n" -X POST https://api.indexnow.org/indexnow \
+            -H "Content-Type: application/json; charset=utf-8" --data @indexnow.json

@@ -156,4 +156,13 @@ const day = new Date().toISOString().slice(0, 10);
 const urls = ['', '?lang=en', 'datenschutz.html', ...pages.sort()];
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
   + urls.map(u => `<url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod>${u === '' ? '<priority>1.0</priority>' : ''}</url>`).join('\n') + '\n</urlset>\n');
+// ---------- IndexNow (Bing, Yandex …): Schlüsseldatei + Liste der täglich geänderten Seiten ----------
+// GitHub schickt die Liste nach dem Veröffentlichen an api.indexnow.org (siehe .github/workflows/pages.yml)
+if (CONFIG.indexNowKey) {
+  const key = CONFIG.indexNowKey, u = new URL(SITE);
+  fs.writeFileSync(path.join(DIST, key + '.txt'), key);
+  const fresh = ['', 'start/index.html', 'en/launches/index.html', 'iss/index.html', ...pages.filter(p => /^iss\//.test(p)),
+    ...up.results.filter(l => !isPast(l)).flatMap(l => [`start/${slug(l)}.html`, `en/launch/${slug(l)}.html`])];
+  fs.writeFileSync(path.join(DIST, 'data/indexnow.json'), JSON.stringify({ host: u.host, key, keyLocation: `${SITE}${key}.txt`, urlList: [...new Set(fresh)].map(p => SITE + p) }));
+}
 console.log(`SEO-Seiten: ${pages.length} (${all.length} Starts × 2 Sprachen, ${CITIES.length} ISS-Städte), Sitemap: ${urls.length} Adressen`);
