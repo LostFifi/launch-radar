@@ -1,6 +1,14 @@
 import json, os, io, base64, hashlib, subprocess, collections
 from PIL import Image
 import pathlib, datetime
+# Textdateien immer als UTF-8 lesen/schreiben (Windows nimmt sonst cp1252)
+# und beim Schreiben LF behalten, damit dist/index.html überall gleich ist.
+_open=open
+def open(f,mode='r',**k):
+    if 'b' not in mode:
+        k.setdefault('encoding','utf-8')
+        if 'w' in mode: k.setdefault('newline','')
+    return _open(f,mode,**k)
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 b=str(ROOT)+'/'
 h=open(b+'src/template.html').read()

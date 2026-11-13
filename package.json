@@ -4,10 +4,10 @@
   "private": true,
   "description": "LaunchRadar – Raketenstarts live verfolgen (Flightradar-Stil)",
   "scripts": {
-    "build": "python3 scripts/build.py",
+    "build": "node scripts/py.js scripts/build.py",
     "fetch": "bash scripts/fetch_data.sh",
     "world": "node scripts/make_world.js",
-    "serve": "python3 -m http.server 8000 --directory dist"
+    "serve": "node scripts/py.js -m http.server 8000 --directory dist"
   },
   "dependencies": {
     "d3-array": "^3.2.5",
