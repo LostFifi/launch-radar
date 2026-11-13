@@ -2,7 +2,7 @@
 // - App startet auch offline (index.html wird zwischengespeichert, online immer frisch geladen)
 // - Benachrichtigungen (auf Android geht das nur über den Service Worker)
 // - Hintergrund-Prüfung der Erinnerungen (Periodic Background Sync: nur Chrome/Edge, installierte App, Zeitpunkt bestimmt der Browser)
-const VERSION = "2f22c9d575";
+const VERSION = "dde4ef6d38";
 const SHELL = "lr-shell-" + VERSION, DATA = "lr-data";
 const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png", "data/tle.json", "data/img.json"];
 
@@ -22,13 +22,15 @@ self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
   if (req.mode === "navigate") {
+    // Nur die App selbst (Startseite) als Offline-Kopie speichern – nicht die Info-Seiten (start/, iss/, datenschutz …)
+    const scope = new URL(self.registration.scope).pathname, isApp = url.pathname === scope || url.pathname === scope + "index.html";
     e.respondWith((async () => {
       try {
         const res = await fetch(req);
-        if (res.ok) (await caches.open(SHELL)).put("./", res.clone());
+        if (res.ok && isApp) (await caches.open(SHELL)).put("./", res.clone());
         return res;
       } catch (err) {
-        return (await caches.match("./")) || Response.error();
+        return (isApp && await caches.match("./")) || (await caches.match(req)) || (await caches.match("./")) || Response.error();
       }
     })());
     return;

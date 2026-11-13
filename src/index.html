@@ -26,6 +26,7 @@
 <meta name="twitter:description" content="Map & 3D globe, trajectories, real telemetry, ISS passes, Moon & Mars. Free and ad-free.">
 <meta name="twitter:image" content="/*SITEURL*/og-image.png">
 <!--ANALYTICS-->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"LaunchRadar","url":"/*SITEURL*/","applicationCategory":"EducationalApplication","operatingSystem":"Any","inLanguage":["de","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"CHF"},"description":"Raketenstarts live verfolgen: Karte, 3D-Globus, geschätzte Bahnen, echte Telemetrie, ISS-Überflüge, Mond- und Mars-Missionen. Track rocket launches live.","image":"/*SITEURL*/og-image.png"}</script>
 <meta name="theme-color" content="#0b0f17">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -62,6 +63,15 @@
 <div id="tele"></div>
 <div id="pip"></div>
 <div id="msg"></div>
+<!-- Beschreibung für Suchmaschinen und Screenreader (optisch ausgeblendet, Inhalt = was die App zeigt) -->
+<section id="seo" class="sr-only" translate="no">
+  <h1>LaunchRadar – Raketenstarts live verfolgen / Track rocket launches live</h1>
+  <p>LaunchRadar zeigt alle kommenden Raketenstarts weltweit auf einer Karte und einem 3D-Globus – SpaceX Falcon 9, Starship, Rocket Lab Electron, ULA Vulcan, Ariane 6, Langer Marsch und mehr. Mit Countdown, Livestream im Mini-Fenster, geschätzter Flugbahn und Aufstiegsprofil, echter Telemetrie aus dem Livestream, Wetter am Startplatz, Erinnerungen und Push-Nachrichten.</p>
+  <p>Dazu: ISS- und Tiangong-Überflüge für deinen Standort mit Himmelskarte, Satelliten (Starlink, GPS), Start-Statistik, Raketen-Datenbank mit Vergleich, Reise-Ansicht für Mond- und Mars-Missionen. Gratis, ohne Werbung, auf Deutsch und Englisch.</p>
+  <p>LaunchRadar shows every upcoming rocket launch worldwide on a map and 3D globe, with countdown, livestream, estimated trajectory, real telemetry, launch-site weather, ISS passes, satellites, statistics and a rocket database. Free and ad-free.</p>
+  <nav><a href="start/">Nächste Raketenstarts</a> · <a href="en/launches/">Upcoming rocket launches</a> · <a href="iss/">ISS-Überflüge</a> · <a href="datenschutz.html">Datenschutz</a></nav>
+  <!--SEOLIST-->
+</section>
 
 <script>
 // Eingebettete Daten (werden von scripts/build.py eingesetzt)

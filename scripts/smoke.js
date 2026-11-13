@@ -122,6 +122,22 @@ async function launchBrowser() {
       const files = await p3.evaluate(async () => { const st = async f => (await fetch(f)).status; return { og: await st('og-image.png'), ds: await (await fetch('datenschutz.html')).text(), robots: await st('robots.txt'), sitemap: await st('sitemap.xml') }; });
       check('[Datenschutz] Seite vorhanden (DE + EN, Kontakt)', files.ds.includes('id="de"') && files.ds.includes('id="en"') && files.ds.includes('github.com/LostFifi/launch-radar/issues') && !files.ds.includes('/*SITEURL*/'));
       check('[Teilen] og-image.png, robots.txt, sitemap.xml', files.og === 200 && files.robots === 200 && files.sitemap === 200);
+      // Suchmaschinen-Seiten: Start-Seiten (DE/EN) mit Event-Daten, ISS-Städte, Sitemap, Direktlink #iss=
+      const seo = await p3.evaluate(async () => {
+        const sm = await (await fetch('sitemap.xml')).text(), locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+        const startUrl = locs.find(u => /\/start\/[^/]+\.html$/.test(u) && !u.endsWith('index.html')), rel = startUrl.split('/launch-radar/')[1] || startUrl.replace(/^https?:\/\/[^/]+\//, '');
+        const sp = await (await fetch(rel)).text(), ip = await (await fetch('iss/zuerich.html')).text();
+        const ld = JSON.parse(sp.match(/<script type="application\/ld\+json">(.+?)<\/script>/)[1]);
+        return { n: locs.length, event: ld['@type'] === 'Event' && !!ld.startDate, hreflang: sp.includes('hreflang="en"'), iss: /ISS sichtbar über Zürich/.test(ip) && /#iss=47\.377,8\.541/.test(ip),
+          home: document.getElementById('seo')?.innerText.includes('Raketenstarts live') };
+      });
+      check('[Suche] Sitemap mit allen Seiten', seo.n > 100, seo.n + ' Adressen');
+      check('[Suche] Start-Seite mit Event-Daten + Sprachversion', seo.event && seo.hreflang);
+      check('[Suche] ISS-Städte-Seite + Startseiten-Text', seo.iss && seo.home);
+      await p3.evaluate(() => { location.hash = 'iss=47.377,8.541'; });
+      await p3.waitForTimeout(3500);
+      const ih = await p3.evaluate(() => ({ home: HOME, passes: document.querySelectorAll('#panel .pass').length }));
+      check('[Suche] Direktlink #iss= öffnet Überflüge', ih.home && Math.abs(ih.home.lat - 47.38) < 0.02 && ih.passes > 0, ih.passes + ' Überflüge');
       const del = await p3.evaluate(async () => { localStorage.setItem('lr_home', '{"lat":1,"lon":2}'); localStorage.setItem('fremd', 'x'); window.confirm = () => true;
         const r = location.reload; let reloaded = false; try { Object.defineProperty(location, 'reload', { value: () => { reloaded = true; } }); } catch (e) { }
         await deleteAllData(); return { home: localStorage.getItem('lr_home'), other: localStorage.getItem('fremd') }; });

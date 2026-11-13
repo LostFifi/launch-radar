@@ -47,6 +47,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;
 .lfilt input[type=search]{flex-basis:100%}
 .subrow{display:flex;align-items:center;gap:8px;padding:4px 0} .subrow span{flex:1}
 .subrow .x{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;line-height:1}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .pill.shift{background:#4d3a1f;color:#f5b041}
 #live.warn{background:#2a220f;border-color:var(--tbd)}
 .warnbox{background:#2a220f;border:1px solid var(--tbd);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}

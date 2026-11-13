@@ -14,7 +14,11 @@ async function shareLaunch(id){
 // Beim ersten Laden: Start aus der Adresse öffnen (kommende, sonst vergangene Starts)
 var hashDone=false;
 async function openFromHash(){
-  if(hashDone) return; const m=location.hash.match(/start=([\w-]+)/); if(!m){ hashDone=true; return; }
+  if(hashDone) return;
+  // #iss=lat,lon (von den Städte-Seiten): Standort setzen und Überflüge zeigen
+  const mi=location.hash.match(/iss=(-?[\d.]+),(-?[\d.]+)/);
+  if(mi){ hashDone=true; try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} setHome(+mi[1],+mi[2]); return; }
+  const m=location.hash.match(/start=([\w-]+)/); if(!m){ hashDone=true; return; }
   if(!launches.length) return; hashDone=true;
   const id=decodeURIComponent(m[1]); let l=launches.find(x=>x.id===id);
   if(!l){ try{ l=(await loadPast()).find(x=>x.id===id); }catch(e){} }

@@ -129,6 +129,9 @@ SITE=(CONFIG.get('siteUrl') or '').rstrip('/')+'/'
 h=h.replace('/*CONFIG*/',J({k:CONFIG.get(k) for k in ('worker','vapidPublic')})).replace('/*SNAPAT*/',SNAP_AT).replace('/*SITEURL*/',SITE)
 # Besucherzählung (Cloudflare Web Analytics, ohne Cookies) – nur wenn ein Token in src/config.json steht
 TOK=(CONFIG.get('analyticsToken') or '').strip()
+# Bestätigung für Google Search Console / Bing Webmaster Tools (Codes aus src/config.json)
+VER=''.join(f'<meta name="{n}" content="{CONFIG.get(k).strip()}">' for k,n in (('googleVerify','google-site-verification'),('bingVerify','msvalidate.01')) if (CONFIG.get(k) or '').strip())
+h=h.replace('<!--ANALYTICS-->','<!--ANALYTICS-->'+VER)
 h=h.replace('<!--ANALYTICS-->',("<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='{\"token\": \""+TOK+"\"}'></script>") if TOK else '')
 # Zwei Varianten:
 #  dist/index.html               online (GitHub Pages): Reserve-Bahndaten + Vorschaubilder als eigene Dateien data/*.json → ~2,4 MB weniger
@@ -141,6 +144,7 @@ for k,v in rep.items():
 open(b+'dist/data/tle.json','w').write(tle); open(b+'dist/data/img.json','w').write(J(snapimg))
 # Reserve für den Worker: kommende Starts mit Zeitstempel (wird bei jedem GitHub-Build frisch geholt)
 open(b+'dist/data/upcoming.json','w').write(J({'ts':int(_dt.timestamp()*1000),'results':up}))
+open(b+'dist/data/previous.json','w').write(J({'ts':int(_dt.timestamp()*1000),'results':past}))   # für die Start-Seiten (scripts/seo_pages.js)
 open(b+'dist/launchradar-offline.html','w').write(full)
 h=online; open(b+'dist/index.html','w').write(h); print(len(h)//1024,'KB online,',len(full)//1024,'KB offline-Datei')
 

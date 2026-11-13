@@ -4,7 +4,7 @@
   "private": true,
   "description": "LaunchRadar – Raketenstarts live verfolgen (Flightradar-Stil)",
   "scripts": {
-    "build": "node scripts/bundle.js && node scripts/py.js scripts/build.py",
+    "build": "node scripts/bundle.js && node scripts/py.js scripts/build.py && node scripts/seo_pages.js",
     "watch": "node scripts/bundle.js --watch",
     "fetch": "bash scripts/fetch_data.sh",
     "world": "node scripts/make_world.js",
