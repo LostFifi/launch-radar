@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lostfifi.github.io/launch-radar/sitemap.xml

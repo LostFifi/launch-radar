@@ -10,6 +10,7 @@ const ESRI="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/{style}/
 L.tileLayer(ESRI,{style:"World_Dark_Gray_Base",maxNativeZoom:15,maxZoom:15,detectRetina:true,   // Retina: Leaflet zieht 1 Stufe ab und lädt z+1
   attribution:'Karte &copy; Esri, HERE, Garmin, &copy; OpenStreetMap | Daten: The Space Devs'}).addTo(map);
 L.tileLayer(ESRI,{style:"World_Dark_Gray_Reference",maxNativeZoom:16,maxZoom:14,pane:"labels"}).addTo(map);
+map.attributionControl.addAttribution('<a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a>');
 // Eingebaute Weltkarte (nur sichtbar, wenn die Kacheln nicht laden: offline / in Vorschauen)
 // Für die 2D-Karte: Polygone über die Datumsgrenze (Fiji, Russland) entwirren – sonst entstehen Querstreifen
 const WORLD2D=JSON.parse(JSON.stringify(WORLD));

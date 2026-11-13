@@ -4,7 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Launch Radar – Raketenstarts live</title>
-<meta name="description" content="Raketenstarts live verfolgen: Karte, 3D-Globus, Bahnen, Livestream, Satelliten und ISS-Überflüge.">
+<meta name="description" content="Raketenstarts live verfolgen: Karte, 3D-Globus, Bahnen, Livestream, Satelliten und ISS-Überflüge. Track rocket launches live – map, 3D globe, telemetry, ISS passes.">
+<link rel="canonical" href="https://lostfifi.github.io/launch-radar/">
+<link rel="alternate" hreflang="de" href="https://lostfifi.github.io/launch-radar/?lang=de">
+<link rel="alternate" hreflang="en" href="https://lostfifi.github.io/launch-radar/?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://lostfifi.github.io/launch-radar/">
+<!-- Vorschau beim Teilen (WhatsApp, Reddit, Discord, X …) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LaunchRadar">
+<meta property="og:title" content="LaunchRadar – Track rocket launches live">
+<meta property="og:description" content="Free, ad-free launch tracker: map & 3D globe, estimated trajectories, real telemetry from the livestream, ISS passes, Moon & Mars missions. Deutsch & English.">
+<meta property="og:url" content="https://lostfifi.github.io/launch-radar/">
+<meta property="og:image" content="https://lostfifi.github.io/launch-radar/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LaunchRadar map with a rocket on its orbit">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="de_CH">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LaunchRadar – Track rocket launches live">
+<meta name="twitter:description" content="Map & 3D globe, trajectories, real telemetry, ISS passes, Moon & Mars. Free and ad-free.">
+<meta name="twitter:image" content="https://lostfifi.github.io/launch-radar/og-image.png">
+
 <meta name="theme-color" content="#0b0f17">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -974,7 +995,14 @@ var I18N_EN = {
   "Texterkennung konnte nicht geladen werden":"Text recognition could not be loaded","Noch keine Messwerte":"No readings yet","Geht nur in Chrome oder Edge am Computer":"Only works in Chrome or Edge on a computer",
   "LaunchRadar ist jetzt als App installiert":"LaunchRadar is now installed as an app","Benachrichtigung konnte nicht angezeigt werden":"Notification could not be shown",
   "Test: So sehen Start-Erinnerungen aus.":"Test: this is what launch reminders look like.","Hinweis: Fallback-Daten (dev-Server) – evtl. nicht ganz aktuell":"Note: fallback data (dev server) – may not be fully up to date",
-  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs"
+  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
+  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
+  // ---------- Info, Datenschutz ----------
+  "Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
+  "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
+  "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
+  "Push-Nachrichten wieder eingeschaltet":"Push notifications turned back on","Abmelden fehlgeschlagen":"Unsubscribing failed","Alle Daten gelöscht":"All data deleted",
+  "Wirklich alle LaunchRadar-Daten löschen? Erinnerungen, Abos, Standort, Einstellungen und Messungen – im Browser und auf dem Server.":"Really delete all LaunchRadar data? Reminders, subscriptions, location, settings and measurements – in your browser and on the server."
 };
 
 // ---- 005-i18n.js ----
@@ -1094,6 +1122,7 @@ const ESRI="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/{style}/
 L.tileLayer(ESRI,{style:"World_Dark_Gray_Base",maxNativeZoom:15,maxZoom:15,detectRetina:true,   // Retina: Leaflet zieht 1 Stufe ab und lädt z+1
   attribution:'Karte &copy; Esri, HERE, Garmin, &copy; OpenStreetMap | Daten: The Space Devs'}).addTo(map);
 L.tileLayer(ESRI,{style:"World_Dark_Gray_Reference",maxNativeZoom:16,maxZoom:14,pane:"labels"}).addTo(map);
+map.attributionControl.addAttribution('<a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a>');
 // Eingebaute Weltkarte (nur sichtbar, wenn die Kacheln nicht laden: offline / in Vorschauen)
 // Für die 2D-Karte: Polygone über die Datumsgrenze (Fiji, Russland) entwirren – sonst entstehen Querstreifen
 const WORLD2D=JSON.parse(JSON.stringify(WORLD));
@@ -2251,7 +2280,7 @@ function buildLayerMenu(){
     +row("fresh","Neueste Starts hervorheben","#ff4fd8")
     +`<h4>Mein Standort</h4>${row("home","Standort & ISS-Sichtkreis","#ffd25a")}
       <button class="chip ic" style="margin:4px 0 2px" onclick="document.getElementById('layers').style.display='none';openPasses()">${ICON.eye} ISS-Überflüge bei mir</button>`
-    +subsMenuHtml()+pwaMenuHtml()+langMenuHtml();
+    +subsMenuHtml()+pwaMenuHtml()+langMenuHtml()+infoMenuHtml();
   el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
@@ -3366,7 +3395,33 @@ async function syncRem(){
   pushSync();
 }
 // ---------- Echte Push-Nachrichten über den eigenen Worker (nur wenn src/config.json ausgefüllt ist) ----------
-const PUSH_OK=()=>!!(CONFIG.worker && CONFIG.vapidPublic && PWA_OK && "PushManager" in window);
+const pushOff=()=>{ try{ return localStorage.getItem("lr_push_off")==="1"; }catch(e){ return false; } };
+const PUSH_OK=()=>!!(CONFIG.worker && CONFIG.vapidPublic && PWA_OK && "PushManager" in window && !pushOff());
+// Push abmelden: beim Server löschen + Abo im Browser beenden; bleibt aus, bis man es wieder einschaltet
+async function pushUnsubscribe(silent){
+  try{ localStorage.setItem("lr_push_off","1"); }catch(e){}
+  try{ const reg=PWA.reg||(PWA_OK?await navigator.serviceWorker.getRegistration():null), sub=reg&&reg.pushManager&&await reg.pushManager.getSubscription();
+    if(sub){ if(CONFIG.worker) await fetch(CONFIG.worker+"/push/unsubscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});
+      await sub.unsubscribe(); }
+    PWA.push=false; pushLast=""; if(!silent) toast("Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht");
+  }catch(e){ if(!silent) toast("Abmelden fehlgeschlagen"); }
+  if(!silent) buildLayerMenu();
+}
+function pushResume(){ try{ localStorage.removeItem("lr_push_off"); }catch(e){} pushSync(); toast("Push-Nachrichten wieder eingeschaltet"); buildLayerMenu(); }
+// Alles löschen: Browser (localStorage, Caches) + Server (Push-Abo); danach neu laden
+async function deleteAllData(){
+  if(!confirm(i18n("Wirklich alle LaunchRadar-Daten löschen? Erinnerungen, Abos, Standort, Einstellungen und Messungen – im Browser und auf dem Server."))) return;
+  await pushUnsubscribe(true);
+  try{ Object.keys(localStorage).filter(k=>k.startsWith("lr_")).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ for(const k of await caches.keys()) await caches.delete(k); }catch(e){}
+  toast("Alle Daten gelöscht"); setTimeout(()=>location.reload(),800);
+}
+function infoMenuHtml(){
+  return `<h4>Info</h4><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:4px 0">
+    <a class="chip" href="datenschutz.html${LANG==="en"?"#en":""}" target="_blank" rel="noopener" style="text-decoration:none">Datenschutz & Impressum</a>
+    ${CONFIG.worker&&CONFIG.vapidPublic&&PWA_OK?(pushOff()?`<button class="chip" onclick="pushResume()">Push-Nachrichten wieder einschalten</button>`:`<button class="chip" onclick="pushUnsubscribe()">Push-Nachrichten abmelden</button>`):""}
+    <button class="chip" onclick="deleteAllData()">Alle meine Daten löschen</button></div>`;
+}
 let pushLast="", pushTimer=null;
 function pushSync(){ if(!PUSH_OK()) return; clearTimeout(pushTimer); pushTimer=setTimeout(pushSyncNow,1500); }
 async function pushSyncNow(){

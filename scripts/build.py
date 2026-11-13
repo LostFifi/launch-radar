@@ -125,7 +125,11 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
      '/*TLE*/':tle,'/*IMG*/':J(snapimg),'/*SNAPTS*/':SNAP_DATE}
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
 CONFIG=json.load(open(b+'src/config.json')); CONFIG['worker']=(CONFIG.get('worker') or '').rstrip('/')
-h=h.replace('/*CONFIG*/',J(CONFIG)).replace('/*SNAPAT*/',SNAP_AT)
+SITE=(CONFIG.get('siteUrl') or '').rstrip('/')+'/'
+h=h.replace('/*CONFIG*/',J({k:CONFIG.get(k) for k in ('worker','vapidPublic')})).replace('/*SNAPAT*/',SNAP_AT).replace('/*SITEURL*/',SITE)
+# Besucherzählung (Cloudflare Web Analytics, ohne Cookies) – nur wenn ein Token in src/config.json steht
+TOK=(CONFIG.get('analyticsToken') or '').strip()
+h=h.replace('<!--ANALYTICS-->',("<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='{\"token\": \""+TOK+"\"}'></script>") if TOK else '')
 # Zwei Varianten:
 #  dist/index.html               online (GitHub Pages): Reserve-Bahndaten + Vorschaubilder als eigene Dateien data/*.json → ~2,4 MB weniger
 #  dist/launchradar-offline.html alles eingebettet (Claude-Vorschau, als Datei öffnen, ohne Server)
@@ -145,6 +149,12 @@ import shutil
 os.makedirs(b+'dist/icons',exist_ok=True)
 shutil.copyfile(b+'src/pwa/manifest.webmanifest',b+'dist/manifest.webmanifest')
 for f in os.listdir(b+'src/pwa/icons'): shutil.copyfile(b+'src/pwa/icons/'+f,b+'dist/icons/'+f)
+shutil.copyfile(b+'src/pwa/og-image.png',b+'dist/og-image.png')
+# Datenschutz/Impressum (statische Seite, auch ohne JavaScript lesbar) + Suchmaschinen
+open(b+'dist/datenschutz.html','w').write(open(b+'src/pages/datenschutz.html').read().replace('/*SITEURL*/',SITE))
+open(b+'dist/robots.txt','w').write(f"User-agent: *\nAllow: /\nSitemap: {SITE}sitemap.xml\n")
+open(b+'dist/sitemap.xml','w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  +''.join(f'<url><loc>{SITE}{p}</loc></url>' for p in ['','?lang=en','datenschutz.html'])+'</urlset>\n')
 sw=open(b+'src/pwa/sw.js').read(); ver=hashlib.md5((h+sw).encode()).hexdigest()[:10]
 open(b+'dist/sw.js','w').write(sw.replace('/*SW_VERSION*/',ver).replace('/*WORKER_URL*/',CONFIG['worker']))
 print('PWA', ver)

@@ -234,5 +234,12 @@ var I18N_EN = {
   "Texterkennung konnte nicht geladen werden":"Text recognition could not be loaded","Noch keine Messwerte":"No readings yet","Geht nur in Chrome oder Edge am Computer":"Only works in Chrome or Edge on a computer",
   "LaunchRadar ist jetzt als App installiert":"LaunchRadar is now installed as an app","Benachrichtigung konnte nicht angezeigt werden":"Notification could not be shown",
   "Test: So sehen Start-Erinnerungen aus.":"Test: this is what launch reminders look like.","Hinweis: Fallback-Daten (dev-Server) – evtl. nicht ganz aktuell":"Note: fallback data (dev server) – may not be fully up to date",
-  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs"
+  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
+  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
+  // ---------- Info, Datenschutz ----------
+  "Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
+  "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
+  "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
+  "Push-Nachrichten wieder eingeschaltet":"Push notifications turned back on","Abmelden fehlgeschlagen":"Unsubscribing failed","Alle Daten gelöscht":"All data deleted",
+  "Wirklich alle LaunchRadar-Daten löschen? Erinnerungen, Abos, Standort, Einstellungen und Messungen – im Browser und auf dem Server.":"Really delete all LaunchRadar data? Reminders, subscriptions, location, settings and measurements – in your browser and on the server."
 };

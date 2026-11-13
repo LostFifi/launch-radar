@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LaunchRadar – Datenschutz & Impressum / Privacy & Legal</title>
+<meta name="description" content="Datenschutzerklärung, Impressum und Quellen von LaunchRadar. Privacy policy, legal notice and credits.">
+<link rel="canonical" href="https://lostfifi.github.io/launch-radar/datenschutz.html">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="theme-color" content="#0b0f17">
+<style>
+  :root{--bg:#0b0f17;--panel:#121826;--line:#232c3f;--text:#e6ebf5;--mute:#8a96ad;--acc:#4ea1ff}
+  *{box-sizing:border-box} html{background:var(--bg)}
+  body{margin:0 auto;max-width:820px;padding:24px 16px 60px;color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--acc)} h1{font-size:26px;margin:8px 0 4px} h2{font-size:19px;margin:32px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:15px;margin:20px 0 6px;color:var(--mute);text-transform:uppercase;letter-spacing:.8px}
+  .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .top a.btn{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;text-decoration:none;color:var(--text)}
+  .logo{font-weight:800;font-size:18px;text-decoration:none;color:var(--text);margin-right:auto} .logo span{color:var(--acc)}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0} th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+  th{color:var(--mute);font-weight:600} td:first-child{white-space:nowrap} code{background:var(--panel);padding:1px 5px;border-radius:5px;font-size:13px}
+  .note{color:var(--mute);font-size:13px} .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  @media (max-width:600px){ td:first-child{white-space:normal} table{font-size:13px} }
+</style>
+</head>
+<body>
+<div class="top"><a class="logo" href="./">Launch<span>Radar</span></a><a class="btn" href="#de">Deutsch</a><a class="btn" href="#en">English</a><a class="btn" href="./">← App</a></div>
+
+<section id="de" lang="de">
+<h1>Datenschutz & Impressum</h1>
+<p class="note">Stand: November 2026</p>
+
+<h2>Impressum</h2>
+<div class="box">
+<b>LaunchRadar</b> ist ein privates, nicht-kommerzielles Hobbyprojekt ohne Werbung.<br>
+Verantwortlich: Fionn, Privatperson, Schweiz<br>
+Kontakt: <a href="https://github.com/LostFifi/launch-radar/issues" rel="noopener">github.com/LostFifi/launch-radar/issues</a><br>
+Quellcode: <a href="https://github.com/LostFifi/launch-radar" rel="noopener">github.com/LostFifi/launch-radar</a>
+</div>
+<p class="note">Alle Bahnen, Höhen, Geschwindigkeiten und Sichtbarkeiten sind Schätzungen. Keine Gewähr – für Sicherheits- oder Reiseentscheide bitte offizielle Quellen nutzen.</p>
+
+<h2>Datenschutz in Kürze</h2>
+<ul>
+<li>Kein Konto, keine Cookies, keine Werbung, kein Tracking über andere Seiten hinweg.</li>
+<li>Einstellungen, Erinnerungen und dein Standort bleiben <b>in deinem Browser</b> (localStorage). Der Standort wird nie verschickt.</li>
+<li>Für Push-Nachrichten speichert unser Server nur, was für die Erinnerung nötig ist – und löscht es automatisch.</li>
+<li>Alles löschen: in der App im Ebenen-Menü → „Alle meine Daten löschen“.</li>
+</ul>
+
+<h2>Welche Daten wohin gehen</h2>
+<table>
+<tr><th>Dienst</th><th>Wofür</th><th>Was übertragen wird</th></tr>
+<tr><td>GitHub Pages (GitHub Inc., USA)</td><td>Hosting der Seite</td><td>Technisch nötige Zugriffsdaten (IP-Adresse, Browser) in Server-Protokollen von GitHub</td></tr>
+<tr><td>Cloudflare Worker (Cloudflare Inc., USA)</td><td>Startdaten für alle Nutzer; Push-Nachrichten</td><td>Abruf der Startdaten (IP-Adresse technisch nötig). <b>Nur wenn du Benachrichtigungen erlaubst:</b> die Push-Adresse deines Browsers, deine Erinnerungen (Start-ID, Zeit, Name), deine Abo-Filter und die Sprache. Wird gelöscht, wenn du Push abmeldest, alle Daten löschst oder 40 Tage nichts mehr kommt.</td></tr>
+<tr><td>Push-Dienst deines Browsers (z.B. Google, Mozilla, Apple)</td><td>Zustellung der Push-Nachrichten</td><td>Ein Weckruf <b>ohne Inhalt</b>; den Text holt die App danach selbst bei unserem Server ab</td></tr>
+<tr><td>Cloudflare Web Analytics</td><td>Besucherzahlen (falls aktiviert)</td><td>Seitenaufrufe ohne Cookies und ohne Wiedererkennung über Tage hinweg; Cloudflare speichert dafür keine IP-Adressen</td></tr>
+<tr><td>The Space Devs – Launch Library 2</td><td>Startdaten (Reserve, wenn unser Server nicht antwortet)</td><td>Abruf durch deinen Browser (IP-Adresse)</td></tr>
+<tr><td>CelesTrak</td><td>Bahndaten von Satelliten</td><td>Abruf durch deinen Browser (IP-Adresse)</td></tr>
+<tr><td>Esri (ArcGIS)</td><td>Kartenbilder</td><td>Abruf der Kartenkacheln (IP-Adresse, sichtbarer Kartenausschnitt)</td></tr>
+<tr><td>Open-Meteo</td><td>Wetter am Startplatz</td><td>Nur die Koordinaten des <b>Startplatzes</b> – nicht deine</td></tr>
+<tr><td>YouTube (youtube-nocookie.com)</td><td>Livestream im Mini-Fenster</td><td>Nur wenn du einen Stream startest</td></tr>
+<tr><td>jsDelivr</td><td>Texterkennung für „Echte Telemetrie“</td><td>Nur wenn du die Telemetrie startest; das Bild des geteilten Tabs wird <b>nur lokal</b> ausgewertet und nie hochgeladen</td></tr>
+</table>
+
+<h3>Im Browser gespeichert (localStorage)</h3>
+<p class="note"><code>lr_cache</code>, <code>lr_past</code>, <code>lr_tle_*</code>, <code>lr_wx</code> (zwischengespeicherte Daten) · <code>lr_layers</code>, <code>lr_lang</code> (Einstellungen) · <code>lr_rem</code>, <code>lr_rem_off</code>, <code>lr_subs</code> (Erinnerungen, Abos) · <code>lr_home</code> (Standort, auf ~1 km gerundet) · <code>lr_net</code> (bekannte Startzeiten für Verschiebungen) · <code>lr_tele</code> (eigene Telemetrie-Messungen) · <code>lr_inc</code>, <code>lr_full_*</code> (Statistik). Dazu der Cache des Service Workers für den Offline-Betrieb.</p>
+
+<h3>Deine Rechte</h3>
+<p>Du kannst jederzeit Auskunft, Berichtigung oder Löschung verlangen (Schweizer Datenschutzgesetz DSG; für Besucher aus der EU sinngemäss DSGVO). Am schnellsten: in der App „Alle meine Daten löschen“ – das entfernt alles im Browser und auf unserem Server. Fragen über den Kontakt oben.</p>
+
+<h2>Quellen & Lizenzen</h2>
+<ul>
+<li>Startdaten: <a href="https://thespacedevs.com" rel="noopener">The Space Devs</a> – Launch Library 2</li>
+<li>Satelliten-Bahndaten: <a href="https://celestrak.org" rel="noopener">CelesTrak</a></li>
+<li>Karte: © Esri, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a>-Mitwirkende · Weltkarte offline: Natural Earth / world-atlas</li>
+<li>Wetter: <a href="https://open-meteo.com" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</li>
+<li>Software: Leaflet (BSD-2), d3-geo (ISC), satellite.js (MIT), Tesseract.js (Apache-2.0)</li>
+</ul>
+</section>
+
+<section id="en" lang="en">
+<h1 style="margin-top:48px">Privacy & Legal notice</h1>
+<p class="note">Last updated: November 2026</p>
+
+<h2>Legal notice</h2>
+<div class="box">
+<b>LaunchRadar</b> is a private, non-commercial hobby project without ads.<br>
+Responsible: Fionn, private individual, Switzerland<br>
+Contact: <a href="https://github.com/LostFifi/launch-radar/issues" rel="noopener">github.com/LostFifi/launch-radar/issues</a><br>
+Source code: <a href="https://github.com/LostFifi/launch-radar" rel="noopener">github.com/LostFifi/launch-radar</a>
+</div>
+<p class="note">All trajectories, altitudes, speeds and visibility are estimates. No warranty – use official sources for safety or travel decisions.</p>
+
+<h2>Privacy in short</h2>
+<ul>
+<li>No account, no cookies, no ads, no cross-site tracking.</li>
+<li>Settings, reminders and your location stay <b>in your browser</b> (localStorage). Your location is never sent anywhere.</li>
+<li>For push notifications our server stores only what the reminder needs – and deletes it automatically.</li>
+<li>Delete everything: in the app, Layers menu → “Delete all my data”.</li>
+</ul>
+
+<h2>Which data goes where</h2>
+<table>
+<tr><th>Service</th><th>Purpose</th><th>What is transmitted</th></tr>
+<tr><td>GitHub Pages (GitHub Inc., USA)</td><td>Hosting</td><td>Technically required access data (IP address, browser) in GitHub's server logs</td></tr>
+<tr><td>Cloudflare Worker (Cloudflare Inc., USA)</td><td>Launch data for all users; push notifications</td><td>Fetching launch data (IP address technically required). <b>Only if you allow notifications:</b> your browser's push address, your reminders (launch ID, time, name), your subscription filters and language. Deleted when you unsubscribe from push, delete all data, or after 40 days without updates.</td></tr>
+<tr><td>Your browser's push service (e.g. Google, Mozilla, Apple)</td><td>Delivering push notifications</td><td>A wake-up signal <b>without content</b>; the app then fetches the text from our server itself</td></tr>
+<tr><td>Cloudflare Web Analytics</td><td>Visitor counts (if enabled)</td><td>Page views without cookies and without recognising you across days; Cloudflare does not store IP addresses for this</td></tr>
+<tr><td>The Space Devs – Launch Library 2</td><td>Launch data (fallback if our server doesn't respond)</td><td>Requested by your browser (IP address)</td></tr>
+<tr><td>CelesTrak</td><td>Satellite orbital data</td><td>Requested by your browser (IP address)</td></tr>
+<tr><td>Esri (ArcGIS)</td><td>Map images</td><td>Map tile requests (IP address, visible map area)</td></tr>
+<tr><td>Open-Meteo</td><td>Weather at the launch site</td><td>Only the <b>launch site</b> coordinates – not yours</td></tr>
+<tr><td>YouTube (youtube-nocookie.com)</td><td>Livestream in the mini player</td><td>Only when you start a stream</td></tr>
+<tr><td>jsDelivr</td><td>Text recognition for “Real telemetry”</td><td>Only when you start telemetry; the shared tab's image is analysed <b>locally only</b> and never uploaded</td></tr>
+</table>
+
+<h3>Stored in your browser (localStorage)</h3>
+<p class="note">Cached data, settings, reminders and subscriptions, your rounded location, known launch times (to detect delays), your own telemetry measurements and statistics – see the key list in the German section above – plus the service worker cache for offline use.</p>
+
+<h3>Your rights</h3>
+<p>You can request information, correction or deletion at any time (Swiss Federal Act on Data Protection, FADP; for EU visitors the GDPR applies accordingly). Fastest: “Delete all my data” in the app – it removes everything in your browser and on our server. Questions via the contact above.</p>
+
+<h2>Sources & licences</h2>
+<ul>
+<li>Launch data: <a href="https://thespacedevs.com" rel="noopener">The Space Devs</a> – Launch Library 2</li>
+<li>Satellite orbital data: <a href="https://celestrak.org" rel="noopener">CelesTrak</a></li>
+<li>Map: © Esri, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors · offline world map: Natural Earth / world-atlas</li>
+<li>Weather: <a href="https://open-meteo.com" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</li>
+<li>Software: Leaflet (BSD-2), d3-geo (ISC), satellite.js (MIT), Tesseract.js (Apache-2.0)</li>
+</ul>
+</section>
+<script>if(!/^de\b/i.test(navigator.language||"")&&!location.hash) location.hash="en";</script>
+</body>
+</html>

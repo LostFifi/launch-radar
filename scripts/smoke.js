@@ -111,6 +111,23 @@ async function launchBrowser() {
     const w = await page.evaluate(async b => { CONFIG.worker = b + 'mockworker'; localStorage.removeItem('lr_cache'); await load(); return { via: DATA.via, n: launches.length, name: launches[0].name }; }, base);
     check('[Worker] App nutzt eingetragenen Worker', w.via === 'worker' && w.name === 'Worker | Test');
     await ctx.close();
+    // Teilen-Vorschau, Datenschutz-Seite, Suchmaschinen, „Alle Daten löschen“
+    {
+      const ctx3 = await browser.newContext({ serviceWorkers: 'block', locale: 'de-CH' });
+      await ctx3.route(u => !u.href.startsWith(base), r => r.abort());
+      const p3 = await ctx3.newPage(); await p3.goto(base);
+      await p3.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0);
+      const og = await p3.evaluate(() => ({ img: document.querySelector('meta[property="og:image"]')?.content, url: document.querySelector('meta[property="og:url"]')?.content }));
+      check('[Teilen] Vorschau-Angaben (og:image absolut)', /^https:\/\/.+\/og-image\.png$/.test(og.img || '') && /^https:\/\//.test(og.url || ''), og.img);
+      const files = await p3.evaluate(async () => { const st = async f => (await fetch(f)).status; return { og: await st('og-image.png'), ds: await (await fetch('datenschutz.html')).text(), robots: await st('robots.txt'), sitemap: await st('sitemap.xml') }; });
+      check('[Datenschutz] Seite vorhanden (DE + EN, Kontakt)', files.ds.includes('id="de"') && files.ds.includes('id="en"') && files.ds.includes('github.com/LostFifi/launch-radar/issues') && !files.ds.includes('/*SITEURL*/'));
+      check('[Teilen] og-image.png, robots.txt, sitemap.xml', files.og === 200 && files.robots === 200 && files.sitemap === 200);
+      const del = await p3.evaluate(async () => { localStorage.setItem('lr_home', '{"lat":1,"lon":2}'); localStorage.setItem('fremd', 'x'); window.confirm = () => true;
+        const r = location.reload; let reloaded = false; try { Object.defineProperty(location, 'reload', { value: () => { reloaded = true; } }); } catch (e) { }
+        await deleteAllData(); return { home: localStorage.getItem('lr_home'), other: localStorage.getItem('fremd') }; });
+      check('[Datenschutz] „Alle meine Daten löschen“ leert nur LaunchRadar-Daten', del.home === null && del.other === 'x');
+      await ctx3.close();
+    }
     // Englisch: alle Ansichten durchklicken, kein deutscher Text darf übrig bleiben
     {
       const { visitAll, mockWeather } = require('./i18n-views.js');

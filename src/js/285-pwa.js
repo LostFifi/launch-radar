@@ -32,7 +32,33 @@ async function syncRem(){
   pushSync();
 }
 // ---------- Echte Push-Nachrichten über den eigenen Worker (nur wenn src/config.json ausgefüllt ist) ----------
-const PUSH_OK=()=>!!(CONFIG.worker && CONFIG.vapidPublic && PWA_OK && "PushManager" in window);
+const pushOff=()=>{ try{ return localStorage.getItem("lr_push_off")==="1"; }catch(e){ return false; } };
+const PUSH_OK=()=>!!(CONFIG.worker && CONFIG.vapidPublic && PWA_OK && "PushManager" in window && !pushOff());
+// Push abmelden: beim Server löschen + Abo im Browser beenden; bleibt aus, bis man es wieder einschaltet
+async function pushUnsubscribe(silent){
+  try{ localStorage.setItem("lr_push_off","1"); }catch(e){}
+  try{ const reg=PWA.reg||(PWA_OK?await navigator.serviceWorker.getRegistration():null), sub=reg&&reg.pushManager&&await reg.pushManager.getSubscription();
+    if(sub){ if(CONFIG.worker) await fetch(CONFIG.worker+"/push/unsubscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});
+      await sub.unsubscribe(); }
+    PWA.push=false; pushLast=""; if(!silent) toast("Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht");
+  }catch(e){ if(!silent) toast("Abmelden fehlgeschlagen"); }
+  if(!silent) buildLayerMenu();
+}
+function pushResume(){ try{ localStorage.removeItem("lr_push_off"); }catch(e){} pushSync(); toast("Push-Nachrichten wieder eingeschaltet"); buildLayerMenu(); }
+// Alles löschen: Browser (localStorage, Caches) + Server (Push-Abo); danach neu laden
+async function deleteAllData(){
+  if(!confirm(i18n("Wirklich alle LaunchRadar-Daten löschen? Erinnerungen, Abos, Standort, Einstellungen und Messungen – im Browser und auf dem Server."))) return;
+  await pushUnsubscribe(true);
+  try{ Object.keys(localStorage).filter(k=>k.startsWith("lr_")).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ for(const k of await caches.keys()) await caches.delete(k); }catch(e){}
+  toast("Alle Daten gelöscht"); setTimeout(()=>location.reload(),800);
+}
+function infoMenuHtml(){
+  return `<h4>Info</h4><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:4px 0">
+    <a class="chip" href="datenschutz.html${LANG==="en"?"#en":""}" target="_blank" rel="noopener" style="text-decoration:none">Datenschutz & Impressum</a>
+    ${CONFIG.worker&&CONFIG.vapidPublic&&PWA_OK?(pushOff()?`<button class="chip" onclick="pushResume()">Push-Nachrichten wieder einschalten</button>`:`<button class="chip" onclick="pushUnsubscribe()">Push-Nachrichten abmelden</button>`):""}
+    <button class="chip" onclick="deleteAllData()">Alle meine Daten löschen</button></div>`;
+}
 let pushLast="", pushTimer=null;
 function pushSync(){ if(!PUSH_OK()) return; clearTimeout(pushTimer); pushTimer=setTimeout(pushSyncNow,1500); }
 async function pushSyncNow(){
