@@ -154,6 +154,8 @@ async function launchBrowser() {
       const lang = await p2.evaluate(() => LANG);
       const left = await visitAll(p2);
       check('[Englisch] Sprache automatisch erkannt', lang === 'en');
+      const api = await p2.evaluate(() => [i18n('Orbital Insertion Burn Start'), i18n('Payload Deployment Sequence Start'), i18n('3 Starts'), i18n('12 von 40')]);
+      check('[Englisch] API-Texte bleiben unverändert, Zahlen-Muster greifen', api[0] === 'Orbital Insertion Burn Start' && api[1] === 'Payload Deployment Sequence Start' && api[2] === '3 launches' && api[3] === '12 of 40', api.join(' | '));
       check('[Englisch] kein deutscher Text übrig', left.length === 0, left.length ? left.slice(0, 8).join(' | ') + (left.length > 8 ? ` … (+${left.length - 8})` : '') : 'alle Ansichten geprüft');
       await p2.goto(base + '?lang=de'); const de = await p2.evaluate(() => [LANG, document.querySelector('[data-f=all]').textContent]);
       check('[Englisch] Umschalten auf Deutsch (?lang=de)', de[0] === 'de' && de[1] === 'Alle');

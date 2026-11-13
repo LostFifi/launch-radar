@@ -66,8 +66,11 @@ function select(l){
   }
   // Timeline
   if(l.timeline?.length){
-    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl">`+
-      l.timeline.map(t=>`<li><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
+    // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
+    const t0=new Date(l.net).getTime();
+    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl" id="tlList">`+
+      l.timeline.slice().sort((a,b)=>(relSec(a.relative_time)??0)-(relSec(b.relative_time)??0))
+        .map(t=>`<li data-at="${t0+(relSec(t.relative_time)??0)*1000}"><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
   }
 
   // Live-Updates
@@ -124,6 +127,16 @@ function select(l){
   else if(lst==="likely") document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox">Start vermutlich erfolgt, aber noch nicht bestätigt (${esc(dataInfo())}).</div>`);
 }
 
+// Timeline live nachführen: erledigte Schritte grün (✓), nächster Schritt hervorgehoben.
+// Nur wenn der Start nicht „nicht bestätigt“ ist – sonst wäre die Startzeit ja evtl. verschoben.
+function timelineTick(){
+  const ul=document.getElementById("tlList"); if(!ul||!selected) return;
+  const now=Date.now(), stale=launchState(selected)==="unconfirmed"; let nextSet=false;
+  ul.querySelectorAll("li").forEach(li=>{ const done=!stale && +li.dataset.at<=now;
+    li.classList.toggle("done",done);
+    const nx=!done && !nextSet && !stale; li.classList.toggle("next",nx); if(nx) nextSet=true; });
+}
+setInterval(timelineTick,1000);
 function liveFollow(l,est){
   simTimer=setInterval(()=>{
     const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();

@@ -16,8 +16,9 @@ function i18nPrep(){
   if(I18N_MAP) return; I18N_MAP=new Map(); I18N_PAT=[];
   const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
   for(const [de,en] of Object.entries(typeof I18N_EN==="object"?I18N_EN:{})){
-    if(/\{\d\}/.test(de)){ const parts=de.split(/(\{\d\})/), order=[];
-      const rx=parts.map(p=>{ const m=p.match(/^\{(\d)\}$/); if(m){ order.push(+m[1]); return "(.+?)"; } return esc(p); }).join("");
+    // {0} = beliebiger Text, {n0} = nur Zahl (damit z.B. „{n0} Start“ keinen API-Text wie „Burn Start“ trifft)
+    if(/\{n?\d\}/.test(de)){ const parts=de.split(/(\{n?\d\})/), order=[];
+      const rx=parts.map(p=>{ const m=p.match(/^\{(n?)(\d)\}$/); if(m){ order.push(+m[2]); return m[1]?"([\\d.,'’\\u202f\\s]*\\d)":"(.+?)"; } return esc(p); }).join("");
       I18N_PAT.push({rx:new RegExp("^"+rx+"$"),order,en}); }
     else I18N_MAP.set(de,en); }
   I18N_PAT.sort((a,b)=>b.rx.source.length-a.rx.source.length);   // spezifischere Muster zuerst
