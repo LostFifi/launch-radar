@@ -153,6 +153,8 @@ table.cmp img{width:100%;max-width:220px;aspect-ratio:4/3;object-fit:cover;borde
 #pip .pb{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
 #pip .pv{position:relative;padding-top:56.25%} #pip iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 #satcv{position:absolute;inset:0;z-index:450;pointer-events:none}
+#layers{max-height:calc(100vh - 130px);overflow:auto;max-width:min(320px,calc(100vw - 24px))}
+#layers .note{margin-top:4px}
 button.btn{border:0;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
 .btn svg{vertical-align:-3px}
 .homepin{width:14px;height:14px;border-radius:50%;background:#ffd25a;border:3px solid #0b0f17;box-shadow:0 0 0 2px #ffd25a,0 0 12px #ffd25a99}

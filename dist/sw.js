@@ -1,0 +1,77 @@
+// LaunchRadar Service Worker
+// - App startet auch offline (index.html wird zwischengespeichert, online immer frisch geladen)
+// - Benachrichtigungen (auf Android geht das nur über den Service Worker)
+// - Hintergrund-Prüfung der Erinnerungen (Periodic Background Sync: nur Chrome/Edge, installierte App, Zeitpunkt bestimmt der Browser)
+const VERSION = "17d40f9f51";
+const SHELL = "lr-shell-" + VERSION, DATA = "lr-data";
+const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png"];
+
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+self.addEventListener("activate", e => {
+  e.waitUntil((async () => {
+    for (const k of await caches.keys()) if (k.startsWith("lr-shell-") && k !== SHELL) await caches.delete(k);
+    await self.clients.claim();
+  })());
+});
+
+// Seite: zuerst Netz (immer neueste Version), offline aus dem Cache. Eigene Dateien: Cache, sonst Netz.
+// Fremde Server (API, Karte, CelesTrak) gehen direkt ans Netz – die App hat dafür ihren eigenen Cache.
+self.addEventListener("fetch", e => {
+  const req = e.request, url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== location.origin) return;
+  if (req.mode === "navigate") {
+    e.respondWith((async () => {
+      try {
+        const res = await fetch(req);
+        if (res.ok) (await caches.open(SHELL)).put("./", res.clone());
+        return res;
+      } catch (err) {
+        return (await caches.match("./")) || Response.error();
+      }
+    })());
+    return;
+  }
+  e.respondWith(caches.match(req).then(r => r || fetch(req)));
+});
+
+// ---------- Erinnerungen im Hintergrund ----------
+// Die Seite legt ihre Erinnerungen (lr_rem) als rem.json im Cache "lr-data" ab.
+async function readRem() {
+  try { const r = await (await caches.open(DATA)).match("rem.json"); return r ? await r.json() : {}; } catch (e) { return {}; }
+}
+async function writeRem(rem) {
+  await (await caches.open(DATA)).put("rem.json", new Response(JSON.stringify(rem), { headers: { "content-type": "application/json" } }));
+}
+async function checkReminders() {
+  const rem = await readRem(), now = Date.now(); let changed = false;
+  for (const id in rem) {
+    const r = rem[id], t = new Date(r.net) - now;
+    // Der Browser weckt uns unregelmässig: alles melden, was in den nächsten 20 Min kommt oder knapp verpasst wurde
+    if (!r.fired && t <= 20 * 60e3 && t > -15 * 60e3) {
+      r.fired = true; changed = true;
+      const min = Math.round(t / 60e3), name = r.kind === "pass" ? r.name : (r.name.split("|")[1] || r.name).trim();
+      const when = min > 0 ? `in ca. ${min} Min` : min === 0 ? "jetzt" : `vor ${-min} Min`;
+      try {
+        await self.registration.showNotification("LaunchRadar", {
+          body: r.kind === "pass" ? `${name} ${when} – ${r.txt || ""}` : `${name} startet ${when}`,
+          icon: "icons/icon-192.png", badge: "icons/badge-96.png", tag: "lr-" + id, data: { url: "./" }
+        });
+      } catch (err) { /* Benachrichtigungen nicht erlaubt – trotzdem als gemeldet markieren */ }
+    }
+  }
+  if (changed) await writeRem(rem);
+}
+self.addEventListener("periodicsync", e => { if (e.tag === "lr-rem") e.waitUntil(checkReminders()); });
+self.addEventListener("message", e => { if (e.data && e.data.type === "check") e.waitUntil(checkReminders()); });
+
+// Klick auf die Benachrichtigung: offenes App-Fenster nach vorne holen, sonst öffnen
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of all) if (new URL(c.url).pathname.startsWith(new URL(self.registration.scope).pathname)) return c.focus();
+    return self.clients.openWindow((e.notification.data && e.notification.data.url) || "./");
+  })());
+});

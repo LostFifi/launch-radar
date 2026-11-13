@@ -28,6 +28,8 @@ Python 3 (+ Pillow) und Node.js werden gebraucht.
 | `scripts/bundle.js` | Fügt `src/js` + `src/css` mit esbuild zusammen (inkl. Syntaxprüfung mit Datei/Zeile) → `build/` |
 | `scripts/build.py` | Ersetzt die Platzhalter: App-Code, Bibliotheken, Schnappschuss-Daten, Vorschaubilder → `dist/index.html` |
 | `scripts/py.js` | Startet Python 3 auf Windows, macOS und Linux |
+| `src/pwa/` | Manifest, Service Worker (`sw.js`), Icons – werden beim Build nach `dist/` kopiert |
+| `scripts/make_icons.py` | Erzeugt die App-Icons aus dem Raketen-Symbol |
 | `.github/workflows/pages.yml` | Veröffentlicht `dist/` bei jedem Push auf GitHub Pages |
 | `scripts/fetch_data.sh` | Lädt frische Rohdaten nach `data/raw/` und `data/tle/` |
 | `scripts/make_world.js` | Erzeugt `data/world.json` (Ländergrenzen) |
@@ -81,6 +83,11 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 - Klick → Höhe, Tempo, Bahn der nächsten ~90 min; „Objekte eines Starts“ über COSPAR-Kennung
 - **Überflüge bei mir** (`145-ueberfluege.js`): Standort per GPS oder Klick (gerundet ~1 km, nur `localStorage` `lr_home`), ISS/Tiangong-Überflüge der nächsten 10 Tage. Sichtbar = Station beleuchtet (Erdschatten-Zylinder), Sonne beim Beobachter < −6°, Höhe ≥ 10°. Himmelskarte je Überflug, Erinnerung 10 Min vorher, „Zeigen“ springt im Zeitraffer hin. Ebene „Standort & ISS-Sichtkreis“
 
+**App (PWA)** (`src/pwa/`, `285-pwa.js`)
+- Installierbar (Manifest, Icons aus `scripts/make_icons.py`), startet offline (Service Worker: Seite zuerst aus dem Netz, sonst aus dem Cache)
+- Benachrichtigungen über den Service Worker (nötig auf Android), Test-Knopf im Ebenen-Menü
+- Erinnerungen werden als `rem.json` im Cache `lr-data` abgelegt; installiert in Chrome/Edge prüft der Service Worker sie per Periodic Background Sync auch bei geschlossener App (Zeitpunkt bestimmt der Browser, nicht garantiert). Echte Push-Nachrichten bräuchten einen Server (z.B. Cloudflare Worker)
+
 **Statistik & Raketen-Datenbank**
 - Statistik des Jahres (Kacheln, pro Monat, Betreiber, Land, Rakete)
 - 527 Raketen, sortier-/filterbar, Vergleich von bis zu 4 Raketen
@@ -101,7 +108,7 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 
 - Flugbahnen sind **Schätzungen** (keine öffentliche Echtzeit-Position während des Aufstiegs). FlightClub.io ist präziser.
 - Telemetrie nur am Computer (Chrome/Edge), Browser verlangt jedes Mal eine Bestätigung zum Teilen; X-Streams nicht einbettbar.
-- Erinnerungen funktionieren nur, solange die Seite offen ist (keine echten Push-Nachrichten).
+- Erinnerungen sind nur bei offener App zuverlässig; im Hintergrund (installierte App, Chrome/Edge) entscheidet der Browser, wann geprüft wird. Keine echten Push-Nachrichten (bräuchte einen Server).
 - CelesTrak katalogisiert neue Objekte mit Verzögerung → „Objekte eines Starts“ oft erst nach Tagen.
 - Höhe der 1. Stufe nur für Starship (berechnet), Falcon 9/Heavy (41,2 m), New Glenn (57,5 m).
 - Claude-Artifacts blockieren externe Abfragen und iframes → dort nur Schnappschuss.
@@ -110,7 +117,7 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 
 1. ~~Auf GitHub Pages veröffentlichen~~ – erledigt: https://lostfifi.github.io/launch-radar/
 2. ~~`template.html` in Module aufteilen, Build mit esbuild~~ – erledigt (`src/js/`)
-3. PWA mit echten Push-Benachrichtigungen (Service Worker – geht nur gehostet)
+3. ~~PWA~~ – erledigt ohne Server (installierbar, offline, Benachrichtigungen, Hintergrund-Prüfung). Offen: echte Push-Nachrichten mit Cloudflare Worker
 4. ~~Bessere Bahnen: Startazimut, Aufstiegskurven je Rakete~~ – erledigt mit eigenem Modell (FlightClub hat keine freie API). Weiter möglich: Dogleg-Manöver, Profile für Long March / H3 / New Glenn
 5. ~~Satelliten-Überflüge für den eigenen Standort~~ – erledigt (Ebenen-Menü → „ISS-Überflüge bei mir“)
 6. ~~Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit~~ – erledigt

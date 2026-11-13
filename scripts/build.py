@@ -121,3 +121,12 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
 for k,v in rep.items(): h=h.replace(k,v)
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
 os.makedirs(b+'dist',exist_ok=True); open(b+'dist/index.html','w').write(h); print(len(h)//1024,'KB')
+
+# ---- PWA: Manifest, Icons, Service Worker (Version = Hash der App → Browser lädt neue Version) ----
+import shutil
+os.makedirs(b+'dist/icons',exist_ok=True)
+shutil.copyfile(b+'src/pwa/manifest.webmanifest',b+'dist/manifest.webmanifest')
+for f in os.listdir(b+'src/pwa/icons'): shutil.copyfile(b+'src/pwa/icons/'+f,b+'dist/icons/'+f)
+sw=open(b+'src/pwa/sw.js').read(); ver=hashlib.md5((h+sw).encode()).hexdigest()[:10]
+open(b+'dist/sw.js','w').write(sw.replace('/*SW_VERSION*/',ver))
+print('PWA', ver)

@@ -158,8 +158,7 @@ function showPass(start){
 function passRem(id,t,txt){
   if(REM[id]) delete REM[id];
   else { REM[id]={name:STATIONS[PASS.sat].label+"-Überflug",net:new Date(t).toISOString(),fired:false,kind:"pass",txt};
-    try{ if(window.Notification && Notification.permission==="default") Notification.requestPermission(); }catch(e){}
-    beep(true); toast("Erinnerung gesetzt – 10 Min vor dem Überflug"); }
+    pwaAsk(); beep(true); toast("Erinnerung gesetzt – 10 Min vor dem Überflug"); }
   saveRem(); renderPasses();
 }
 drawHome();

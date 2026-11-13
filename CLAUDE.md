@@ -24,6 +24,9 @@ Projekt von Fionn: **LaunchRadar**, Raketenstart-Tracker im Flightradar-Stil. Au
 - `select(l)` – Detailfenster; `stageCard()` – einheitlicher Booster/Ship-Steckbrief
 - `teleAuto()`, `teleTick()`, `teleParse()` – OCR-Telemetrie; `openPip()` – Mini-Fenster
 - `refreshCounts()`, `fullStats()`, `fullDB()` – Statistik/DB aktuell halten
+- `profileFor(l)`, `profAt()` (065) – Aufstiegsprofile je Rakete; `distAt()` nutzt sie
+- `openPasses()`, `findPasses()` (145) – ISS-Überflüge am eigenen Standort
+- `notify()`, `syncRem()`, `pwaMenuHtml()` (285) – PWA; Service Worker in `src/pwa/sw.js` (kein localStorage dort, Erinnerungen via Cache `lr-data`)
 
 ## Offene Wünsche
 Siehe „Ideen / nächste Schritte“ im README. Live: https://lostfifi.github.io/launch-radar/ (Push auf master veröffentlicht automatisch).
