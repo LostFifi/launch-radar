@@ -47,7 +47,8 @@ async function teleBegin(stream,auto){
 function buildTeleBox(){
   const B=document.getElementById("tele");
   const big=k=>`<div class="tst" style="--c:${TCOL[k]}"><div class="tsh"><i></i>${TLAB[k]} <span class="pill" id="tB_${k}">wartet</span></div>
-     <div class="tbig"><div><small>Tempo</small><b id="tV_${k}">–</b></div><div><small>Höhe</small><b id="tH_${k}">–</b></div>${k==="s2"?`<div><small>Bodendistanz</small><b id="tD">–</b></div>`:`<div><small>Steigrate</small><b id="tR_s1">–</b></div>`}</div></div>`;
+     <div class="tbig"><div><small>Tempo</small><b id="tV_${k}">–</b></div><div><small>Höhe</small><b id="tH_${k}">–</b></div>${k==="s2"?`<div><small>Bodendistanz</small><b id="tD">–</b></div>`:`<div><small>Steigrate</small><b id="tR_s1">–</b></div>`}</div>
+     ${k==="s2"?`<div class="mute" id="tPay" style="font-size:12px;margin-top:4px"></div>`:""}</div>`;
   B.innerHTML=`<div class="thd"><b>Echte Telemetrie</b><button class="x" onclick="teleStop()">×</button></div>
    ${big("s2")}${big("s1")}
    <div class="tch"><canvas id="tChH" width="640" height="200"></canvas><canvas id="tChV" width="640" height="200"></canvas></div>
@@ -122,7 +123,11 @@ async function teleReadGroups(region){
       for(const d of [q-1,q+1,q-w,q+w]){ if(d<0||d>=w*h||lab[d]||!m[d]) continue; if((d===q-1&&qx===0)||(d===q+1&&qx===w-1)) continue; lab[d]=id; st.push(d); } }
     comps.push({x0,x1,y0,y1,n,cw:x1-x0+1,ch:y1-y0+1}); }
   let cs=comps.filter(c=>c.ch>=Math.max(4,h*0.035)&&c.ch<=h*0.6&&c.n/(c.cw*c.ch)>=0.14&&c.cw<=c.ch*2.2);
-  const maxH=Math.max(0,...cs.map(c=>c.ch)); cs=cs.filter(c=>c.ch>=maxH*0.55).sort((a,b)=>a.x0-b.x0);   // nur Schrift in Ziffern-Grösse
+  // Schriftgrösse nur aus ziffernähnlichen Flecken bestimmen (Seitenverhältnis + Füllung) – Kreisbögen sind oft
+  // dicker und grösser als die Ziffern und würden sonst die Ziffern als „zu klein“ verdrängen
+  const dig=cs.filter(c=>c.cw/c.ch>=0.35&&c.cw/c.ch<=0.95&&c.n/(c.cw*c.ch)>=0.22);
+  const Href=dig.length?Math.max(...dig.map(c=>c.ch)):Math.max(0,...cs.map(c=>c.ch));
+  cs=cs.filter(c=>c.ch>=Href*0.55&&c.ch<=Href*1.25).sort((a,b)=>a.x0-b.x0);   // nur Schrift in Ziffern-Grösse
   const words=[]; for(const c of cs){ const p=words[words.length-1], ov=p?Math.min(p.y1,c.y1)-Math.max(p.y0,c.y0):0;
     if(p&&c.x0-p.x1<=Math.max(p.y1-p.y0,c.ch)*0.75&&ov>Math.min(p.y1-p.y0,c.ch)*0.5){ p.x1=Math.max(p.x1,c.x1); p.y0=Math.min(p.y0,c.y0); p.y1=Math.max(p.y1,c.y1); }
     else words.push({x0:c.x0,x1:c.x1,y0:c.y0,y1:c.y1}); }
@@ -135,17 +140,34 @@ async function teleReadGroups(region){
     const im=x.getImageData(0,0,c.width,c.height), p=im.data; for(let i=0;i<p.length;i+=4){ const o=(.3*p[i]+.59*p[i+1]+.11*p[i+2])>150?0:255; p[i]=p[i+1]=p[i+2]=o; } x.putImageData(im,0,0);
     const t=((await TELE.worker.recognize(c)).data.text||"").replace(/\s+/g,"");
     out.push({t,x:wd.x0,x1:wd.x1,y:wd.y0,h:wh}); }
+  // Beschriftung um jede Zahl lesen (klein, über/unter der Zahl): SPEED · ALTITUDE · PAYLOADS DEPLOYED
+  // Die Zahl selbst wird dafür schwarz übermalt, damit nur die Buchstaben gelesen werden.
+  await TELE.worker.setParameters({tessedit_pageseg_mode:"6",tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZ/"});
+  for(const o of out){ if(!/^\d{1,6}$/.test(o.t)) continue;
+    const bx=Math.max(0,o.x-o.h*1.6), by=Math.max(0,o.y-o.h*1.5), bw=Math.min(w-bx,(o.x1-o.x)+o.h*3.2), bh=Math.min(h-by,o.h*3.7), sc=Math.max(2,130/o.h);
+    const c=document.createElement("canvas"); c.width=Math.round(bw*sc); c.height=Math.round(bh*sc); const x=c.getContext("2d"); x.imageSmoothingQuality="high";
+    x.drawImage(src,bx,by,bw,bh,0,0,c.width,c.height); x.fillStyle="#000"; x.fillRect((o.x-bx-o.h*0.15)*sc,(o.y-by-o.h*0.1)*sc,(o.x1-o.x+o.h*0.3)*sc,o.h*1.2*sc);
+    const im=x.getImageData(0,0,c.width,c.height), p=im.data; for(let i=0;i<p.length;i+=4){ const v=(.3*p[i]+.59*p[i+1]+.11*p[i+2])>140?0:255; p[i]=p[i+1]=p[i+2]=v; } x.putImageData(im,0,0);
+    o.lab=((await TELE.worker.recognize(c)).data.text||"").toUpperCase().replace(/[^A-Z\/]+/g," ").trim(); }
   await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789:KMHSPEDALTUI/ "});
   // Vorschau: Ausschnitt mit Rahmen um die gefundenen Gruppen
   const dbg=document.createElement("canvas"), ds=Math.min(4,700/w); dbg.width=Math.round(w*ds); dbg.height=Math.round(h*ds); const dx=dbg.getContext("2d");
   dx.drawImage(src,0,0,dbg.width,dbg.height); dx.lineWidth=2; dx.font="bold 14px sans-serif";
-  out.forEach(o=>{ const ok=/^\d{1,6}$/.test(o.t); dx.strokeStyle=ok?"#2ecc71":"#ff6b6b"; dx.strokeRect(o.x*ds-2,o.y*ds-2,(o.x1-o.x+1)*ds+4,o.h*ds+4); dx.fillStyle=ok?"#2ecc71":"#ff6b6b"; dx.fillText(o.t||"?",o.x*ds,Math.max(14,o.y*ds-6)); });
+  out.forEach(o=>{ const ok=/^\d{1,6}$/.test(o.t), k=teleKind(o); dx.strokeStyle=ok?"#2ecc71":"#ff6b6b"; dx.strokeRect(o.x*ds-2,o.y*ds-2,(o.x1-o.x+1)*ds+4,o.h*ds+4);
+    dx.fillStyle=ok?"#2ecc71":"#ff6b6b"; dx.fillText((o.t||"?")+(k?" "+{sp:"km/h",al:"km",pay:"Sat."}[k]:""),o.x*ds,Math.max(14,o.y*ds-6)); });
   return {words:out,c:dbg,text:out.map(o=>o.t).filter(Boolean).join(" ")};
 }
+// Art einer Zahl aus ihrer Beschriftung: Tempo, Höhe oder ausgesetzte Satelliten (null = unbekannt)
+function teleKind(o){ const l=o.lab||""; if(/PAY|LOAD|DEPL|PLOY/.test(l)) return "pay"; if(/ALT|TITU/.test(l)) return "al"; if(/SPE|PEED|KM\s*\/\s*H|KMH/.test(l)) return "sp"; return null; }
 function stripPairs(words){
   // reine Zahlen; Uhrzeiten (mit „:“) und Zahlen mit Buchstaben weglassen – auch Zahlen direkt nach einem „xx:“ (Rest der Uhr)
   const colon=words.filter(w=>/:/.test(w.t));
-  let n=words.filter(w=>/^\d{1,6}$/.test(w.t) && !colon.some(c=>w.x>=c.x && w.x-c.x1<c.h*2 && Math.abs(w.y-c.y)<c.h)).map(w=>({...w,v:+w.t}));
+  let n=words.filter(w=>/^\d{1,6}$/.test(w.t) && !colon.some(c=>w.x>=c.x && w.x-c.x1<c.h*2 && Math.abs(w.y-c.y)<c.h)).map(w=>({...w,v:+w.t,k:teleKind(w)}));
+  // „PAYLOADS DEPLOYED“: Anzahl merken, nicht als Höhe verwenden
+  const pay=n.find(q=>q.k==="pay"); TELE.payNow=pay?pay.v:null; n=n.filter(q=>q.k!=="pay");
+  // Mit Beschriftung eindeutig: Tempo (+ Höhe falls vorhanden) – ein Paar je Tempo-Anzeige
+  if(n.some(q=>q.k==="sp")){ const sp=n.filter(q=>q.k==="sp").sort((a,b)=>a.x-b.x), al=n.filter(q=>q.k==="al");
+    return sp.map(s=>{ const a=al.filter(q=>q.x>s.x).sort((x,y)=>x.x-y.x)[0]; return {sp:s.v,al:a&&a.x-s.x1<s.h*8?a.v:null,x:s.x}; }); }
   n.sort((a,b)=>a.x-b.x);
   const m=[]; for(const q of n){ const p=m[m.length-1];   // „26“ „046“ → 26046 (Tausender-Abstand)
     if(p&&q.t.length===3&&p.t.length<=3&&q.x-p.x1<p.h*0.9&&Math.abs(q.y-p.y)<p.h*0.6){ p.t+=q.t; p.v=+p.t; p.x1=q.x1; } else m.push({...q}); }
@@ -171,7 +193,8 @@ function teleDebug(){
     const src=TELE.dbg.strip, cv=document.getElementById("tDbgS"); cv.width=Math.min(700,src.width); cv.height=Math.round(cv.width*src.height/src.width); cv.getContext("2d").drawImage(src,0,0,cv.width,cv.height);
     const P=TELE.strip?.pairs||[], pf=document.getElementById("pipFrame");
     const small=TELE.auto&&pf&&pf.getBoundingClientRect().width<700;
-    document.getElementById("tDbgST").textContent=(TELE.strip?.text?`„${TELE.strip.text}“`:"(kein Text erkannt)")+" → "+(P.length?P.map((p,i)=>`Paar ${i+1}: ${p.sp} km/h · ${p.al} km`).join(" | "):"keine Werte")
+    document.getElementById("tDbgST").textContent=(TELE.strip?.text?`„${TELE.strip.text}“`:"(kein Text erkannt)")+" → "+(P.length?P.map((p,i)=>`Paar ${i+1}: ${p.sp} km/h · ${p.al??"–"} km`).join(" | "):"keine Werte")
+      +(TELE.strip?.pay!=null?` · ${TELE.strip.pay} Satelliten ausgesetzt`:"")
       +(small?" · Tipp: Mini-Fenster grösser ziehen (mind. ~720 px) – kleine Ziffern werden schlecht erkannt.":"");
     return; }
   if(!box.dataset.ready){ box.innerHTML=["s2","s1"].map(k=>`<div style="margin:6px 0"><div style="color:${TCOL[k]};font-weight:700">${TLAB[k]}</div><canvas id="tDbg_${k}" style="width:100%;height:auto;background:#fff;border-radius:6px;margin:3px 0"></canvas><div id="tDbgT_${k}" style="word-break:break-word"></div></div>`).join(""); box.dataset.ready=1; }
@@ -209,9 +232,20 @@ async function teleTick(){
       const reg=TELE.auto?autoRegion(TSTRIP):(TELE.area||TSTRIP);
       if(reg){ let r=await teleReadGroups(reg), pairs=stripPairs(r.words);
         if(!pairs.length){ const r2=await teleOCRStrip(reg,0), p2=stripPairs(r2.words); if(p2.length||teleExtract(r2.text).sp!=null){ r=r2; pairs=p2; } }
+        // Zweite Anzeige wechselt bei Starship zwischen ALTITUDE und PAYLOADS DEPLOYED. Ohne lesbare Beschriftung:
+        // kleine Ganzzahl (≤ Anzahl Satelliten) nach Höhe > 80 km oder im Aussetz-Zeitraum = Satelliten-Anzahl, nicht Höhe
+        { const ts=selected?(Date.now()-netOf(selected))/1000:null, lastH=TELE.S.s2.h, maxN=Math.max(60,DEP?.n||0);
+          const inWin=DEP&&ts!=null&&ts>DEP.t0-300&&ts<DEP.t1+1800;
+          pairs.forEach(p=>{ if(p.al!=null&&p.al<=maxN&&TELE.payNow==null&&((lastH!=null&&lastH>80)||inWin)){ TELE.payNow=p.al; p.al=null; } }); }
         let as=stripAssign(pairs);
         if(!pairs.length){ const x=teleExtract(r.text); if(x.sp!=null||x.al!=null) as={s2:x}; }   // Layout mit Beschriftungen
-        TELE.dbg={strip:r.c}; TELE.strip={text:r.text.replace(/\s+/g," ").trim().slice(0,80),pairs};
+        TELE.dbg={strip:r.c}; TELE.strip={text:r.text.replace(/\s+/g," ").trim().slice(0,80),pairs,pay:TELE.payNow};
+        // „PAYLOADS DEPLOYED“: Anzahl ausgesetzter Satelliten (nur steigend, erst nach T-0) → Punkte auf der Karte
+        const now=Date.now(), pre=selected&&now<netOf(selected)-5000, n=TELE.payNow;
+        if(n!=null&&!pre&&n<=200&&(!TELE.pay||TELE.pay.id!==selected?.id||n>=TELE.pay.n)){
+          if(!TELE.pay||TELE.pay.id!==selected?.id){ TELE.pay={id:selected?.id,n:0,at:now}; TELE.payTimes=[]; }
+          for(let i=TELE.pay.n;i<n;i++) TELE.payTimes[i]=teleT(now);
+          TELE.pay.n=n; TELE.pay.at=now; }
         for(const k of ["s2","s1"]){ if(k==="s1"&&!TELE.use1) continue; const a=as[k];
           if(a) teleAccept(k,a.sp,a.al,TELE.strip.text); else { TELE.S[k].bad++; TELE.S[k].raw=TELE.strip.text; } } }
     }
@@ -261,6 +295,7 @@ function teleUI(){
     document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
     document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }
   document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString(LOC)+" km":"–";
+  const tp=document.getElementById("tPay"); if(tp) tp.textContent=TELE.pay&&TELE.pay.n?`Satelliten ausgesetzt: ${TELE.pay.n} (gemessen)`:"";
   const r=TELE.S.s1.rate; document.getElementById("tR_s1").textContent=r!=null&&TELE.use1?(r>=0?"+":"")+r.toFixed(1)+" km/s":"–";
   const st=k=>`${TLAB[k]}: ${TELE.S[k].ok} gelesen, ${TELE.S[k].bad} verworfen${TELE.S[k].raw?` („${TELE.S[k].raw}“)`:""}`;
   document.getElementById("tStat").textContent=st("s2")+(TELE.use1?" · "+st("s1"):"");

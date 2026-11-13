@@ -36,12 +36,16 @@ function setupDeploy(l){
 function depGap(i,dt){ return 6 + dt*0.05; }
 function updateDeploy(t,d){
   depPos=[]; if(!DEP||!curTrack) return 0; let cnt=0;
+  // Gemessen per Telemetrie („PAYLOADS DEPLOYED“)? Dann zählt die gemessene Anzahl statt der geschätzten Zeiten.
+  const meas=typeof TELE!=="undefined"&&TELE.pay&&selected&&TELE.pay.id===selected.id&&TELE.pay.n>0&&Date.now()-TELE.pay.at<15*60e3?TELE.pay:null;
   DEP.times.forEach((td,i)=>{ const mk=DEP.markers[i];
-    if(t<td){ mk.setStyle({opacity:0,fillOpacity:0}); return; }
-    cnt++; const p=pointAt(curTrack.track,curTrack.cum,Math.max(0,d-depGap(i,t-td))), q=[p[0],norm(p[1])];
+    let dep=t>=td, tdep=td;
+    if(meas){ dep=i<meas.n; tdep=Math.min(t,TELE.payTimes?.[i]??td); }
+    if(!dep){ mk.setStyle({opacity:0,fillOpacity:0}); return; }
+    cnt++; const p=pointAt(curTrack.track,curTrack.cum,Math.max(0,d-depGap(i,t-tdep))), q=[p[0],norm(p[1])];
     mk.setLatLng(q); mk.setStyle({opacity:1,fillOpacity:1}); depPos.push(q); });
   if(cnt){ const last=depPos[depPos.length-1]; DEP.lbl.setLatLng(last); DEP.lbl.setOpacity(1);
-    const el=DEP.lbl.getElement()?.querySelector(".deplbl"); if(el) el.textContent=`${cnt}${DEP.n>1?"/"+DEP.n:""} ${DEP.label}`; }
+    const el=DEP.lbl.getElement()?.querySelector(".deplbl"); if(el) el.textContent=`${cnt}${DEP.n>1?"/"+DEP.n:""} ${DEP.label}${meas?" ✓":""}`; }
   else DEP.lbl.setOpacity(0);
   return cnt;
 }
