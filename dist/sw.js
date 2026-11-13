@@ -2,7 +2,7 @@
 // - App startet auch offline (index.html wird zwischengespeichert, online immer frisch geladen)
 // - Benachrichtigungen (auf Android geht das nur über den Service Worker)
 // - Hintergrund-Prüfung der Erinnerungen (Periodic Background Sync: nur Chrome/Edge, installierte App, Zeitpunkt bestimmt der Browser)
-const VERSION = "e423bf33ba";
+const VERSION = "3bdd0030d4";
 const SHELL = "lr-shell-" + VERSION, DATA = "lr-data";
 const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png", "data/tle.json", "data/img.json"];
 
@@ -66,7 +66,7 @@ async function checkReminders() {
 self.addEventListener("periodicsync", e => { if (e.tag === "lr-rem") e.waitUntil(checkReminders()); });
 
 // Push vom eigenen Worker (ohne Inhalt): Meldungen dort abholen und anzeigen
-const WORKER = "";
+const WORKER = "https://launch-radar.lostfifi.workers.dev";
 self.addEventListener("push", e => {
   e.waitUntil((async () => {
     let msgs = [];

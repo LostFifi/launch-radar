@@ -23,7 +23,8 @@ export default {
         if (!v) return json({ error: "noch keine Daten" }, 503, cors);
         return json(v, 200, { ...cors, "cache-control": "public, max-age=60" });
       }
-      if (url.pathname === "/push/key") return json({ key: env.VAPID_PUBLIC || null }, 200, cors);
+      if (url.pathname === "/push/key") return json({ key: pubKey(env) || null }, 200, cors);
+      if (url.pathname === "/status") return json(await env.LR.get("status", "json") || {}, 200, cors);
       if (url.pathname === "/push/subscribe" && req.method === "POST") {
         const { sub, rem } = await req.json();
         if (!sub || !sub.endpoint || !/^https:\/\//.test(sub.endpoint)) return json({ error: "ungültig" }, 400, cors);
@@ -55,12 +56,37 @@ export default {
   }
 };
 
+// Reserve: GitHub baut die App bei jedem Push und jede Nacht mit frischen Daten und veröffentlicht sie auch als Datei
+const SNAPSHOT_URL = "https://lostfifi.github.io/launch-radar/data/upcoming.json";
 async function refresh(env, key) {
-  const r = await fetch(key === "previous" ? PREVIOUS : UPCOMING, { headers: { "user-agent": "LaunchRadar-Worker" } });
-  if (!r.ok) return false;                             // z.B. 429: alte Daten bleiben
-  const j = await r.json();
-  await env.LR.put(key, JSON.stringify({ ts: Date.now(), results: j.results || [] }));
-  return true;
+  const ok = await refreshLL(env, key);
+  if (!ok && key === "launches") {                     // API gesperrt → GitHub-Schnappschuss, falls neuer als unsere Daten
+    try {
+      const cur = await env.LR.get(key, "json"), r = await fetch(SNAPSHOT_URL, { cf: { cacheTtl: 300 } });
+      if (r.ok) { const s = await r.json(); if (s.results?.length && (!cur || s.ts > cur.ts)) await env.LR.put(key, JSON.stringify({ ts: s.ts, results: s.results, src: "github" })); }
+    } catch (e) {}
+  }
+  return ok;
+}
+async function refreshLL(env, key) {
+  const prev = await env.LR.get("status", "json") || {}, now = Date.now();
+  if (prev.retryUntil && now < prev.retryUntil) return false;   // gesperrt: nicht unnötig Kontingent verbrauchen
+  let st = 0, info = "";
+  try {
+    const r = await fetch(key === "previous" ? PREVIOUS : UPCOMING, { headers: { "user-agent": "LaunchRadar-Worker (+https://lostfifi.github.io/launch-radar/)", accept: "application/json" } });
+    st = r.status;
+    if (r.ok) {
+      const j = await r.json();
+      await env.LR.put(key, JSON.stringify({ ts: Date.now(), results: j.results || [] }));
+    } else info = (await r.text()).slice(0, 200);      // z.B. 429: alte Daten bleiben
+  } catch (e) { info = String(e.message || e); }
+  // letzter Abruf für /status (nur bei Fehlern oder höchstens 1× pro 30 Min schreiben – KV-Gratislimit)
+  const wait = st === 429 ? +((info.match(/(\d+) seconds/) || [])[1] || 900) : 0;
+  if (st !== 200 || !prev[key] || prev[key].status !== 200 || now - prev[key].at > 30 * 60e3 || prev.retryUntil) {
+    prev[key] = { status: st, at: now, info }; prev.retryUntil = wait ? now + wait * 1000 : 0;
+    await env.LR.put("status", JSON.stringify(prev));
+  }
+  return st === 200;
 }
 
 // Erinnerungen prüfen: 10 Min vor Start (bzw. Überflug) einen Push senden. Startzeit aus den frischen Daten.
@@ -99,7 +125,7 @@ async function webPush(sub, env) {
   try {
     const aud = new URL(sub.endpoint).origin;
     const jwt = await vapidJwt(aud, env);
-    const r = await fetch(sub.endpoint, { method: "POST", headers: { TTL: "900", Urgency: "high", Authorization: `vapid t=${jwt}, k=${env.VAPID_PUBLIC}` } });
+    const r = await fetch(sub.endpoint, { method: "POST", headers: { TTL: "900", Urgency: "high", Authorization: `vapid t=${jwt}, k=${pubKey(env)}` } });
     return r.status;
   } catch (e) { console.log("Push fehlgeschlagen:", e.message); return 0; }
 }
@@ -110,6 +136,7 @@ export async function vapidJwt(aud, env) {
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(data));
   return data + "." + b64u(new Uint8Array(sig));
 }
+function pubKey(env) { return (env.VAPID_PUBLIC || "").trim(); }   // Secrets können einen Zeilenumbruch enthalten
 function b64u(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
 async function hash(s) { return b64u(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).slice(0, 32); }
 function short(n) { return (String(n).split("|")[1] || n).trim(); }

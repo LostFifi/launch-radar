@@ -44,4 +44,16 @@ j = await (await call("/push/pending?e=" + encodeURIComponent("https://push.exam
 check("Meldungen nur einmal", j.length === 0);
 await worker.scheduled({ scheduledTime: Date.now() }, env, {});
 check("kein doppelter Push", pushes.length === 1);
+// 3) API gesperrt (429) → Wartezeit merken + GitHub-Schnappschuss als Reserve
+store.clear(); let llCalls = 0;
+globalThis.fetch = async (url) => { url = String(url);
+  if (url.includes("thespacedevs")) { llCalls++; return new Response('{"detail":"Request was throttled. Expected available in 600 seconds."}', { status: 429 }); }
+  if (url.includes("github.io")) return new Response(JSON.stringify({ ts: Date.now() - 3600e3, results: [{ id: "g1", name: "GitHub | Reserve", net: soon }] }));
+  return new Response("?", { status: 404 }); };
+r = await call("/launches"); j = await r.json();
+check("429 → GitHub-Schnappschuss als Reserve", r.status === 200 && j.results[0].id === "g1" && j.src === "github");
+await worker.scheduled({ scheduledTime: Date.now() }, env, {});
+check("Wartezeit eingehalten (keine weitere API-Abfrage)", llCalls === 1);
+j = await (await call("/status")).json();
+check("/status zeigt Sperre", j.launches.status === 429 && j.retryUntil > Date.now());
 console.log(bad ? `\n${bad} Fehler` : "\nAlles in Ordnung"); process.exit(bad ? 1 : 0);

@@ -135,6 +135,8 @@ for k,v in rep.items():
     full=full.replace(k,v)
     online=online.replace(k,'null' if k in ('/*TLE*/','/*IMG*/') else v)
 open(b+'dist/data/tle.json','w').write(tle); open(b+'dist/data/img.json','w').write(J(snapimg))
+# Reserve für den Worker: kommende Starts mit Zeitstempel (wird bei jedem GitHub-Build frisch geholt)
+open(b+'dist/data/upcoming.json','w').write(J({'ts':int(_dt.timestamp()*1000),'results':up}))
 open(b+'dist/launchradar-offline.html','w').write(full)
 h=online; open(b+'dist/index.html','w').write(h); print(len(h)//1024,'KB online,',len(full)//1024,'KB offline-Datei')
 
