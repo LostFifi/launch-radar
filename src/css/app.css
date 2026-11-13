@@ -156,6 +156,15 @@ table.cmp img{width:100%;max-width:220px;aspect-ratio:4/3;object-fit:cover;borde
 #tele .tbig div{background:#18203a;border-radius:8px;padding:6px 8px} #tele .tbig small{display:block;color:var(--mute);font-size:11px}
 #tele .tbig b{font-size:16px;font-variant-numeric:tabular-nums}
 #tele canvas{width:100%;display:block;border-radius:8px;background:#000;margin-bottom:6px}
+#tele{display:none;flex-direction:column;overflow:hidden!important;padding:0!important}
+#tele .tin{overflow:auto;flex:1;min-height:0;padding:10px 12px 18px}
+#tele .thd{cursor:move;user-select:none}
+.grip{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;z-index:6;touch-action:none;
+  background:linear-gradient(135deg,transparent 0 55%,#4ea1ff 55% 62%,transparent 62% 72%,#4ea1ff 72% 79%,transparent 79%)}
+.grip:hover{background-color:#4ea1ff22}
+#pip{padding-bottom:14px}
+body.resizing iframe,body.resizing canvas{pointer-events:none}
+body.resizing{user-select:none}
 #tele .tst{border-left:3px solid var(--c);padding-left:8px;margin-bottom:8px}
 #tele .tsh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin-bottom:4px}
 #tele .tsh .pill{font-weight:600}

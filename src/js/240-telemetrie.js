@@ -9,7 +9,7 @@ const TLIM={s1:{v:12000,h:300},s2:{v:32000,h:3000}};          // Plausibilitäts
 const TCOL={s1:"#f5a142",s2:"#4ea1ff"}, TLAB={s1:"Stufe 1",s2:"Stufe 2"};
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 function openTele(){
-  const B=document.getElementById("tele"); B.style.display="block";
+  const B=document.getElementById("tele"); B.style.display="flex";
   if(TELE.on) return teleUI();
   B.innerHTML=`<div class="thd"><b>Echte Telemetrie</b><button class="x" onclick="teleStop()">×</button></div>
    <ol class="tsteps"><li>Öffne den Livestream (YouTube oder X) in einem <b>anderen Tab</b> und lass ihn laufen.</li>
@@ -19,6 +19,7 @@ function openTele(){
    ${PIP.yt?`<button class="btn sec2" onclick="teleAuto()">Mini-Fenster verwenden (1 Klick)</button>`:""}
    <div class="note"><b>Einfacher:</b> Stream im Mini-Fenster abspielen und dort „Telemetrie“ drücken – dann nur noch „Diesen Tab teilen“ bestätigen.</div>
    <div class="note">Funktioniert in Chrome oder Edge am Computer (Bildschirm teilen gibt es auf dem Handy nicht). Die Werte werden lokal per Texterkennung gelesen, nichts wird hochgeladen.</div>`;
+  teleChrome(B);
 }
 async function teleStart(){
   if(!navigator.mediaDevices?.getDisplayMedia){ toast("Bildschirm teilen geht hier nicht – Datei in Chrome oder Edge am Computer öffnen"); return; }
@@ -33,7 +34,7 @@ async function teleBegin(stream,auto){
   const keep={s1:TELE.S.s1.region,s2:TELE.S.s2.region};
   Object.assign(TELE,{on:true,auto,d:null,vh:0,v:null,h:null,t0:null,S:{s1:teleStage(),s2:teleStage()}});
   TELE.S.s1.region=auto?null:keep.s1||TPRESET.s1; TELE.S.s2.region=auto?null:keep.s2||TPRESET.s2;
-  document.getElementById("tele").style.display="block"; buildTeleBox(); document.getElementById("tStat").textContent="Texterkennung wird geladen …";
+  document.getElementById("tele").style.display="flex"; buildTeleBox(); document.getElementById("tStat").textContent="Texterkennung wird geladen …";
   try{
     if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
     TELE.worker=await Tesseract.createWorker("eng");
@@ -54,6 +55,7 @@ function buildTeleBox(){
      <label class="chip" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="tUse1" ${TELE.use1?"checked":""} style="margin:0">Stufe 1 lesen</label>
      <button class="chip" onclick="teleCSV()" title="Messwerte als CSV-Datei speichern">CSV</button></div>
    <div class="note" id="tStat"></div>`;
+  teleChrome(B);
   const mark=()=>B.querySelectorAll("[data-te]").forEach(b=>b.classList.toggle("on",b.dataset.te===TELE.edit));
   B.querySelectorAll("[data-te]").forEach(b=>b.onclick=()=>{ TELE.edit=b.dataset.te; if(!TELE.auto&&!TELE.S[TELE.edit].region) TELE.S[TELE.edit].region=TPRESET[TELE.edit]; mark(); drawTelePrev(); });
   mark();
