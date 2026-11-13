@@ -1,6 +1,6 @@
 // ===================== Detailfenster =====================
 function select(l){
-  clearSat(); selected=l; stopSim();
+  clearSat(); selected=l; stopSim(); setHash(l.id);
   const P=document.getElementById("panel"); P.classList.remove("wide");
   const cfg=l.rocket?.configuration||{};
   const m=l.mission||{};
@@ -32,8 +32,9 @@ function select(l){
 
   // Countdown
   html+=`<div class="sec"><h3>Start (NET)</h3><div class="cd" id="cd">${countdown(l.net)}</div>
-     <div class="mute">${fmtDate(l.net)} ${l.probability!=null&&l.probability>=0?`· Wetter-Go: ${l.probability}%`:""}</div>
-     ${new Date(l.net)>Date.now()?`<button class="btn ${REM[l.id]?"":"sec2"}" id="remBtn" onclick="toggleRem('${l.id}')">${REM[l.id]?ICON.bell+" Erinnerung aktiv – entfernen":ICON.bell+" 10 Min vorher erinnern"}</button>`:""}</div>`;
+     <div class="mute">${fmtDate(l.net)} ${l.probability!=null&&l.probability>=0?`· Wetter-Go: ${l.probability}%`:""}</div>${postponedNote(l)}
+     ${new Date(l.net)>Date.now()?`<button class="btn ${REM[l.id]?"":"sec2"}" id="remBtn" onclick="toggleRem('${l.id}')">${REM[l.id]?ICON.bell+" Erinnerung aktiv – entfernen":ICON.bell+" 10 Min vorher erinnern"}</button>`:""}
+     <button class="btn sec2" onclick="shareLaunch('${l.id}')">${ICON.share} Teilen</button></div>`;
 
   // Missionsprofil
   html+=`<div class="sec"><h3>Missionsprofil</h3><div class="grid">

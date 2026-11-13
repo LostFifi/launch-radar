@@ -39,6 +39,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;
 .item:hover{background:#18203a}
 .item small{color:var(--mute)}
 .mute{color:var(--mute)}
+.pill.shift{background:#4d3a1f;color:#f5b041}
 #live.warn{background:#2a220f;border-color:var(--tbd)}
 .warnbox{background:#2a220f;border:1px solid var(--tbd);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}
 .padgrp summary{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;padding:9px 14px 9px 30px;background:#141b2b;border-bottom:1px solid var(--line);cursor:pointer;list-style:none;position:relative}

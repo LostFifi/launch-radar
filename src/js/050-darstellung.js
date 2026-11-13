@@ -45,6 +45,7 @@ function render(){
       .on("click",()=>openGroup(list));
   });
   updateNext(); livePoll(false);   // Live-Banner sofort nach dem Laden (fragt höchstens alle 5 Min nach)
+  openFromHash();                  // #start=<id> in der Adresse → diesen Start öffnen
 }
 // Liste eines Startorts mit Unterkapiteln je Startkomplex (aufklappbar)
 function showSite(s){
@@ -66,13 +67,13 @@ function updateNext(){
 
 // groups (optional): Unterkapitel [{title,full,loc,n,live}] – list ist dann in dieser Reihenfolge sortiert
 function showList(list,title,tab,groups){
-  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null;
+  clearSat(); stopSim(); setHash(null); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null;
   const P=document.getElementById("panel"); P.classList.remove("wide");
   const item=(l,i)=>`<div class="item" data-i="${i}">${imgTag(l,true)}<div><b>${esc(l.name)}</b><br>
       <small>${fmtDate(l.net)} · ${esc(groups?padShort(l.pad?.name):l.pad?.location?.name||"")}</small><br>
       <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.abbrev||"")}</span>
       ${l.webcast_live?'<span class="badge" style="background:var(--live)">● LIVE</span>':""}
-      ${landIcons(l)} ${REM[l.id]?ICON.bell:""}</div></div>`;
+      ${postponedPill(l)} ${landIcons(l)} ${REM[l.id]?ICON.bell:""}</div></div>`;
   let body;
   if(groups){ let i=0;
     body=`<div class="sec mute" style="font-size:13px">${list.length} Starts auf ${groups.length} Startkomplexen</div>`+
@@ -85,4 +86,4 @@ function showList(list,title,tab,groups){
   P.querySelectorAll(".item").forEach(d=>d.onclick=()=>select(list[+d.dataset.i]));
   P.style.display="block"; P.scrollTop=0;
 }
-function closeP(){ follow=false; clearSat(); document.getElementById("panel").classList.remove("min"); document.getElementById("panel").classList.remove("wide"); document.getElementById("panel").style.display="none"; stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; }
+function closeP(){ follow=false; setHash(null); clearSat(); document.getElementById("panel").classList.remove("min"); document.getElementById("panel").classList.remove("wide"); document.getElementById("panel").style.display="none"; stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; }

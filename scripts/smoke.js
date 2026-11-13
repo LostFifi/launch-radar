@@ -1,0 +1,76 @@
+// Smoke-Test: öffnet dist/index.html in einem echten Browser und klickt die wichtigsten Funktionen durch.
+// Externe Server werden blockiert → die App muss mit dem eingebetteten Schnappschuss laufen (Offline-Fall).
+// Schlägt fehl bei JavaScript-Fehlern oder wenn eine Funktion nicht das Erwartete zeigt.
+//   npm test                 (lokal: nutzt Edge oder Chrome; bei GitHub: Chromium von Playwright)
+const http = require('http'), fs = require('fs'), path = require('path');
+const { chromium } = require('playwright-core');
+const DIST = path.resolve(__dirname, '..', 'dist');
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+
+const server = http.createServer((req, res) => {
+  const p = path.join(DIST, decodeURIComponent(req.url.split('?')[0].split('#')[0]).replace(/\/$/, '/index.html'));
+  if (!p.startsWith(DIST) || !fs.existsSync(p)) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(res);
+});
+
+async function launchBrowser() {
+  const tries = process.env.CI ? [{}] : [{ channel: 'msedge' }, { channel: 'chrome' }, {}];
+  for (const o of tries) { try { return await chromium.launch(o); } catch (e) { /* nächster */ } }
+  throw new Error('Kein Browser gefunden (Edge/Chrome installieren oder: npx playwright-core install chromium)');
+}
+
+(async () => {
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}/`;
+  const browser = await launchBrowser();
+  const errors = [], results = [];
+  const check = (name, ok, info = '') => { results.push(`${ok ? '✓' : '✗'} ${name}${info ? ' – ' + info : ''}`); if (!ok) errors.push(name); };
+  try {
+    for (const vp of [{ name: 'Desktop', width: 1280, height: 800 }, { name: 'Handy', width: 390, height: 844 }]) {
+      const ctx = await browser.newContext({ viewport: vp, serviceWorkers: 'block' });
+      await ctx.route(u => !u.href.startsWith(base), r => r.abort());       // alles Externe blockieren
+      const page = await ctx.newPage();
+      page.on('pageerror', e => errors.push(`[${vp.name}] JS-Fehler: ${e.message}`));
+      await page.goto(base, { waitUntil: 'load' });
+      await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
+      const r = await page.evaluate(async () => {
+        const out = {}, wait = ms => new Promise(r => setTimeout(r, ms));
+        out.launches = launches.length; out.sites = padGroups.length; out.src = DATA.src;
+        const l = launches.find(x => /falcon 9/i.test(x.rocket?.configuration?.name || '')) || launches[0];
+        select(l); await wait(200);
+        out.detail = !!document.querySelector('#panel .simtop') && !!curTrack && curTrack.track.length > 10;
+        out.profile = !!document.querySelector('#panel svg');
+        out.hash = location.hash.includes(l.id);
+        const s = document.getElementById('sim'); s.value = 300; s.oninput(); out.rocket = !!curPos;
+        openGroup(padGroups.find(g => g.length > 1) || padGroups[0]); await wait(100);
+        out.list = document.querySelectorAll('#panel .item').length;
+        openStats(); await wait(200); out.stats = document.getElementById('panel').innerText.length > 100;
+        openDB(); await wait(200); out.db = document.querySelectorAll('#panel table.db tr').length;
+        document.getElementById('globeBtn').click(); await wait(300); out.globe = G.on; document.getElementById('globeBtn').click();
+        document.getElementById('layerBtn').click(); await wait(100); out.layers = document.querySelectorAll('#layers input').length;
+        HOME = { lat: 47.39, lon: 8.04 }; openPasses(); await wait(3000);
+        out.passes = document.querySelectorAll('#panel .pass').length + ' Überflüge';
+        closeP(); return out;
+      });
+      check(`[${vp.name}] Starts geladen`, r.launches > 0, `${r.launches} (${r.src}), ${r.sites} Startorte`);
+      check(`[${vp.name}] Startfenster + Bahn`, r.detail && r.rocket);
+      check(`[${vp.name}] Aufstiegsprofil`, r.profile);
+      check(`[${vp.name}] Link #start=`, r.hash);
+      check(`[${vp.name}] Startort-Liste`, r.list > 0, `${r.list} Einträge`);
+      check(`[${vp.name}] Statistik`, r.stats);
+      check(`[${vp.name}] Raketen-Datenbank`, r.db > 10, `${r.db} Zeilen`);
+      check(`[${vp.name}] Globus`, r.globe);
+      check(`[${vp.name}] Ebenen-Menü`, r.layers > 5);
+      check(`[${vp.name}] ISS-Überflüge`, /\d/.test(r.passes), r.passes);
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      check(`[${vp.name}] kein seitliches Scrollen`, wide <= 1, wide > 1 ? `${wide}px zu breit` : '');
+      await ctx.close();
+    }
+  } catch (e) { errors.push('Test abgebrochen: ' + e.message); }
+  await browser.close(); server.close();
+  console.log(results.join('\n'));
+  const js = errors.filter(e => /JS-Fehler|abgebrochen/.test(e));
+  if (js.length) console.log('\n' + js.join('\n'));
+  console.log(errors.length ? `\n${errors.length} Problem(e)` : '\nAlles in Ordnung');
+  process.exit(errors.length ? 1 : 0);
+})();

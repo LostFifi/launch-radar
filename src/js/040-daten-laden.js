@@ -4,7 +4,7 @@
 // DATA merkt sich die Quelle, damit die App ehrlich anzeigen kann, wie aktuell die Daten sind.
 var DATA={src:null,ts:0,stand:null,limited:false};
 function dataStand(list){ const m=Math.max(0,...list.map(l=>Date.parse(l.last_updated||"")||0)); return m||null; }
-function saveCache(){ try{ localStorage.setItem("lr_cache",JSON.stringify({ts:DATA.ts,src:(DATA.src==="live"||DATA.src==="cache")?"live":"dev",data:launches})); }catch(e){} }
+function saveCache(){ trackNet(launches); try{ localStorage.setItem("lr_cache",JSON.stringify({ts:DATA.ts,src:(DATA.src==="live"||DATA.src==="cache")?"live":"dev",data:launches})); }catch(e){} }
 async function load(){
   let cached=null;
   try{ cached = JSON.parse(localStorage.getItem("lr_cache")||"null"); }catch(e){}
@@ -18,7 +18,7 @@ async function load(){
   DATA.limited = status===429;
   const why = DATA.limited ? "API-Limit erreicht (max. ~15 Abfragen pro Stunde)" : "Live-API nicht erreichbar";
   if(real && Date.now()-cached.ts < 12*3600e3){
-    launches=cached.data; Object.assign(DATA,{src:"cache",ts:cached.ts});
+    launches=cached.data; Object.assign(DATA,{src:"cache",ts:cached.ts}); trackNet(launches);
     toast(`${why} – zeige Daten von vor ${Math.round((Date.now()-cached.ts)/60e3)} Min. Neuer Versuch in 15 Min.`); return render();
   }
   try{

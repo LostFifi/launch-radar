@@ -12,8 +12,12 @@ def open(f,mode='r',**k):
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 b=str(ROOT)+'/'
 h=open(b+'src/index.html').read()  # App-Code kommt aus build/ (scripts/bundle.js)
-# Datum des Schnappschusses = Änderungsdatum von upcoming.json
-SNAP_DATE=datetime.datetime.fromtimestamp(os.path.getmtime(b+'data/raw/upcoming.json')).strftime('%d.%m.%Y')
+# Datum des Schnappschusses: aus data/raw/fetched_at.txt (fetch_data.sh), sonst Änderungsdatum von upcoming.json
+_fa=b+'data/raw/fetched_at.txt'
+if os.path.exists(_fa):
+    SNAP_DATE=datetime.datetime.strptime(open(_fa).read().strip(),'%Y-%m-%dT%H:%M:%SZ').strftime('%d.%m.%Y')
+else:
+    SNAP_DATE=datetime.datetime.fromtimestamp(os.path.getmtime(b+'data/raw/upcoming.json')).strftime('%d.%m.%Y')
 def pick(o,keys): return {k:o.get(k) for k in keys} if isinstance(o,dict) else None
 J=lambda o: json.dumps(o,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')
 

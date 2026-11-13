@@ -89,7 +89,7 @@ function stationSat(k){ return (SATS.stations||[]).find(s=>STATIONS[k].re.test(s
 
 // ---------- Fenster ----------
 function openPasses(){
-  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; follow=false;
+  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; follow=false; setHash(null);
   const P=document.getElementById("panel"); P.classList.remove("wide","min");
   const hd=`<div class="hd"><h2>${ICON.eye} Überflüge bei mir</h2><button class="x" onclick="closeP()">×</button></div>`;
   if(!HOME){

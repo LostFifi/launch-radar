@@ -133,7 +133,7 @@ function satTrack(s){ const P=2*Math.PI/s.rec.no, pts=[]; let prev=null,off=0; c
   return pts; }
 function clearSat(){ selSat=null; satLayer.clearLayers(); }
 function selectSat(s,g){
-  stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; follow=false;
+  stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; follow=false; setHash(null);
   selSat={s,g,track:satTrack(s)}; satLayer.clearLayers();
   L.polyline(segs(selSat.track),{color:"#ff6b6b",weight:2,dashArray:"4 6"}).bindTooltip("Bahn der nächsten ~"+Math.round(2*Math.PI/s.rec.no)+" Min",{sticky:true}).addTo(satLayer);
   const P=document.getElementById("panel"), rec=s.rec; P.classList.remove("wide");

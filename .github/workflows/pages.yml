@@ -1,12 +1,22 @@
-# Veröffentlicht dist/ (fertig gebaute App) auf GitHub Pages.
-# Gebaut wird lokal (npm run build), weil der Build Daten-Schnappschüsse braucht.
+# Baut LaunchRadar mit frischen Daten und veröffentlicht es auf GitHub Pages.
+# - bei jedem Push auf master
+# - jede Nacht (03:17 UTC) → eingebetteter Schnappschuss ist nie älter als 1 Tag
+# - sonntags zusätzlich die Raketen-Datenbank (FULL=1)
+# Schlägt der Datenabruf fehl (API-Limit), wird mit den Daten aus dem Repo gebaut.
+# Die frischen Daten werden NICHT committet (Repo bliebe sonst nicht klein) – nur veröffentlicht.
 name: GitHub Pages
 
 on:
   push:
     branches: [master]
-    paths: ['dist/**', '.github/workflows/pages.yml']
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      full:
+        description: "Auch Raketen-Datenbank neu laden"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,19 +25,44 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - run: npm ci
+      - name: Frische Daten laden
+        run: |
+          FULL=0
+          if [ "${{ inputs.full }}" = "true" ]; then FULL=1; fi
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = "7" ]; then FULL=1; fi
+          FULL=$FULL bash scripts/fetch_data.sh
+      - name: Browser für den Test
+        run: npx playwright-core install --with-deps chromium
+      - run: npm run build
+      - name: Smoke-Test (App lädt ohne JavaScript-Fehler)
+        run: npm test
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
