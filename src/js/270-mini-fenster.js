@@ -45,6 +45,10 @@ function closePip(){ const W=document.getElementById("pip"); W.style.display="no
 // Telemetrie mit einem Klick: diesen Tab teilen, Bereich = Mini-Fenster (unten rechts = Stufe 2)
 async function teleAuto(){
   if(!navigator.mediaDevices?.getDisplayMedia){ toast("Geht nur in Chrome oder Edge am Computer"); return; }
+  // Mini-Fenster gross machen: kleine Ziffern (unter ~720 px Fensterbreite) liest die Texterkennung unzuverlässig
+  const Wp=document.getElementById("pip"); if(Wp&&Wp.getBoundingClientRect().width<760){ pinTopLeft(Wp);
+    const nw=Math.min(innerWidth-24,900); Wp.style.width=nw+"px"; Wp.style.left=Math.max(12,Math.min(parseFloat(Wp.style.left)||12,innerWidth-nw-12))+"px";
+    Wp.style.top=Math.max(12,Math.min(parseFloat(Wp.style.top)||80,innerHeight-Wp.getBoundingClientRect().height-12))+"px"; }
   let st; try{ st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,displaySurface:"browser"},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"}); }
   catch(e){ toast("Teilen abgebrochen"); return; }
   teleBegin(st,true);

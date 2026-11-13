@@ -1009,7 +1009,9 @@ var I18N_EN = {
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
   // ---------- Info, Datenschutz ----------
   "Grösse ändern":"Resize","Was die App sieht":"What the app sees","Noch kein Bild.":"No image yet.","(kein Text erkannt)":"(no text recognised)",
-  "{0} → Tempo {1} · Höhe {2}":"{0} → speed {1} · altitude {2}","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
+  "{0} → Tempo {1} · Höhe {2}":"{0} → speed {1} · altitude {2}","{0} → keine Werte":"{0} → no values","keine Werte":"no values",
+  "Paar {0}: {1}":"pair {0}: {1}","{0} · Tipp: Mini-Fenster grösser ziehen (mind. ~720 px) – kleine Ziffern werden schlecht erkannt.":"{0} · Tip: make the mini player bigger (at least ~720 px) – small digits are hard to read.","{0} → {1}":"{0} → {1}","{0} | {1}":"{0} | {1}",
+  "Ziehe in der Vorschau einen Rahmen um alle Tempo-/Höhen-Anzeigen (beide Stufen).":"In the preview, drag one frame around all speed/altitude readouts (both stages).","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
   "Start bestätigt – Abhebezeit auf jetzt gesetzt":"Launch confirmed – liftoff time set to now","Start bestätigt – die Rakete fliegt mit":"Launch confirmed – the rocket is now tracked","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
   "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
@@ -3104,7 +3106,7 @@ async function teleBegin(stream,auto){
   try{
     if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
     TELE.worker=await Tesseract.createWorker("eng");
-    await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTUI/ ",tessedit_pageseg_mode:"6"});
+    await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789:KMHSPEDALTUI/ ",tessedit_pageseg_mode:"6"});
   }catch(e){ toast("Texterkennung konnte nicht geladen werden (Internet nötig)"); return teleStop(); }
   TELE.timer=setInterval(teleTick,1000); teleTick();
 }
@@ -3116,48 +3118,128 @@ function buildTeleBox(){
    ${big("s2")}${big("s1")}
    <div class="tch"><canvas id="tChH" width="640" height="200"></canvas><canvas id="tChV" width="640" height="200"></canvas></div>
    <canvas id="tPrev" width="320" height="180" title="Rahmen ziehen"></canvas>
-   <div class="tbtns">${TELE.auto?"":`<span class="mute" style="font-size:12px;align-self:center">Rahmen für:</span>`}
-     <button class="chip" data-te="s1">Stufe 1</button><button class="chip" data-te="s2">Stufe 2</button>
+   ${TELE.auto?"":`<div class="note" style="margin-top:0">Ziehe in der Vorschau einen Rahmen um alle Tempo-/Höhen-Anzeigen (beide Stufen).</div>`}
+   <div class="tbtns">
      <label class="chip" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="tUse1" ${TELE.use1?"checked":""} style="margin:0">Stufe 1 lesen</label>
      <button class="chip" onclick="teleCSV()" title="Messwerte als CSV-Datei speichern">CSV</button></div>
    <details class="tdbg" open><summary>Was die App sieht</summary><div id="tDbg" class="mute" style="font-size:12px">Noch kein Bild.</div></details>
    <div class="note" id="tStat"></div>`;
   teleChrome(B);
-  const mark=()=>B.querySelectorAll("[data-te]").forEach(b=>b.classList.toggle("on",b.dataset.te===TELE.edit));
-  B.querySelectorAll("[data-te]").forEach(b=>b.onclick=()=>{ TELE.edit=b.dataset.te; if(!TELE.auto&&!TELE.S[TELE.edit].region) TELE.S[TELE.edit].region=TPRESET[TELE.edit]; mark(); drawTelePrev(); });
-  mark();
   document.getElementById("tUse1").onchange=e=>{ TELE.use1=e.target.checked; teleUI(); };
   const cv=document.getElementById("tPrev"); let st=null;
   cv.style.display=TELE.auto?"none":"block";
   const pos=e=>{ const r=cv.getBoundingClientRect(); return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))]; };
   cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); st=pos(e); };
-  cv.onpointermove=e=>{ if(!st) return; const q=pos(e), S=TELE.S[TELE.edit];
-    S.region=[Math.min(st[0],q[0]),Math.min(st[1],q[1]),Math.max(.03,Math.abs(q[0]-st[0])),Math.max(.03,Math.abs(q[1]-st[1]))]; drawTelePrev(); };
-  cv.onpointerup=()=>{ st=null; TELE.S[TELE.edit].last=null; };
+  cv.onpointermove=e=>{ if(!st) return; const q=pos(e);
+    TELE.area=[Math.min(st[0],q[0]),Math.min(st[1],q[1]),Math.max(.03,Math.abs(q[0]-st[0])),Math.max(.03,Math.abs(q[1]-st[1]))]; drawTelePrev(); };
+  cv.onpointerup=()=>{ st=null; TELE.S.s1.last=null; TELE.S.s2.last=null; };
 }
 function teleRegion(k){ return TELE.auto?autoRegion(TPRESET[k]):TELE.S[k].region; }
 function drawTelePrev(){
   const cv=document.getElementById("tPrev"), v=TELE.video; if(!cv||!v||!v.videoWidth||TELE.auto) return;
   cv.height=Math.round(cv.width*v.videoHeight/v.videoWidth);
   const c=cv.getContext("2d"); c.drawImage(v,0,0,cv.width,cv.height);
-  for(const k of ["s1","s2"]){ const r=TELE.S[k].region; if(!r||(k==="s1"&&!TELE.use1)) continue; const [x,y,w,hh]=r;
-    c.strokeStyle=TCOL[k]; c.lineWidth=k===TELE.edit?3:1.5; c.setLineDash(k===TELE.edit?[]:[4,3]); c.strokeRect(x*cv.width,y*cv.height,w*cv.width,hh*cv.height);
-    c.setLineDash([]); c.fillStyle=TCOL[k]; c.font="bold 11px sans-serif"; c.fillText(k==="s1"?"1":"2",x*cv.width+4,y*cv.height+12); } }
-async function teleOCR(region){
+  const [x,y,w,hh]=TELE.area||TSTRIP; c.strokeStyle="#4ea1ff"; c.lineWidth=3; c.strokeRect(x*cv.width,y*cv.height,w*cv.width,hh*cv.height); }
+// Bildausschnitt vergrössern und aufbereiten: nur fast-weisse Pixel (alle Farbkanäle hell) gelten als Schrift →
+// schwarz auf weiss. Orange Flammen, blauer Himmel und graue Flächen fallen weg.
+// open>0: dünne Linien (Kreise um die Starship-Anzeigen, winzige Beschriftungen) wegfiltern, dicke Ziffern bleiben.
+function teleCanvas(region,target,open){
   const v=TELE.video, W=v.videoWidth, H=v.videoHeight, [rx,ry,rw,rh]=region;
-  const sc=Math.max(1,900/(rw*W)), c=document.createElement("canvas"); c.width=Math.round(rw*W*sc); c.height=Math.round(rh*H*sc);
+  const sc=Math.max(1,target/(rw*W)), c=document.createElement("canvas"); c.width=Math.round(rw*W*sc); c.height=Math.round(rh*H*sc);
   const x=c.getContext("2d"); x.drawImage(v,rx*W,ry*H,rw*W,rh*H,0,0,c.width,c.height);
-  // Nur fast-weisse Pixel (alle Farbkanäle hell) gelten als Schrift → schwarz auf weiss.
-  // So werden orange Flammen, blauer Himmel und graue Flächen ignoriert.
-  const im=x.getImageData(0,0,c.width,c.height), p=im.data;
-  for(let i=0;i<p.length;i+=4){ const mn=Math.min(p[i],p[i+1],p[i+2]), mx=Math.max(p[i],p[i+1],p[i+2]), o=(mn>170&&mx-mn<60)?0:255; p[i]=p[i+1]=p[i+2]=o; }
-  x.putImageData(im,0,0);
-  TELE.dbg=TELE.dbg||{}; TELE.dbg[TELE.cur]=c;          // für die Vorschau „Was die App sieht“
+  const im=x.getImageData(0,0,c.width,c.height), p=im.data, w=c.width, h=c.height; let m=new Uint8Array(w*h);
+  for(let i=0,j=0;i<p.length;i+=4,j++){ const mn=Math.min(p[i],p[i+1],p[i+2]), mx=Math.max(p[i],p[i+1],p[i+2]); m[j]=(mn>170&&mx-mn<60)?1:0; }
+  if(open){ const op=(src,er)=>{ const d=new Uint8Array(w*h); for(let y=1;y<h-1;y++) for(let xx=1;xx<w-1;xx++){ const i=y*w+xx;
+      const n=src[i-1]+src[i+1]+src[i-w]+src[i+w]+src[i-w-1]+src[i-w+1]+src[i+w-1]+src[i+w+1]+src[i]; d[i]=er?(n===9?1:0):(n>0?1:0); } return d; };
+    for(let k=0;k<open;k++) m=op(m,true); for(let k=0;k<open;k++) m=op(m,false); }
+  for(let i=0,j=0;i<p.length;i+=4,j++){ const o=m[j]?0:255; p[i]=p[i+1]=p[i+2]=o; }
+  x.putImageData(im,0,0); return c;
+}
+async function teleOCR(region){
+  const c=teleCanvas(region,900,0); TELE.dbg=TELE.dbg||{}; TELE.dbg[TELE.cur]=c;   // für „Was die App sieht“
+  await TELE.worker.setParameters({tessedit_pageseg_mode:"6"});
   return (await TELE.worker.recognize(c)).data.text;
+}
+// ---------- Streifen-Modus: ganzen unteren Streifen lesen, Zahlenpaare (Tempo, Höhe) mit Position finden ----------
+// Für Layouts wie Starship: runde Anzeigen „(26046)“ „(274)“ mit winzigen Beschriftungen, Lage je nach Flugphase verschieden.
+const TSTRIP=[0,0.74,1,0.25];
+async function teleOCRStrip(region,open){
+  const c=teleCanvas(region,2200,open);
+  await TELE.worker.setParameters({tessedit_pageseg_mode:"11"});
+  const {data}=await TELE.worker.recognize(c,{},{text:true,blocks:true});
+  let words=(data.words||[]).slice();
+  if(!words.length&&data.blocks) data.blocks.forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>words.push(...(l.words||[])))));
+  return {c,text:data.text||"",words:words.map(w=>({t:String(w.text||""),x:w.bbox.x0,x1:w.bbox.x1,y:w.bbox.y0,h:Math.max(1,w.bbox.y1-w.bbox.y0)}))};
+}
+// ---------- Ziffern-Gruppen finden und einzeln lesen (robust für runde Anzeigen, kleine Mini-Fenster) ----------
+// 1) Ausschnitt in Originalgrösse, helle Pixel markieren, zusammenhängende Flecken suchen
+// 2) Kreise (dünn, kaum gefüllt) und winzige Beschriftungen weglassen, Ziffern zu Wörtern zusammenfassen
+// 3) jedes Wort stark vergrössern und einzeln lesen (nur Ziffern und „:“) – Uhrzeiten werden aussortiert
+async function teleReadGroups(region){
+  const v=TELE.video, W=v.videoWidth, H=v.videoHeight, [rx,ry,rw,rh]=region;
+  // vorab auf ~1600 px Breite vergrössern (weich) – trennt kleine Ziffern sauberer vom Kreis
+  const up=Math.max(1,Math.min(4,1600/(rw*W))), w=Math.max(8,Math.round(rw*W*up)), h=Math.max(8,Math.round(rh*H*up));
+  const src=document.createElement("canvas"); src.width=w; src.height=h; const sx=src.getContext("2d"); sx.imageSmoothingQuality="high"; sx.drawImage(v,rx*W,ry*H,rw*W,rh*H,0,0,w,h);
+  const px=sx.getImageData(0,0,w,h).data, m=new Uint8Array(w*h);
+  for(let i=0,j=0;i<px.length;i+=4,j++){ const mn=Math.min(px[i],px[i+1],px[i+2]), mx=Math.max(px[i],px[i+1],px[i+2]); m[j]=(.3*px[i]+.59*px[i+1]+.11*px[i+2]>150&&mx-mn<90)?1:0; }
+  const lab=new Int32Array(w*h), comps=[], st=[];
+  for(let s=0;s<w*h;s++){ if(!m[s]||lab[s]) continue; const id=comps.length+1; let x0=w,x1=0,y0=h,y1=0,n=0; st.push(s); lab[s]=id;
+    while(st.length){ const q=st.pop(), qx=q%w, qy=(q-qx)/w; n++; if(qx<x0)x0=qx; if(qx>x1)x1=qx; if(qy<y0)y0=qy; if(qy>y1)y1=qy;
+      for(const d of [q-1,q+1,q-w,q+w]){ if(d<0||d>=w*h||lab[d]||!m[d]) continue; if((d===q-1&&qx===0)||(d===q+1&&qx===w-1)) continue; lab[d]=id; st.push(d); } }
+    comps.push({x0,x1,y0,y1,n,cw:x1-x0+1,ch:y1-y0+1}); }
+  let cs=comps.filter(c=>c.ch>=Math.max(4,h*0.035)&&c.ch<=h*0.6&&c.n/(c.cw*c.ch)>=0.14&&c.cw<=c.ch*2.2);
+  const maxH=Math.max(0,...cs.map(c=>c.ch)); cs=cs.filter(c=>c.ch>=maxH*0.55).sort((a,b)=>a.x0-b.x0);   // nur Schrift in Ziffern-Grösse
+  const words=[]; for(const c of cs){ const p=words[words.length-1], ov=p?Math.min(p.y1,c.y1)-Math.max(p.y0,c.y0):0;
+    if(p&&c.x0-p.x1<=Math.max(p.y1-p.y0,c.ch)*0.75&&ov>Math.min(p.y1-p.y0,c.ch)*0.5){ p.x1=Math.max(p.x1,c.x1); p.y0=Math.min(p.y0,c.y0); p.y1=Math.max(p.y1,c.y1); }
+    else words.push({x0:c.x0,x1:c.x1,y0:c.y0,y1:c.y1}); }
+  await TELE.worker.setParameters({tessedit_pageseg_mode:"7",tessedit_char_whitelist:"0123456789:"});
+  const out=[];
+  // Seitlich grosszügig ausschneiden: Ziffern, die den Kreis berühren, wurden oben evtl. mit ihm aussortiert
+  for(const wd of words.slice(0,12)){ const wh=wd.y1-wd.y0+1, py=Math.ceil(wh*0.4), pxx=Math.ceil(wh*1.1), cw=wd.x1-wd.x0+1+2*pxx, ch=wh+2*py, sc=Math.max(2,90/wh);
+    const c=document.createElement("canvas"); c.width=Math.round(cw*sc); c.height=Math.round(ch*sc); const x=c.getContext("2d"); x.imageSmoothingQuality="high";
+    x.fillStyle="#000"; x.fillRect(0,0,c.width,c.height); x.drawImage(src,wd.x0-pxx,wd.y0-py,cw,ch,0,0,c.width,c.height);
+    const im=x.getImageData(0,0,c.width,c.height), p=im.data; for(let i=0;i<p.length;i+=4){ const o=(.3*p[i]+.59*p[i+1]+.11*p[i+2])>150?0:255; p[i]=p[i+1]=p[i+2]=o; } x.putImageData(im,0,0);
+    const t=((await TELE.worker.recognize(c)).data.text||"").replace(/\s+/g,"");
+    out.push({t,x:wd.x0,x1:wd.x1,y:wd.y0,h:wh}); }
+  await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789:KMHSPEDALTUI/ "});
+  // Vorschau: Ausschnitt mit Rahmen um die gefundenen Gruppen
+  const dbg=document.createElement("canvas"), ds=Math.min(4,700/w); dbg.width=Math.round(w*ds); dbg.height=Math.round(h*ds); const dx=dbg.getContext("2d");
+  dx.drawImage(src,0,0,dbg.width,dbg.height); dx.lineWidth=2; dx.font="bold 14px sans-serif";
+  out.forEach(o=>{ const ok=/^\d{1,6}$/.test(o.t); dx.strokeStyle=ok?"#2ecc71":"#ff6b6b"; dx.strokeRect(o.x*ds-2,o.y*ds-2,(o.x1-o.x+1)*ds+4,o.h*ds+4); dx.fillStyle=ok?"#2ecc71":"#ff6b6b"; dx.fillText(o.t||"?",o.x*ds,Math.max(14,o.y*ds-6)); });
+  return {words:out,c:dbg,text:out.map(o=>o.t).filter(Boolean).join(" ")};
+}
+function stripPairs(words){
+  // reine Zahlen; Uhrzeiten (mit „:“) und Zahlen mit Buchstaben weglassen – auch Zahlen direkt nach einem „xx:“ (Rest der Uhr)
+  const colon=words.filter(w=>/:/.test(w.t));
+  let n=words.filter(w=>/^\d{1,6}$/.test(w.t) && !colon.some(c=>w.x>=c.x && w.x-c.x1<c.h*2 && Math.abs(w.y-c.y)<c.h)).map(w=>({...w,v:+w.t}));
+  n.sort((a,b)=>a.x-b.x);
+  const m=[]; for(const q of n){ const p=m[m.length-1];   // „26“ „046“ → 26046 (Tausender-Abstand)
+    if(p&&q.t.length===3&&p.t.length<=3&&q.x-p.x1<p.h*0.9&&Math.abs(q.y-p.y)<p.h*0.6){ p.t+=q.t; p.v=+p.t; p.x1=q.x1; } else m.push({...q}); }
+  // Uhr-Reste (mehrere 2-stellige Zahlen dicht nebeneinander, z.B. 00 24 03) weglassen
+  const clean=m.filter((q,i)=>!(q.t.length===2&&((m[i+1]&&m[i+1].t.length===2&&m[i+1].x-q.x1<q.h*1.2)||(m[i-1]&&m[i-1].t.length===2&&q.x-m[i-1].x1<q.h*1.2))));
+  const pairs=[]; for(let i=0;i+1<clean.length;i++){ const a=clean[i], b=clean[i+1];
+    if(a.v>=b.v&&b.v<=3000&&a.v<=32000&&b.x-a.x1<a.h*8&&Math.abs(a.y-b.y)<a.h){ pairs.push({sp:a.v,al:b.v,x:a.x}); i++; } }
+  return pairs;
+}
+// Paare den Stufen zuordnen: zwei Paare = links Booster, rechts Ship; ein Paar = Ship
+// (in den ersten ~2:50 nach dem Start fliegen beide Stufen noch zusammen → gilt für beide)
+function stripAssign(pairs){
+  const ts=selected?(Date.now()-netOf(selected))/1000:null;
+  if(pairs.length>=2) return {s1:pairs[0],s2:pairs[pairs.length-1]};
+  if(pairs.length===1){ const p=pairs[0]; return (ts!=null&&ts<170&&p.sp<9000)?{s1:p,s2:p}:{s2:p}; }
+  return {};
 }
 // Vorschau: aufbereiteter Bildausschnitt je Stufe + erkannter Text (zum Prüfen, ob der Bereich stimmt)
 function teleDebug(){
   const box=document.getElementById("tDbg"); if(!box||!TELE.dbg) return;
+  if(TELE.dbg.strip){   // Streifen-Modus: ein Bild, erkannter Text, gefundene Paare
+    if(box.dataset.ready!=="strip"){ box.innerHTML=`<canvas id="tDbgS" style="width:100%;height:auto;background:#fff;border-radius:6px;margin:3px 0"></canvas><div id="tDbgST" style="word-break:break-word"></div>`; box.dataset.ready="strip"; }
+    const src=TELE.dbg.strip, cv=document.getElementById("tDbgS"); cv.width=Math.min(700,src.width); cv.height=Math.round(cv.width*src.height/src.width); cv.getContext("2d").drawImage(src,0,0,cv.width,cv.height);
+    const P=TELE.strip?.pairs||[], pf=document.getElementById("pipFrame");
+    const small=TELE.auto&&pf&&pf.getBoundingClientRect().width<700;
+    document.getElementById("tDbgST").textContent=(TELE.strip?.text?`„${TELE.strip.text}“`:"(kein Text erkannt)")+" → "+(P.length?P.map((p,i)=>`Paar ${i+1}: ${p.sp} km/h · ${p.al} km`).join(" | "):"keine Werte")
+      +(small?" · Tipp: Mini-Fenster grösser ziehen (mind. ~720 px) – kleine Ziffern werden schlecht erkannt.":"");
+    return; }
   if(!box.dataset.ready){ box.innerHTML=["s2","s1"].map(k=>`<div style="margin:6px 0"><div style="color:${TCOL[k]};font-weight:700">${TLAB[k]}</div><canvas id="tDbg_${k}" style="width:100%;height:auto;background:#fff;border-radius:6px;margin:3px 0"></canvas><div id="tDbgT_${k}" style="word-break:break-word"></div></div>`).join(""); box.dataset.ready=1; }
   for(const k of ["s2","s1"]){ const src=TELE.dbg[k], cv=document.getElementById("tDbg_"+k), tx=document.getElementById("tDbgT_"+k); if(!cv) continue;
     cv.parentElement.style.display=(k==="s1"&&!TELE.use1)?"none":"";
@@ -3188,16 +3270,26 @@ async function teleTick(){
   if(!TELE.on||TELE.busy||!TELE.worker||!TELE.video?.videoWidth) return; TELE.busy=true;
   try{
     drawTelePrev();
-    for(const k of TELE.use1?["s2","s1"]:["s2"]){ const r=teleRegion(k); if(!r) continue; TELE.cur=k; teleParse(k,await teleOCR(r)); }
+    {
+      // Ganzer unterer Streifen (bzw. selbst gezogener Rahmen), Paare suchen; ohne Treffer nochmals mit Linienfilter
+      const reg=TELE.auto?autoRegion(TSTRIP):(TELE.area||TSTRIP);
+      if(reg){ let r=await teleReadGroups(reg), pairs=stripPairs(r.words);
+        if(!pairs.length){ const r2=await teleOCRStrip(reg,0), p2=stripPairs(r2.words); if(p2.length||teleExtract(r2.text).sp!=null){ r=r2; pairs=p2; } }
+        let as=stripAssign(pairs);
+        if(!pairs.length){ const x=teleExtract(r.text); if(x.sp!=null||x.al!=null) as={s2:x}; }   // Layout mit Beschriftungen
+        TELE.dbg={strip:r.c}; TELE.strip={text:r.text.replace(/\s+/g," ").trim().slice(0,80),pairs};
+        for(const k of ["s2","s1"]){ if(k==="s1"&&!TELE.use1) continue; const a=as[k];
+          if(a) teleAccept(k,a.sp,a.al,TELE.strip.text); else { TELE.S[k].bad++; TELE.S[k].raw=TELE.strip.text; } } }
+    }
     teleDebug();
     teleUI();
   }catch(e){ console.warn(e); }
   TELE.busy=false;
 }
-function teleParse(k,text){
+function teleParse(k,text){ const x=teleExtract(text); teleAccept(k,x.sp,x.al,text); }
+function teleAccept(k,sp,al,text){
   const S=TELE.S[k], lim=TLIM[k];
-  S.raw=text.replace(/\s+/g," ").trim().slice(0,60);
-  let {sp,al}=teleExtract(text);
+  S.raw=String(text||"").replace(/\s+/g," ").trim().slice(0,60);
   const now=Date.now(), L=S.last;
   // Vor dem Start (T−) nichts übernehmen: Rakete bleibt am Boden, Anzeige „wartet auf den Start“
   if(selected && TELE.t0==null && now < new Date(netOf(selected)).getTime()-5000){ S.pre=(S.pre||0)+1; return; }
@@ -3449,6 +3541,10 @@ function closePip(){ const W=document.getElementById("pip"); W.style.display="no
 // Telemetrie mit einem Klick: diesen Tab teilen, Bereich = Mini-Fenster (unten rechts = Stufe 2)
 async function teleAuto(){
   if(!navigator.mediaDevices?.getDisplayMedia){ toast("Geht nur in Chrome oder Edge am Computer"); return; }
+  // Mini-Fenster gross machen: kleine Ziffern (unter ~720 px Fensterbreite) liest die Texterkennung unzuverlässig
+  const Wp=document.getElementById("pip"); if(Wp&&Wp.getBoundingClientRect().width<760){ pinTopLeft(Wp);
+    const nw=Math.min(innerWidth-24,900); Wp.style.width=nw+"px"; Wp.style.left=Math.max(12,Math.min(parseFloat(Wp.style.left)||12,innerWidth-nw-12))+"px";
+    Wp.style.top=Math.max(12,Math.min(parseFloat(Wp.style.top)||80,innerHeight-Wp.getBoundingClientRect().height-12))+"px"; }
   let st; try{ st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,displaySurface:"browser"},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"}); }
   catch(e){ toast("Teilen abgebrochen"); return; }
   teleBegin(st,true);
