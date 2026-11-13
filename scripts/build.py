@@ -15,9 +15,10 @@ h=open(b+'src/index.html').read()  # App-Code kommt aus build/ (scripts/bundle.j
 # Datum des Schnappschusses: aus data/raw/fetched_at.txt (fetch_data.sh), sonst Änderungsdatum von upcoming.json
 _fa=b+'data/raw/fetched_at.txt'
 if os.path.exists(_fa):
-    SNAP_DATE=datetime.datetime.strptime(open(_fa).read().strip(),'%Y-%m-%dT%H:%M:%SZ').strftime('%d.%m.%Y')
+    _dt=datetime.datetime.strptime(open(_fa).read().strip(),'%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=datetime.timezone.utc)
 else:
-    SNAP_DATE=datetime.datetime.fromtimestamp(os.path.getmtime(b+'data/raw/upcoming.json')).strftime('%d.%m.%Y')
+    _dt=datetime.datetime.fromtimestamp(os.path.getmtime(b+'data/raw/upcoming.json'),datetime.timezone.utc)
+SNAP_DATE=_dt.astimezone().strftime('%d.%m.%Y'); SNAP_AT=_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 def pick(o,keys): return {k:o.get(k) for k in keys} if isinstance(o,dict) else None
 J=lambda o: json.dumps(o,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')
 
@@ -124,7 +125,7 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
      '/*TLE*/':tle,'/*IMG*/':J(snapimg),'/*SNAPTS*/':SNAP_DATE}
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
 CONFIG=json.load(open(b+'src/config.json')); CONFIG['worker']=(CONFIG.get('worker') or '').rstrip('/')
-h=h.replace('/*CONFIG*/',J(CONFIG))
+h=h.replace('/*CONFIG*/',J(CONFIG)).replace('/*SNAPAT*/',SNAP_AT)
 # Zwei Varianten:
 #  dist/index.html               online (GitHub Pages): Reserve-Bahndaten + Vorschaubilder als eigene Dateien data/*.json → ~2,4 MB weniger
 #  dist/launchradar-offline.html alles eingebettet (Claude-Vorschau, als Datei öffnen, ohne Server)

@@ -26,13 +26,19 @@ async function load(){
     launches=cached.data; Object.assign(DATA,{src:"cache",ts:cached.ts}); trackNet(launches);
     toast(`${why} – zeige Daten von vor ${Math.round((Date.now()-cached.ts)/60e3)} Min. Neuer Versuch in 15 Min.`); return render();
   }
+  // Eingebetteter Schnappschuss ist echt (GitHub holt ihn bei jedem Build und jede Nacht) → wenn jung, besser als der dev-Server
+  const snapT=Date.parse(SNAP_AT)||0;
+  if(Date.now()-snapT<36*3600e3){
+    launches=SNAPSHOT; Object.assign(DATA,{src:"snap",ts:snapT});
+    toast(`${why} – zeige Daten vom ${fmtStand(snapT)}. Neuer Versuch in 15 Min.`); return render();
+  }
   try{
     const r=await fetch(API_DEV); if(!r.ok) throw new Error(r.status);
     launches=(await r.json()).results||[]; Object.assign(DATA,{src:"dev",ts:Date.now(),stand:dataStand(launches)});
     toast(`${why} – Ersatzdaten vom Test-Server, Stand ${fmtStand(DATA.stand)}. Verschiebungen fehlen evtl.!`); return render();
   }catch(e){ console.warn("dev-Server:",e); }
   if(cached){ launches=cached.data; Object.assign(DATA,{src:"cache",ts:cached.ts}); toast("Offline – zeige zwischengespeicherte Daten"); return render(); }
-  launches = SNAPSHOT; Object.assign(DATA,{src:"snap",ts:0}); render();
+  launches = SNAPSHOT; Object.assign(DATA,{src:"snap",ts:snapT}); render();
   toast("Live-Daten blockiert – zeige Schnappschuss vom "+SNAP_TS+". Im Browser (Chrome) öffnen für Live-Daten.");
 }
 function fmtStand(t){ return t?new Date(t).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"unbekannt"; }
@@ -42,7 +48,7 @@ function dataInfo(){
   if(DATA.src==="live") return `Daten vor ${m(DATA.ts)} Min`;
   if(DATA.src==="cache") return `Daten vor ${m(DATA.ts)} Min${DATA.limited?" (API-Limit)":""}`;
   if(DATA.src==="dev") return `Ersatzdaten, Stand ${fmtStand(DATA.stand)}`;
-  if(DATA.src==="snap") return `Schnappschuss ${SNAP_TS}`;
+  if(DATA.src==="snap") return DATA.ts?`Daten vom ${fmtStand(DATA.ts)}`:`Schnappschuss ${SNAP_TS}`;
   return "";
 }
 // Ist der Start wirklich erfolgt? Nach T-0 reicht „Go“ nicht – der Start kann verschoben sein, ohne dass wir es schon wissen.
