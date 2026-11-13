@@ -11,7 +11,8 @@ function toggleRem(id){
   if(b){ b.className="btn "+(REM[id]?"":"sec2"); b.innerHTML=REM[id]?ICON.bell+" Erinnerung aktiv – entfernen":ICON.bell+" 10 Min vorher erinnern"; } }
 function checkRem(){ for(const id in REM){ const r=REM[id], l=launches.find(x=>x.id===id); if(l && l.net!==r.net){ r.net=l.net; r.fired=false; }
     const t=new Date(r.net)-Date.now();
-    if(!r.fired && t<=10*60e3 && t>-30*60e3){ r.fired=true; const msg=`${(r.name.split("|")[1]||r.name).trim()} startet in ${Math.max(0,Math.round(t/60e3))} Min!`;
+    if(!r.fired && t<=10*60e3 && t>-30*60e3){ r.fired=true; const min=Math.max(0,Math.round(t/60e3));
+      const msg=r.kind==="pass"?`${r.name} in ${min} Min – ${r.txt}`:`${(r.name.split("|")[1]||r.name).trim()} startet in ${min} Min!`;
       toast(msg); beep(); try{ if(window.Notification && Notification.permission==="granted") new Notification("LaunchRadar",{body:msg}); }catch(e){} }
     if(t<-6*3600e3) delete REM[id]; }
   saveRem(); }

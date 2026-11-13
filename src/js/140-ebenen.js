@@ -1,5 +1,5 @@
 // ===================== Ebenen (alles ausschaltbar) =====================
-var LAYERS = {pads:true, stations:true, starlink:false, gnss:false, weather:false, live:true, night:true, time:true, fresh:false};
+var LAYERS = {pads:true, stations:true, starlink:false, gnss:false, weather:false, live:true, night:true, time:true, fresh:false, home:true};
 try{ Object.assign(LAYERS, JSON.parse(localStorage.getItem("lr_layers")||"{}")); }catch(e){}
 const SAT_SRC={
   stations:{label:"Raumstationen (ISS, Tiangong)",color:"#ffffff",size:4,celestrak:"stations"},
@@ -17,12 +17,15 @@ function buildLayerMenu(){
   el.innerHTML=`<h4>Starts</h4>${row("pads","Startplätze & Routen","#2ecc71")}${row("live","Live-Status bei laufenden Starts","#ff3b3b")}
     <h4>Erde & Zeit</h4>${row("night","Tag/Nacht-Grenze","#4a5878")}${row("time","Zeitraffer-Leiste","#4ea1ff")}
     <h4>Satelliten</h4>`+Object.entries(SAT_SRC).map(([k,s])=>row(k,s.label+(SATS[k]?` <span class="mute">(${SATS[k].length})</span>`:""),s.color)).join("")
-    +row("fresh","Neueste Starts hervorheben","#ff4fd8");
+    +row("fresh","Neueste Starts hervorheben","#ff4fd8")
+    +`<h4>Mein Standort</h4>${row("home","Standort & ISS-Sichtkreis","#ffd25a")}
+      <button class="chip ic" style="margin:4px 0 2px" onclick="document.getElementById('layers').style.display='none';openPasses()">${ICON.eye} ISS-Überflüge bei mir</button>`;
   el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
     if(i.dataset.k==="live") livePoll(true);
     if(i.dataset.k==="night") updateNight(true);
+    if(i.dataset.k==="home") drawHome();
     if(i.dataset.k==="time"){ if(!i.checked) simReset(); updTimeUI(); }
     if(i.dataset.k==="fresh"){ if(i.checked){ await loadSats("starlink"); setFresh(); } else if(HL&&HL.fresh){ HL=null; } drawSatMap(); }
     if(SAT_SRC[i.dataset.k]){ if(i.checked){ await loadSats(i.dataset.k); buildLayerMenu(); } else if(selSat&&selSat.g===i.dataset.k) closeP(); propAll(true); }
@@ -100,7 +103,7 @@ function nearestSat(pt){ let best=null,bd=1e9;
 
 // ---------- Globus ----------
 function satDrawGlobe(c,proj,path,vis,pt){
-  hlDrawGlobe(c,vis,pt);
+  hlDrawGlobe(c,vis,pt); homeDrawGlobe(c,path,vis,pt);
   for(const g of ["starlink","gnss","weather","stations"]){
     if(!LAYERS[g]||!SATS[g]) continue; const S=SAT_SRC[g]; c.fillStyle=S.color;
     for(const s of SATS[g]){ if(!s.ok||!vis([s.lat,s.lon])) continue; const q=pt([s.lat,s.lon]);
@@ -136,7 +139,7 @@ function selectSat(s,g){
      <b>Umläufe/Tag</b><span>${(1440/(2*Math.PI/rec.no)).toFixed(2)}</span>
      <b>Bahndaten-Alter</b><span>${ageH<48?ageH.toFixed(0)+" h":(ageH/24).toFixed(1)+" Tage"}</span>
    </div><div class="note">Position wird jede Sekunde aus den Bahnelementen (TLE, CelesTrak) mit dem SGP4-Modell berechnet – genau auf wenige km.</div>
-   ${/ISS/.test(s.name)?`<a class="btn sec2" href="https://spotthestation.nasa.gov/" target="_blank" rel="noopener">Wann ist die ISS über mir sichtbar?</a>`:""}</div>`;
+   ${/ISS \(ZARYA\)|TIANHE/.test(s.name)?`<button class="btn sec2" onclick="PASS.sat='${/ISS/.test(s.name)?"iss":"css"}';openPasses()">${ICON.eye} Wann ist sie bei mir sichtbar?</button>`:""}</div>`;
   P.style.display="block"; P.scrollTop=0; updateSatPanel(); drawSatMap();
   if(G.on) G.target=[-s.lon,-s.lat]; else map.panTo([s.lat,s.lon]);
 }

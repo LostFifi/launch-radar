@@ -75,6 +75,7 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 **Satelliten** (CelesTrak TLE, SGP4 via satellite.js)
 - Raumstationen (ISS/Tiangong mit Symbol), Starlink (~10 600), GNSS, Wetter (nur online)
 - Klick → Höhe, Tempo, Bahn der nächsten ~90 min; „Objekte eines Starts“ über COSPAR-Kennung
+- **Überflüge bei mir** (`145-ueberfluege.js`): Standort per GPS oder Klick (gerundet ~1 km, nur `localStorage` `lr_home`), ISS/Tiangong-Überflüge der nächsten 10 Tage. Sichtbar = Station beleuchtet (Erdschatten-Zylinder), Sonne beim Beobachter < −6°, Höhe ≥ 10°. Himmelskarte je Überflug, Erinnerung 10 Min vorher, „Zeigen“ springt im Zeitraffer hin. Ebene „Standort & ISS-Sichtkreis“
 
 **Statistik & Raketen-Datenbank**
 - Statistik des Jahres (Kacheln, pro Monat, Betreiber, Land, Rakete)
@@ -107,5 +108,5 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 2. ~~`template.html` in Module aufteilen, Build mit esbuild~~ – erledigt (`src/js/`)
 3. PWA mit echten Push-Benachrichtigungen (Service Worker – geht nur gehostet)
 4. Bessere Bahnen: Startazimut aus FlightClub oder Mission-Profilen, echte Aufstiegskurven je Rakete
-5. Satelliten-Überflüge für den eigenen Standort (wann ist die ISS sichtbar)
+5. ~~Satelliten-Überflüge für den eigenen Standort~~ – erledigt (Ebenen-Menü → „ISS-Überflüge bei mir“)
 6. Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit
