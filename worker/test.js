@@ -44,6 +44,23 @@ j = await (await call("/push/pending?e=" + encodeURIComponent("https://push.exam
 check("Meldungen nur einmal", j.length === 0);
 await worker.scheduled({ scheduledTime: Date.now() }, env, {});
 check("kein doppelter Push", pushes.length === 1);
+// 2b) Abo: Regel „Starship“ erkennt einen neuen Start selbst, abgewählter Start wird ausgelassen
+{
+  store.clear(); pushes.length = 0;
+  const in8 = new Date(Date.now() + 8 * 60e3).toISOString();
+  globalThis.fetch = async (url, o = {}) => { url = String(url);
+    if (url.includes("thespacedevs")) return new Response(JSON.stringify({ results: [
+      { id: "s1", name: "Starship | Flug 20", net: in8, rocket: { configuration: { name: "Starship" } }, launch_service_provider: { name: "SpaceX" } },
+      { id: "s2", name: "Starship | Flug 21", net: in8, rocket: { configuration: { name: "Starship" } }, launch_service_provider: { name: "SpaceX" } },
+      { id: "f1", name: "Falcon 9 | X", net: in8, rocket: { configuration: { name: "Falcon 9" } }, launch_service_provider: { name: "SpaceX" } }] }));
+    if (url.startsWith("https://push.example")) { pushes.push(1); return new Response(null, { status: 201 }); }
+    return new Response("?", { status: 404 }); };
+  await call("/push/subscribe", { method: "POST", body: JSON.stringify({ sub: { endpoint: "https://push.example/r" }, rem: {}, rules: [{ chip: "starship" }], off: ["s2"] }) });
+  await worker.scheduled({ scheduledTime: Date.now() }, env, {});
+  const p = await (await call("/push/pending?e=" + encodeURIComponent("https://push.example/r"))).json();
+  check("Abo: neuer Starship-Start erkannt, abgewählter + Falcon ausgelassen", pushes.length === 1 && p.length === 1 && p[0].body.includes("Flug 20"), p.map(x => x.body).join(" | "));
+}
+
 // 3) API gesperrt (429) → Wartezeit merken + GitHub-Schnappschuss als Reserve
 store.clear(); let llCalls = 0;
 globalThis.fetch = async (url) => { url = String(url);

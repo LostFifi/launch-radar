@@ -14,6 +14,7 @@ function select(l){
      ${l.webcast_live?' <span class="badge" style="background:var(--live)">● LIVE</span>':""}</h2>
      <button class="x" onclick="closeP()">×</button></div>`;
 
+  html+=reviewSection(l,est);   // Rückblick (nur nach dem Start) ganz oben
   html+="<!--SIM-->";
   // Bild + Missions-Patch
   const im=l.image&&typeof l.image==="object"?l.image:null, patch=(l.mission_patches||[])[0];
@@ -46,7 +47,7 @@ function select(l){
      <b>Startplatz</b><span>${esc(l.pad?.name||"")}, ${esc(l.pad?.location?.name||"")}</span>
      <b>Bahnneigung</b><span>≈ ${est.inc.toFixed(1)}° <span class="mute">(geschätzt)</span></span>
      ${est.suborbital||!est.az?"":`<b>Startrichtung</b><span>≈ ${Math.round(est.az)}° (${compass(est.az)}) <span class="mute">(geschätzt, inkl. Erddrehung)</span></span>`}
-   </div>${m.description?`<p>${esc(m.description)}</p>`:""}</div>`+profileSection(l,est);
+   </div>${m.description?`<p>${esc(m.description)}</p>`:""}</div>`+deepSection(l,est)+profileSection(l,est);
 
   // Booster & Landung
   html+=`<div class="sec"><h3>Booster (1. Stufe)</h3>`;

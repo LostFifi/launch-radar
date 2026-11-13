@@ -66,6 +66,9 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 - **Link pro Start** `#start=<id>` + Teilen-Knopf (`055-teilen.js`)
 - **Wetter am Startplatz** (`095-wetter.js`, Open-Meteo): Wind/Böen, Wolken, Regen, Gewitter-Energie, Höhenwind + Faustregel-Einschätzung
 - **Von meinem Standort aus** (`147-start-sichtbar.js`): Richtung, Höhe über Horizont, Zeitfenster, Quallen-Effekt
+- **Abos** (`182-abos.js`): Filter abonnieren (Liste → „Abonnieren“), passende Starts bekommen automatisch eine Erinnerung (`lr_subs`); einzeln abgewählte bleiben weg (`lr_rem_off`). Der Worker kennt die Regeln und erkennt neue Starts selbst (`matchRule` in App und Worker gleich halten!)
+- **Rückblick** (`062-rueckblick.js`): nach dem Start Ergebnis, Verschiebung, Booster-Landung, Aufzeichnung; mit „Echte Telemetrie“ gemessene Werte werden pro Start gespeichert (`lr_tele`, letzte 8) und neben der Schätzung gezeigt
+- **Mond, Mars, L1/L2** (`068-mond-mars.js`): schematische Reise-Ansicht mit Transfer-Ellipse, Position der Sonde (Kepler), Mond-/Planetenpositionen (Näherung), Abflug/Ankunft geschätzt
 - Tag/Nacht-Grenze, Zeitraffer-Leiste (1×–3600×) für Satelliten und Tag/Nacht
 - Ebenen-Menü: alles einzeln ausschaltbar, Auswahl wird gespeichert
 

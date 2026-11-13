@@ -45,6 +45,7 @@ function render(){
       .on("click",()=>openGroup(list));
   });
   document.getElementById("listBtn").classList.toggle("filt",filterActive());   // Punkt am Liste-Knopf: Filter aktiv
+  applySubs();                     // Abos: neue passende Starts bekommen automatisch eine Erinnerung
   updateNext(); livePoll(false);   // Live-Banner sofort nach dem Laden (fragt höchstens alle 5 Min nach)
   openFromHash();                  // #start=<id> in der Adresse → diesen Start öffnen
 }

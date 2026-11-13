@@ -20,6 +20,8 @@ async function showStartList(tab){
     <select id="lp"><option value="">Alle Betreiber</option>${opts(provOf,FILT.prov)}</select>
     <select id="lc"><option value="">Alle Länder</option>${opts(countryOf,FILT.cty)}</select>
     ${filterActive()?`<button class="chip" id="lx">Filter löschen</button>`:""}
+    ${tab==="up"?(SUBS.some(x=>ruleKey(x)===ruleKey(currentRule()))?`<span class="chip on" title="Abo aktiv – entfernen im Ebenen-Menü">${ICON.bell} abonniert</span>`
+      :`<button class="chip" onclick="subscribeFilter()" title="Bei jedem Start dieses Filters erinnern – auch künftigen">${ICON.bell} ${filterActive()||filter!=="all"?"Abonnieren":"Alle abonnieren"}</button>`):""}
     <span class="mute" style="font-size:12px">${list.length} von ${all.length}</span></div>
     ${list.length?"":`<div class="sec mute">Keine Starts für diesen Filter.</div>`}`);
   const q=document.getElementById("lq"); let tm=null;

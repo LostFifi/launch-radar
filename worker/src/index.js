@@ -26,11 +26,14 @@ export default {
       if (url.pathname === "/push/key") return json({ key: pubKey(env) || null }, 200, cors);
       if (url.pathname === "/status") return json(await env.LR.get("status", "json") || {}, 200, cors);
       if (url.pathname === "/push/subscribe" && req.method === "POST") {
-        const { sub, rem } = await req.json();
+        const { sub, rem, rules, off } = await req.json();
         if (!sub || !sub.endpoint || !/^https:\/\//.test(sub.endpoint)) return json({ error: "ungültig" }, 400, cors);
         const id = await hash(sub.endpoint), old = (await env.LR.get("sub:" + id, "json")) || {};
         const r = {}; for (const k in rem || {}) { const x = rem[k]; if (x && x.net) r[k] = { net: x.net, name: String(x.name || "").slice(0, 120), kind: x.kind === "pass" ? "pass" : "launch", txt: String(x.txt || "").slice(0, 120), sent: old.rem?.[k]?.sent && old.rem[k].net === x.net } }
-        await env.LR.put("sub:" + id, JSON.stringify({ sub, rem: r, pending: old.pending || [] }), { expirationTtl: 40 * 86400 });
+        const S = v => String(v || "").slice(0, 80);
+        const ru = (Array.isArray(rules) ? rules : []).slice(0, 20).map(x => ({ chip: ["spacex", "starship"].includes(x.chip) ? x.chip : "", prov: S(x.prov), cty: S(x.cty), q: S(x.q) }));
+        const of = (Array.isArray(off) ? off : []).slice(0, 300).map(S);
+        await env.LR.put("sub:" + id, JSON.stringify({ sub, rem: r, rules: ru, off: of, pending: old.pending || [] }), { expirationTtl: 40 * 86400 });
         return json({ ok: true, n: Object.keys(r).length }, 200, cors);
       }
       if (url.pathname === "/push/unsubscribe" && req.method === "POST") {
@@ -97,6 +100,13 @@ async function sendReminders(env) {
     const page = await env.LR.list({ prefix: "sub:", cursor }); cursor = page.list_complete ? null : page.cursor;
     for (const k of page.keys) {
       const s = await env.LR.get(k.name, "json"); if (!s) continue; let changed = false, push = false;
+      s.pending = s.pending || [];
+      // Abos: neue passende Starts (nächste 30 Tage) selbst erkennen – auch wenn die App lange nicht offen war
+      for (const l of up) {
+        const t = new Date(l.net) - now;
+        if (s.rem[l.id] || (s.off || []).includes(l.id) || t < 60e3 || t > 30 * 864e5) continue;
+        if ((s.rules || []).some(r => matchRule(r, l))) { s.rem[l.id] = { net: l.net, name: String(l.name).slice(0, 120), kind: "launch", txt: "", sent: false, auto: true }; changed = true; }
+      }
       for (const id in s.rem) {
         const r = s.rem[id];
         if (net[id] && net[id] !== r.net) {            // verschoben → melden und neu planen
@@ -135,6 +145,27 @@ export async function vapidJwt(aud, env) {
   const key = await crypto.subtle.importKey("jwk", JSON.parse(env.VAPID_PRIVATE_JWK), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(data));
   return data + "." + b64u(new Uint8Array(sig));
+}
+// Gleiche Regeln wie in der App (src/js/040-daten-laden.js: matchRule, countryOf)
+const CC_DE = { US: "USA", CN: "China", RU: "Russland", NZ: "Neuseeland", IN: "Indien", JP: "Japan", GF: "Frankreich (Kourou)", FR: "Frankreich (Kourou)",
+  KZ: "Kasachstan", NO: "Norwegen", KR: "Südkorea", SE: "Schweden", IR: "Iran", IL: "Israel", AU: "Australien", GB: "Grossbritannien", KP: "Nordkorea" };
+const CTY_DE = { "USA": "USA", "People's Republic of China": "China", "Russian Federation": "Russland", "New Zealand": "Neuseeland", "India": "Indien",
+  "Japan": "Japan", "French Guiana": "Frankreich (Kourou)", "Republic of Kazakhstan": "Kasachstan", "Kazakhstan": "Kasachstan", "Norway": "Norwegen",
+  "South Korea": "Südkorea", "Republic of Korea": "Südkorea", "Sweden": "Schweden", "Iran": "Iran", "Israel": "Israel", "Australia": "Australien", "United Kingdom": "Grossbritannien" };
+function countryOf(l) {
+  const loc = l.pad?.location?.name || ""; if (/^sea launch|offshore/i.test(loc)) return "Auf See";
+  const cc = l.pad?.country?.alpha_2_code; if (cc && CC_DE[cc]) return CC_DE[cc];
+  const c = l.pad?.country?.name || loc.split(",").pop().trim(); return CTY_DE[c] || c || "?";
+}
+export function matchRule(f, l) {
+  const prov = l.launch_service_provider?.name || "?", p = prov.toLowerCase(), r = (l.rocket?.configuration?.full_name || l.rocket?.configuration?.name || "").toLowerCase();
+  if (f.chip === "spacex" && !p.includes("spacex")) return false;
+  if (f.chip === "starship" && !r.includes("starship")) return false;
+  if (f.prov && prov !== f.prov) return false;
+  if (f.cty && countryOf(l) !== f.cty) return false;
+  if (f.q) { const hay = [l.name, r, p, l.pad?.name, l.pad?.location?.name, l.mission?.name, l.mission?.orbit?.name, l.mission?.type].join(" ").toLowerCase();
+    if (!f.q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false; }
+  return true;
 }
 function pubKey(env) { return (env.VAPID_PUBLIC || "").trim(); }   // Secrets können einen Zeilenumbruch enthalten
 function b64u(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }

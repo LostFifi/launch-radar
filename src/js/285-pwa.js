@@ -39,11 +39,11 @@ async function pushSyncNow(){
     if(!window.Notification||Notification.permission!=="granted") return;
     const reg=PWA.reg||await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
-    if(!sub){ if(!Object.keys(REM).length) return;
+    if(!sub){ if(!Object.keys(REM).length && !SUBS.length) return;
       const k=Uint8Array.from(atob(CONFIG.vapidPublic.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
       sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k}); }
     const rem={}; for(const id in REM){ const r=REM[id]; rem[id]={net:r.net,name:r.name,kind:r.kind,txt:r.txt}; }
-    const body=JSON.stringify({sub:sub.toJSON(),rem}); if(body===pushLast) return;
+    const body=JSON.stringify({sub:sub.toJSON(),rem,rules:SUBS,off:Object.keys(REMOFF)}); if(body===pushLast) return;
     const r=await fetch(CONFIG.worker+"/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body});
     if(r.ok){ pushLast=body; PWA.push=true; }
   }catch(e){ console.warn("Push:",e); PWA.push=false; }

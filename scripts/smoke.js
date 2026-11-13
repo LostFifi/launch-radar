@@ -53,6 +53,19 @@ async function launchBrowser() {
         openDB(); await wait(200); out.db = document.querySelectorAll('#panel table.db tr').length;
         document.getElementById('globeBtn').click(); await wait(300); out.globe = G.on; document.getElementById('globeBtn').click();
         document.getElementById('layerBtn').click(); await wait(100); out.layers = document.querySelectorAll('#layers input').length;
+        // Mond/Mars (künstliche Starts) und Rückblick mit gespeicherter Messung
+        const base = JSON.parse(JSON.stringify(launches.find(x => /falcon 9/i.test(x.rocket?.configuration?.name || '')) || launches[0]));
+        const moon = { ...base, id: 'test-moon', name: 'Falcon 9 | IM-3 Lunar Lander', net: new Date(Date.now() - 2 * 864e5).toISOString(), status: { abbrev: 'Success', name: 'Launch Successful' }, mission: { ...base.mission, name: 'IM-3', orbit: { abbrev: 'TLI', name: 'Trans Lunar Injection' }, description: 'Lunar lander' } };
+        const mars = { ...base, id: 'test-mars', name: 'Falcon Heavy | Mars Orbiter', net: new Date(Date.now() + 5 * 864e5).toISOString(), mission: { ...base.mission, orbit: { abbrev: 'HCO', name: 'Heliocentric' }, description: 'Mars orbiter transfer' } };
+        TELEST['test-moon'] = { at: Date.now(), s2: [[60, 10, 1500], [150, 68, 8100], [300, 150, 14500]], s1: [[60, 10, 1500], [150, 66, 8000]] };
+        select(moon); await wait(150);
+        out.moon = !!document.querySelector('#panel svg[aria-label="Reise zum Mond"]');
+        out.review = /Rückblick/i.test(document.getElementById('panel').innerText) && /Deine Messung/i.test(document.getElementById('panel').innerText);
+        select(mars); await wait(150); out.mars = !!document.querySelector('#panel svg[aria-label="Reise zum Mars"]');
+        // Abo: Filter abonnieren → passende Starts bekommen Erinnerung
+        const nREM = Object.keys(REM).length; filter = 'spacex'; FILT = { q: '', prov: '', cty: '' }; window.confirm = () => true;
+        subscribeFilter(); const nAuto = Object.values(REM).filter(r => r.auto).length;
+        SUBS = []; saveSubs(); filter = 'all'; render(); out.subs = nAuto > 0 && Object.values(REM).filter(r => r.auto).length === 0; out.subsInfo = `${nAuto} Auto-Erinnerungen, danach entfernt`;
         HOME = { lat: 47.39, lon: 8.04 }; openPasses(); await wait(3000);
         out.passes = document.querySelectorAll('#panel .pass').length + ' Überflüge';
         const v = launchView(l, estimateProfile(l)); out.view = !!(v && v.verdict);
@@ -70,6 +83,10 @@ async function launchBrowser() {
       check(`[${vp.name}] Ebenen-Menü`, r.layers > 5);
       check(`[${vp.name}] ISS-Überflüge`, /\d/.test(r.passes), r.passes);
       check(`[${vp.name}] Start-Sichtbarkeit vom Standort`, r.view);
+      check(`[${vp.name}] Reise zum Mond`, r.moon);
+      check(`[${vp.name}] Reise zum Mars`, r.mars);
+      check(`[${vp.name}] Rückblick mit eigener Messung`, r.review);
+      check(`[${vp.name}] Abo anlegen/entfernen`, r.subs, r.subsInfo);
       const wide = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       check(`[${vp.name}] kein seitliches Scrollen`, wide <= 1, wide > 1 ? `${wide}px zu breit` : '');
       await ctx.close();

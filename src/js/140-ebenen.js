@@ -27,7 +27,7 @@ function buildLayerMenu(){
     +row("fresh","Neueste Starts hervorheben","#ff4fd8")
     +`<h4>Mein Standort</h4>${row("home","Standort & ISS-Sichtkreis","#ffd25a")}
       <button class="chip ic" style="margin:4px 0 2px" onclick="document.getElementById('layers').style.display='none';openPasses()">${ICON.eye} ISS-Überflüge bei mir</button>`
-    +pwaMenuHtml();
+    +subsMenuHtml()+pwaMenuHtml();
   el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }

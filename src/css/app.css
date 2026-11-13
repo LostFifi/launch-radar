@@ -45,6 +45,8 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;
 .chip.filt{position:relative} .chip.filt::after{content:"";position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--tbd);box-shadow:0 0 0 2px var(--bg)}
 .lfilt select{background:#0b0f17;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;max-width:48%}
 .lfilt input[type=search]{flex-basis:100%}
+.subrow{display:flex;align-items:center;gap:8px;padding:4px 0} .subrow span{flex:1}
+.subrow .x{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;line-height:1}
 .pill.shift{background:#4d3a1f;color:#f5b041}
 #live.warn{background:#2a220f;border-color:var(--tbd)}
 .warnbox{background:#2a220f;border:1px solid var(--tbd);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}

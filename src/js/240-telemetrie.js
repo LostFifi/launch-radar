@@ -111,6 +111,7 @@ function teleParse(k,text){
   S.rate=L?(al-L.h)/((now-L.t)/1000):null;
   S.last={t:now,v:sp,h:al}; S.v=sp; S.h=al; S.ok++;
   S.hist.push([teleT(now),al,sp]); if(S.hist.length>1800) S.hist.shift();
+  teleSave(false);
   if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(selected.net))/1000); if(s) s.value=ts; placeRocket(ts); }
 }
 // Zeitachse: T+ Sekunden ab Startzeit (falls ein Start gewählt und schon gestartet), sonst Sekunden seit Messbeginn
@@ -164,8 +165,20 @@ function teleCSV(){
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(";")).join("\n")],{type:"text/csv"}));
   a.download="telemetrie-"+((selected?.name||"start").split("|").pop().trim().replace(/[^\w-]+/g,"_"))+".csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
+// Messwerte pro Start im Browser speichern (für den Start-Rückblick); höchstens alle 10 s, die letzten 8 Starts
+var TELEST={}; try{ TELEST=JSON.parse(localStorage.getItem("lr_tele")||"{}"); }catch(e){}
+let teleSavedAt=0;
+function teleSave(force){
+  if(!selected || TELE.t0!=null) return;                       // nur mit echter T+-Zeitachse eines gewählten Starts
+  if(!force && Date.now()-teleSavedAt<10e3) return; teleSavedAt=Date.now();
+  const thin=h=>{ const st=Math.max(1,Math.ceil(h.length/400)); return h.filter((_,i)=>i%st===0).map(q=>[Math.round(q[0]),q[1],q[2]]); };
+  const s1=thin(TELE.S.s1.hist), s2=thin(TELE.S.s2.hist); if(!s1.length&&!s2.length) return;
+  TELEST[selected.id]={at:Date.now(),name:selected.name,s1,s2};
+  const ids=Object.keys(TELEST).sort((a,b)=>TELEST[b].at-TELEST[a].at); ids.slice(8).forEach(id=>delete TELEST[id]);
+  try{ localStorage.setItem("lr_tele",JSON.stringify(TELEST)); }catch(e){}
+}
 // Teilen beendet: Aufnahme stoppen, Diagramme bleiben sichtbar (× schliesst ganz)
-function teleEnd(){
+function teleEnd(){ teleSave(true);
   if(TELE.timer) clearInterval(TELE.timer); TELE.timer=null;
   try{ TELE.stream?.getTracks().forEach(t=>t.stop()); }catch(e){}
   try{ TELE.worker?.terminate(); }catch(e){} TELE.worker=null;

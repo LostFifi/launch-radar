@@ -76,15 +76,18 @@ function countryOf(l){
   const c=l.pad?.country?.name||(l.pad?.location?.name||"").split(",").pop().trim();
   return CTY_DE[c]||c||"?"; }
 function provOf(l){ return l.launch_service_provider?.name||"?"; }
-function matchFilter(l){
+// Regel = {chip:"spacex"|"starship"|"", prov, cty, q} – dieselbe Logik für Filter UND Abos (auch im Worker nachgebaut!)
+function matchRule(f,l){
   const p=provOf(l).toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
-  if(filter==="spacex" && !p.includes("spacex")) return false;
-  if(filter==="starship" && !r.includes("starship")) return false;
-  if(FILT.prov && provOf(l)!==FILT.prov) return false;
-  if(FILT.cty && countryOf(l)!==FILT.cty) return false;
-  if(FILT.q){ const hay=[l.name,r,p,l.pad?.name,l.pad?.location?.name,l.mission?.name,l.mission?.orbit?.name,l.mission?.type].join(" ").toLowerCase();
-    if(!FILT.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false; }
+  if(f.chip==="spacex" && !p.includes("spacex")) return false;
+  if(f.chip==="starship" && !r.includes("starship")) return false;
+  if(f.prov && provOf(l)!==f.prov) return false;
+  if(f.cty && countryOf(l)!==f.cty) return false;
+  if(f.q){ const hay=[l.name,r,p,l.pad?.name,l.pad?.location?.name,l.mission?.name,l.mission?.orbit?.name,l.mission?.type].join(" ").toLowerCase();
+    if(!f.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false; }
   return true;
 }
+function currentRule(){ return {chip:filter==="all"?"":filter, prov:FILT.prov, cty:FILT.cty, q:FILT.q}; }
+function matchFilter(l){ return matchRule(currentRule(),l); }
 function filterActive(){ return !!(FILT.q||FILT.prov||FILT.cty); }
 function visible(){ return launches.filter(matchFilter); }
