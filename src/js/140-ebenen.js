@@ -8,8 +8,15 @@ const SAT_SRC={
   weather:{label:"Wettersatelliten",color:"#ffd25a",size:2.6,celestrak:"weather"}};
 const SATS={}; let selSat=null;
 const satLayer=L.layerGroup().addTo(map);
-const satcv=document.createElement("canvas"); satcv.id="satcv"; map.getContainer().appendChild(satcv);
+// Zeichenfläche liegt in einer Leaflet-Ebene (bewegt sich beim Verschieben mit und macht die Zoom-Animation mit,
+// statt am Ende zu springen) – gleiches Prinzip wie Leaflets eigener Canvas-Renderer.
+map.createPane("sats"); map.getPane("sats").style.zIndex=450; map.getPane("sats").style.pointerEvents="none";
+const satcv=L.DomUtil.create("canvas","leaflet-zoom-animated",map.getPane("sats")); satcv.id="satcv";
 const sx=satcv.getContext("2d");
+let satView=null;   // Kartenausschnitt beim letzten Zeichnen (für die Zoom-Animation)
+map.on("zoomanim",e=>{ if(!satView) return;
+  const sc=map.getZoomScale(e.zoom,satView.zoom), off=map._latLngBoundsToNewLayerBounds(satView.bounds,e.zoom,e.center).min;
+  L.DomUtil.setTransform(satcv,off,sc); });
 
 function buildLayerMenu(){
   const el=document.getElementById("layers");
@@ -73,8 +80,11 @@ setInterval(()=>propAll(false),250);
 
 // ---------- Zeichnen auf der 2D-Karte ----------
 function drawSatMap(){
+  if(map._animatingZoom) return;                       // während der Zoom-Animation übernimmt die CSS-Transformation
   const sz=map.getSize(), r=devicePixelRatio||1;
-  if(satcv.width!==sz.x*r||satcv.height!==sz.y*r){ satcv.width=sz.x*r; satcv.height=sz.y*r; satcv.style.width=sz.x+"px"; satcv.style.height=sz.y+"px"; }
+  if(satcv.width!==Math.round(sz.x*r)||satcv.height!==Math.round(sz.y*r)){ satcv.width=Math.round(sz.x*r); satcv.height=Math.round(sz.y*r); satcv.style.width=sz.x+"px"; satcv.style.height=sz.y+"px"; }
+  L.DomUtil.setTransform(satcv,map.containerPointToLayerPoint([0,0]),1);   // Fläche deckt genau den sichtbaren Ausschnitt
+  satView={bounds:map.getBounds(),zoom:map.getZoom()};
   sx.setTransform(r,0,0,r,0,0); sx.clearRect(0,0,sz.x,sz.y);
   if(G.on) return;
   for(const g of ["starlink","gnss","weather","stations"]){
@@ -94,7 +104,7 @@ function satIcon(c,x,y,s){ const big=/ISS \(ZARYA\)|TIANHE|CSS/.test(s.name);
   c.fillStyle="#fff"; c.fillRect(x-4,y-0.8,8,1.6); c.fillRect(x-2.5,y-2.5,5,5);      // Körper
   c.restore(); c.textAlign="center"; c.textBaseline="middle";
   if(big){ c.font="bold 11px sans-serif"; c.fillStyle="#fff"; c.fillText(/ISS/.test(s.name)?"ISS":"Tiangong",x,y+16); c.fillStyle=SAT_SRC.stations.color; } }
-map.on("move zoom resize viewreset",drawSatMap);
+map.on("move zoomend moveend resize viewreset",drawSatMap);
 map.on("click",e=>{ const hit=nearestSat(map.latLngToContainerPoint(e.latlng)); if(hit) selectSat(hit.s,hit.g); });
 function nearestSat(pt){ let best=null,bd=1e9;
   for(const g in SAT_SRC){ if(!LAYERS[g]||!SATS[g]) continue; const lim=g==="stations"?22:10;

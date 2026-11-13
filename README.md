@@ -48,7 +48,7 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 ## Funktionen
 
 **Karte & Globus**
-- Leaflet-Karte (Esri Dark Gray online, eingebettete Weltkarte offline) und eigener 3D-Globus (d3-geo orthographisch, drehen/zoomen/antippen)
+- Leaflet-Karte: Esri Dark Gray (Retina-Kacheln auf hochauflösenden Bildschirmen) + Beschriftungs-Ebene darüber; eingebettete Weltkarte liegt darunter und ist nur offline sichtbar. Satelliten-Zeichenfläche liegt in einer Leaflet-Ebene und macht die Zoom-Animation mit (CARTO bräuchte inzwischen einen API-Schlüssel) und eigener 3D-Globus (d3-geo orthographisch, drehen/zoomen/antippen)
 - Startplätze mit Status-Farbe (grün Go, gelb TBD, rot Live/Fehlstart), Gruppierung pro Startplatz
 - Filter Alle / SpaceX / Starship, Liste (Kommende/Vergangene), Countdown zum nächsten Start
 - Tag/Nacht-Grenze, Zeitraffer-Leiste (1×–3600×) für Satelliten und Tag/Nacht
