@@ -112,14 +112,18 @@ function select(l){
     simTimer=setInterval(()=>{ let v=+s.value+playSpeed*0.05; if(v>est.tMax) v=0; s.value=v; placeRocket(v); },50);
   };
   // echter Flug läuft?
-  const tSince=(Date.now()-new Date(l.net))/1000;
-  if(tSince>0 && tSince<est.tMax && !failed){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
+  // nur mitfliegen, wenn der Start bestätigt ist (oder kurz nach T-0 mit frischen Daten); sonst ist er evtl. verschoben
+  const tSince=(Date.now()-new Date(l.net))/1000, lst=launchState(l);
+  if(tSince>0 && tSince<est.tMax && !failed && lst!=="unconfirmed"){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
   else placeRocket(0);
+  if(lst==="unconfirmed" && tSince>0 && tSince<6*3600){
+    document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.</div>`); }
+  else if(lst==="likely") document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox">Start vermutlich erfolgt, aber noch nicht bestätigt (${esc(dataInfo())}).</div>`);
 }
 
 function liveFollow(l,est){
   simTimer=setInterval(()=>{
-    const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax) return stopSim();
+    const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();
     const s=document.getElementById("sim"); if(s) s.value=t; placeRocket(t);
   },1000);
 }

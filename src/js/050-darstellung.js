@@ -44,7 +44,7 @@ function render(){
       .bindTooltip(`<b>${esc(s.name)}</b>${s.pads.length>1?` <span class="mute">· ${s.pads.length} Startkomplexe</span>`:""}<br>Nächster: ${esc(l.name)}<br><small>${fmtDate(l.net)}</small>`)
       .on("click",()=>openGroup(list));
   });
-  updateNext();
+  updateNext(); livePoll(false);   // Live-Banner sofort nach dem Laden (fragt höchstens alle 5 Min nach)
 }
 // Liste eines Startorts mit Unterkapiteln je Startkomplex (aufklappbar)
 function showSite(s){
@@ -59,8 +59,9 @@ function updateNext(){
   const v=visible().filter(l=>new Date(l.net)>Date.now()-3600e3).sort((a,b)=>new Date(a.net)-new Date(b.net));
   const n=v[0]; const el=document.getElementById("next");
   if(!n){el.textContent="Keine Starts";return;}
-  el.innerHTML=`Nächster: <b>${esc(n.name.split("|")[1]||n.name)}</b> · ${countdown(n.net)}`;
+  el.innerHTML=`Nächster: <b>${esc(n.name.split("|")[1]||n.name)}</b> · ${launchState(n)==="unconfirmed"?'<span style="color:var(--tbd)">Startzeit vorbei, nicht bestätigt</span>':countdown(n.net)}`;
   el.onclick=()=>select(n);
+  layoutTop();   // Kopfzeile kann zweizeilig werden → Banner darunter neu ausrichten
 }
 
 // groups (optional): Unterkapitel [{title,full,loc,n,live}] – list ist dann in dieser Reihenfolge sortiert

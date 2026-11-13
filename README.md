@@ -106,6 +106,8 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 
 ## Bekannte Grenzen
 
+- **API-Limit:** Bei Sperre (429) nutzt die App zuerst ihren eigenen Cache der echten API (bis 12 h), erst dann den dev-Server. Der dev-Server ist eine Testkopie und oft Tage alt – Verschiebungen fehlen dort. Quelle und Stand stehen im Live-Banner (`dataInfo()`).
+- **Start nicht bestätigt:** Nach T-0 fliegt die Rakete nur mit, wenn der Status „In Flight“/„Success“ ist (oder kurz nach T-0 mit frischen echten Daten „Go“). Sonst gelbes Banner „Start nicht bestätigt – evtl. verschoben“ (`launchState()`).
 - Flugbahnen sind **Schätzungen** (keine öffentliche Echtzeit-Position während des Aufstiegs). FlightClub.io ist präziser.
 - Telemetrie nur am Computer (Chrome/Edge), Browser verlangt jedes Mal eine Bestätigung zum Teilen; X-Streams nicht einbettbar.
 - Erinnerungen sind nur bei offener App zuverlässig; im Hintergrund (installierte App, Chrome/Edge) entscheidet der Browser, wann geprüft wird. Keine echten Push-Nachrichten (bräuchte einen Server).
