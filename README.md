@@ -134,7 +134,7 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 
 1. ~~Auf GitHub Pages veröffentlichen~~ – erledigt: https://lostfifi.github.io/launch-radar/
 2. ~~`template.html` in Module aufteilen, Build mit esbuild~~ – erledigt (`src/js/`)
-3. ~~PWA~~ – erledigt (installierbar, offline, Benachrichtigungen, Hintergrund-Prüfung). **Cloudflare Worker** (`worker/`) für Daten ohne API-Limit + echte Push-Nachrichten ist fertig programmiert und getestet (`cd worker && node test.js`) – muss nur noch mit eigenem Cloudflare-Konto eingerichtet werden: `worker/README.md`, danach `src/config.json` ausfüllen
+3. ~~PWA~~ – erledigt (installierbar, offline, Benachrichtigungen, Hintergrund-Prüfung). **Cloudflare Worker** läuft: https://launch-radar.lostfifi.workers.dev (`/launches`, `/status`). Daten ohne API-Limit für alle Nutzer + echte Push-Nachrichten. Bei Sperre der Launch Library wartet er die Sperrzeit ab und nutzt solange den GitHub-Schnappschuss (`dist/data/upcoming.json`). Änderungen am Worker: `cd worker && node test.js && npx wrangler@3 deploy`
 4. ~~Bessere Bahnen: Startazimut, Aufstiegskurven je Rakete~~ – erledigt mit eigenem Modell (FlightClub hat keine freie API). Weiter möglich: Dogleg-Manöver, Profile für Long March / H3 / New Glenn
 5. ~~Satelliten-Überflüge für den eigenen Standort~~ – erledigt (Ebenen-Menü → „ISS-Überflüge bei mir“)
 6. ~~Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit~~ – erledigt
