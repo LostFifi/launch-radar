@@ -1,0 +1,16 @@
+# Cloudflare Worker für LaunchRadar – Anleitung: worker/README.md
+name = "launch-radar"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# alle 5 Minuten: Starts neu laden + Erinnerungen prüfen
+[triggers]
+crons = ["*/5 * * * *"]
+
+# KV-Speicher: ID nach "npx wrangler kv namespace create LR" hier eintragen
+[[kv_namespaces]]
+binding = "LR"
+id = "HIER_KV_ID_EINTRAGEN"
+
+[vars]
+ALLOW_ORIGIN = "https://lostfifi.github.io"

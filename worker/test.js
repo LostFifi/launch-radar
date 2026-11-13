@@ -1,0 +1,47 @@
+// Offline-Test des Workers ohne Cloudflare-Konto: simuliert KV und fetch.
+//   cd worker && node test.js
+import worker, { vapidJwt } from "./src/index.js";
+import { generateKeyPairSync, createPublicKey, verify } from "node:crypto";
+
+let ok = 0, bad = 0; const check = (n, c, i = "") => { console.log(`${c ? "✓" : "✗"} ${n}${i ? " – " + i : ""}`); c ? ok++ : bad++; };
+
+// Schlüssel wie scripts/vapid.js
+const { privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+const jwk = privateKey.export({ format: "jwk" });
+const pub = Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x, "base64url"), Buffer.from(jwk.y, "base64url")]).toString("base64url");
+const store = new Map();
+const env = { VAPID_PUBLIC: pub, VAPID_PRIVATE_JWK: JSON.stringify(jwk), ALLOW_ORIGIN: "https://lostfifi.github.io",
+  LR: { async get(k, t) { const v = store.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; },
+        async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); },
+        async list({ prefix }) { return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; } } };
+
+// 1) VAPID-JWT ist gültig signiert (ES256)
+const jwt = await vapidJwt("https://fcm.googleapis.com", env), [h, p, s] = jwt.split(".");
+const pk = createPublicKey({ key: { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y }, format: "jwk" });
+check("VAPID-Signatur gültig", verify("sha256", Buffer.from(h + "." + p), { key: pk, dsaEncoding: "ieee-p1363" }, Buffer.from(s, "base64url")));
+check("JWT-Inhalt", JSON.parse(Buffer.from(p, "base64url")).aud === "https://fcm.googleapis.com");
+
+// 2) fetch simulieren: Launch Library liefert einen Start in 8 Minuten, Push-Dienst nimmt an
+const soon = new Date(Date.now() + 8 * 60e3).toISOString(), pushes = [];
+globalThis.fetch = async (url, o = {}) => {
+  url = String(url);
+  if (url.includes("thespacedevs")) return new Response(JSON.stringify({ results: [{ id: "abc", name: "Falcon 9 | Test", net: soon }] }));
+  if (url.startsWith("https://push.example")) { pushes.push(o.headers.Authorization); return new Response(null, { status: 201 }); }
+  return new Response("?", { status: 404 });
+};
+const call = (path, init) => worker.fetch(new Request("https://w.example" + path, { headers: { origin: "https://lostfifi.github.io" }, ...init }), env, {});
+
+let r = await call("/launches"); let j = await r.json();
+check("/launches lädt und speichert", r.status === 200 && j.results.length === 1);
+check("CORS für GitHub Pages", r.headers.get("access-control-allow-origin") === "https://lostfifi.github.io");
+r = await call("/push/subscribe", { method: "POST", body: JSON.stringify({ sub: { endpoint: "https://push.example/abc", keys: {} }, rem: { abc: { net: "2020-01-01T00:00:00Z", name: "Falcon 9 | Test" } } }) });
+check("/push/subscribe", r.status === 200);
+await worker.scheduled({ scheduledTime: Date.now() }, env, {});
+check("Push gesendet (Verschiebung + 10-Min-Erinnerung)", pushes.length === 1 && pushes[0].startsWith("vapid t="));
+r = await call("/push/pending?e=" + encodeURIComponent("https://push.example/abc")); j = await r.json();
+check("/push/pending liefert die Texte", j.length === 2, j.map(m => m.body).join(" | "));
+j = await (await call("/push/pending?e=" + encodeURIComponent("https://push.example/abc"))).json();
+check("Meldungen nur einmal", j.length === 0);
+await worker.scheduled({ scheduledTime: Date.now() }, env, {});
+check("kein doppelter Push", pushes.length === 1);
+console.log(bad ? `\n${bad} Fehler` : "\nAlles in Ordnung"); process.exit(bad ? 1 : 0);

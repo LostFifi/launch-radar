@@ -28,6 +28,25 @@ async function syncRem(){
     if(r){ const sw=await r.json(); for(const id in sw) if(REM[id] && sw[id].fired && sw[id].net===REM[id].net) REM[id].fired=true; }
     await c.put("rem.json",new Response(JSON.stringify(REM),{headers:{"content-type":"application/json"}}));
   }catch(e){}
+  pushSync();
+}
+// ---------- Echte Push-Nachrichten über den eigenen Worker (nur wenn src/config.json ausgefüllt ist) ----------
+const PUSH_OK=()=>!!(CONFIG.worker && CONFIG.vapidPublic && PWA_OK && "PushManager" in window);
+let pushLast="", pushTimer=null;
+function pushSync(){ if(!PUSH_OK()) return; clearTimeout(pushTimer); pushTimer=setTimeout(pushSyncNow,1500); }
+async function pushSyncNow(){
+  try{
+    if(!window.Notification||Notification.permission!=="granted") return;
+    const reg=PWA.reg||await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){ if(!Object.keys(REM).length) return;
+      const k=Uint8Array.from(atob(CONFIG.vapidPublic.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k}); }
+    const rem={}; for(const id in REM){ const r=REM[id]; rem[id]={net:r.net,name:r.name,kind:r.kind,txt:r.txt}; }
+    const body=JSON.stringify({sub:sub.toJSON(),rem}); if(body===pushLast) return;
+    const r=await fetch(CONFIG.worker+"/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body});
+    if(r.ok){ pushLast=body; PWA.push=true; }
+  }catch(e){ console.warn("Push:",e); PWA.push=false; }
 }
 // Benachrichtigung anzeigen – über den Service Worker (Android verlangt das), sonst direkt
 async function notify(body,tag){
@@ -40,7 +59,7 @@ async function notify(body,tag){
 }
 async function pwaAsk(){
   try{ if(window.Notification && Notification.permission==="default") await Notification.requestPermission(); }catch(e){}
-  await pwaPeriodic(); if(document.getElementById("layers").style.display==="block") buildLayerMenu();
+  await pwaPeriodic(); pushSync(); if(document.getElementById("layers").style.display==="block") buildLayerMenu();
 }
 async function pwaTest(){ if(!await notify("Test: So sehen Start-Erinnerungen aus.","lr-test")) toast("Benachrichtigung konnte nicht angezeigt werden"); }
 function pwaMenuHtml(){
@@ -54,7 +73,9 @@ function pwaMenuHtml(){
   return `<h4>App & Benachrichtigungen</h4>${inst}
     <div class="note">Benachrichtigungen: <b style="color:var(--text)">${pl}</b></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${perm==="default"?`<button class="chip" onclick="pwaAsk()">${ICON.bell} Erlauben</button>`:""}${perm==="granted"?`<button class="chip" onclick="pwaTest()">${ICON.bell} Test senden</button>`:""}</div>
-    <div class="note">${PWA.sync==="ja"
+    <div class="note">${PUSH_OK()&&perm==="granted"
+      ?"Echte Push-Nachrichten über den LaunchRadar-Server: Erinnerungen und Verschiebungen kommen auch bei geschlossener App pünktlich."
+      :PWA.sync==="ja"
       ?"Hintergrund-Prüfung aktiv: Erinnerungen kommen auch bei geschlossener App. Den Zeitpunkt bestimmt der Browser – sie können sich verspäten."
       :"Erinnerungen kommen, solange die App offen ist (auch als Hintergrund-Tab)."+(PWA_OK&&!PWA.standalone&&!ios?" Als installierte App (Chrome/Edge) prüft sie zusätzlich im Hintergrund.":"")}</div>`;
 }

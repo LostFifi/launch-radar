@@ -3,7 +3,7 @@ var PAST=null;
 async function loadPast(){ if(PAST) return PAST; let c=null;
   try{ c=JSON.parse(localStorage.getItem("lr_past")||"null"); }catch(e){}
   if(c && Date.now()-c.ts<3600e3){ PAST=c.data; return PAST; }
-  try{ const r=await fetch("https://ll.thespacedevs.com/2.3.0/launches/previous/?mode=detailed&limit=30"); if(!r.ok) throw 0;
+  try{ const r=await fetch(CONFIG.worker?CONFIG.worker+"/previous":"https://ll.thespacedevs.com/2.3.0/launches/previous/?mode=detailed&limit=30"); if(!r.ok) throw 0;
     PAST=(await r.json()).results; try{ localStorage.setItem("lr_past",JSON.stringify({ts:Date.now(),data:PAST})); }catch(e){} }
   catch(e){ PAST=PAST_SNAP; }
   return PAST; }

@@ -87,6 +87,12 @@ async function launchBrowser() {
     await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
     const on = await page.evaluate(async () => { const t = await snapData('tle'), i = await snapData('img'); return { inline: TLE_SNAP !== null, tle: !!(t && t.starlink), img: !!(i && Object.keys(i).length) }; });
     check('[Online] Reserve-Daten ausgelagert und nachladbar', !on.inline && on.tle && on.img);
+    // Mit eingetragenem Worker: App holt die Starts dort (simulierter Worker)
+    await page.route(base + 'mockworker/launches', r => r.fulfill({ contentType: 'application/json',
+      body: JSON.stringify({ ts: Date.now(), results: [{ id: 'w1', name: 'Worker | Test', net: new Date(Date.now() + 864e5).toISOString(), status: { abbrev: 'Go', name: 'Go' },
+        pad: { id: 1, name: 'SLC-40', latitude: '28.56', longitude: '-80.58', location: { name: 'Cape Canaveral SFS, FL, USA' } }, rocket: { configuration: { name: 'Falcon 9' } } }] }) }));
+    const w = await page.evaluate(async b => { CONFIG.worker = b + 'mockworker'; localStorage.removeItem('lr_cache'); await load(); return { via: DATA.via, n: launches.length, name: launches[0].name }; }, base);
+    check('[Worker] App nutzt eingetragenen Worker', w.via === 'worker' && w.name === 'Worker | Test');
     await ctx.close();
   } catch (e) { errors.push('Test abgebrochen: ' + e.message); }
   await browser.close(); server.close();

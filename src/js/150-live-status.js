@@ -11,8 +11,11 @@ async function livePoll(force){
   liveId=l.id; liveBanner();
   if(!force && Date.now()-lastPoll<5*60e3) return;   // Free-API: max. ~12 Abfragen/Stunde
   lastPoll=Date.now();
-  try{ const r=await fetch(`https://ll.thespacedevs.com/2.3.0/launches/${l.id}/?mode=detailed`); if(!r.ok) throw r.status;
-    pollOk=Date.now(); applyLive(await r.json()); }catch(e){ pollFail=e; console.warn("Live-Abfrage fehlgeschlagen",e); liveBanner(); }
+  try{
+    let n;
+    if(CONFIG.worker){ const r=await fetch(CONFIG.worker+"/launches"); if(!r.ok) throw r.status; n=((await r.json()).results||[]).find(x=>x.id===l.id); if(!n) throw "fehlt"; }
+    else { const r=await fetch(`https://ll.thespacedevs.com/2.3.0/launches/${l.id}/?mode=detailed`); if(!r.ok) throw r.status; n=await r.json(); }
+    pollOk=Date.now(); applyLive(n); }catch(e){ pollFail=e; console.warn("Live-Abfrage fehlgeschlagen",e); liveBanner(); }
 }
 let pollOk=0, pollFail=null;
 function applyLive(n){

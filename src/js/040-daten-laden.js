@@ -11,6 +11,11 @@ async function load(){
   const real=cached && cached.src==="live";            // ältere Caches ohne Quelle gelten als unsicher
   if(real && Date.now()-cached.ts < CACHE_MIN*60e3){ launches=cached.data; Object.assign(DATA,{src:"live",ts:cached.ts,limited:false}); return render(); }
   let status=null;
+  // 1. eigener Worker (falls eingerichtet): kein API-Limit, Daten höchstens ~5 Min alt
+  if(CONFIG.worker){ try{ const r=await fetch(CONFIG.worker+"/launches"); if(!r.ok) throw new Error(r.status);
+      const v=await r.json(); if(!v.results?.length) throw new Error("leer");
+      launches=v.results; Object.assign(DATA,{src:"live",ts:v.ts||Date.now(),limited:false,via:"worker"}); saveCache(); return render();
+    }catch(e){ console.warn("Worker:",e); } }
   try{
     const r=await fetch(API); status=r.status; if(!r.ok) throw new Error(r.status);
     launches=(await r.json()).results||[]; Object.assign(DATA,{src:"live",ts:Date.now(),limited:false}); saveCache(); return render();

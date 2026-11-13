@@ -123,6 +123,8 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
      '/*WORLD*/':open(b+'data/world.json').read(),'/*SNAP*/':J(up),'/*PAST*/':J(past),'/*ROCKETS*/':J(rk),'/*STATS*/':J(STATS),
      '/*TLE*/':tle,'/*IMG*/':J(snapimg),'/*SNAPTS*/':SNAP_DATE}
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
+CONFIG=json.load(open(b+'src/config.json')); CONFIG['worker']=(CONFIG.get('worker') or '').rstrip('/')
+h=h.replace('/*CONFIG*/',J(CONFIG))
 # Zwei Varianten:
 #  dist/index.html               online (GitHub Pages): Reserve-Bahndaten + Vorschaubilder als eigene Dateien data/*.json → ~2,4 MB weniger
 #  dist/launchradar-offline.html alles eingebettet (Claude-Vorschau, als Datei öffnen, ohne Server)
@@ -141,5 +143,5 @@ os.makedirs(b+'dist/icons',exist_ok=True)
 shutil.copyfile(b+'src/pwa/manifest.webmanifest',b+'dist/manifest.webmanifest')
 for f in os.listdir(b+'src/pwa/icons'): shutil.copyfile(b+'src/pwa/icons/'+f,b+'dist/icons/'+f)
 sw=open(b+'src/pwa/sw.js').read(); ver=hashlib.md5((h+sw).encode()).hexdigest()[:10]
-open(b+'dist/sw.js','w').write(sw.replace('/*SW_VERSION*/',ver))
+open(b+'dist/sw.js','w').write(sw.replace('/*SW_VERSION*/',ver).replace('/*WORKER_URL*/',CONFIG['worker']))
 print('PWA', ver)

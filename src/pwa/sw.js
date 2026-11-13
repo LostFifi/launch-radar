@@ -64,6 +64,26 @@ async function checkReminders() {
   if (changed) await writeRem(rem);
 }
 self.addEventListener("periodicsync", e => { if (e.tag === "lr-rem") e.waitUntil(checkReminders()); });
+
+// Push vom eigenen Worker (ohne Inhalt): Meldungen dort abholen und anzeigen
+const WORKER = "/*WORKER_URL*/";
+self.addEventListener("push", e => {
+  e.waitUntil((async () => {
+    let msgs = [];
+    try {
+      const sub = await self.registration.pushManager.getSubscription();
+      if (WORKER && sub) msgs = await (await fetch(WORKER + "/push/pending?e=" + encodeURIComponent(sub.endpoint))).json();
+    } catch (err) {}
+    if (!msgs.length) {            // Fallback: lokal gespeicherte Erinnerungen prüfen
+      await checkReminders();
+      const shown = await self.registration.getNotifications();
+      if (shown.length) return;
+      msgs = [{ title: "LaunchRadar", body: "Neue Meldung zu einem Start – tippen zum Öffnen", tag: "lr-push" }];
+    }
+    for (const m of msgs) await self.registration.showNotification(m.title || "LaunchRadar",
+      { body: m.body, tag: m.tag, icon: "icons/icon-192.png", badge: "icons/badge-96.png", data: { url: "./" } });
+  })());
+});
 self.addEventListener("message", e => { if (e.data && e.data.type === "check") e.waitUntil(checkReminders()); });
 
 // Klick auf die Benachrichtigung: offenes App-Fenster nach vorne holen, sonst öffnen

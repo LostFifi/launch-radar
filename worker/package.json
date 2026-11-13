@@ -1,0 +1,10 @@
+{
+  "name": "launch-radar-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx wrangler@3 dev --test-scheduled",
+    "deploy": "npx wrangler@3 deploy",
+    "test": "node test.js"
+  }
+}
