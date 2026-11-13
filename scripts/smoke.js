@@ -50,6 +50,7 @@ async function launchBrowser() {
         document.getElementById('layerBtn').click(); await wait(100); out.layers = document.querySelectorAll('#layers input').length;
         HOME = { lat: 47.39, lon: 8.04 }; openPasses(); await wait(3000);
         out.passes = document.querySelectorAll('#panel .pass').length + ' Überflüge';
+        const v = launchView(l, estimateProfile(l)); out.view = !!(v && v.verdict);
         closeP(); return out;
       });
       check(`[${vp.name}] Starts geladen`, r.launches > 0, `${r.launches} (${r.src}), ${r.sites} Startorte`);
@@ -62,6 +63,7 @@ async function launchBrowser() {
       check(`[${vp.name}] Globus`, r.globe);
       check(`[${vp.name}] Ebenen-Menü`, r.layers > 5);
       check(`[${vp.name}] ISS-Überflüge`, /\d/.test(r.passes), r.passes);
+      check(`[${vp.name}] Start-Sichtbarkeit vom Standort`, r.view);
       const wide = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       check(`[${vp.name}] kein seitliches Scrollen`, wide <= 1, wide > 1 ? `${wide}px zu breit` : '');
       await ctx.close();
