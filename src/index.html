@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launch Radar – Raketenstarts live</title>
+<style>/*LEAFLET_CSS*/</style>
+<script>/*LEAFLET_JS*/</script>
+<script>/*D3_JS*/</script>
+<script>/*SAT_JS*/</script>
+<style>/*APP_CSS*/</style>
+</head>
+<body>
+<div id="map"></div>
+<header>
+  <div class="logo" data-ic="rocket">Launch<span>Radar</span></div>
+  <button class="chip on" data-f="all">Alle</button>
+  <button class="chip" data-f="spacex">SpaceX</button>
+  <button class="chip" data-f="starship">Starship</button>
+  <button class="chip ic" id="listBtn" data-ic="list"><span class="lbl">Liste</span></button>
+  <button class="chip ic" id="globeBtn" data-ic="globe"><span class="lbl">Globus</span></button>
+  <button class="chip ic" id="layerBtn" data-ic="layers"><span class="lbl">Ebenen</span></button>
+  <button class="chip ic" id="statBtn" data-ic="stats"><span class="lbl">Statistik</span></button>
+  <button class="chip ic" id="dbBtn" data-ic="rocket"><span class="lbl">Raketen</span></button>
+  <div class="chip" id="next">Lade Starts…</div>
+</header>
+<canvas id="globe"></canvas>
+<div id="layers"></div>
+<div id="live"></div>
+<div id="panel"></div>
+<div id="timebar"></div>
+<div id="tele"></div>
+<div id="pip"></div>
+<div id="msg"></div>
+
+<script>
+// Eingebettete Daten (werden von scripts/build.py eingesetzt)
+const WORLD = /*WORLD*/;
+const SNAPSHOT = /*SNAP*/;
+const SNAP_TS = "/*SNAPTS*/";
+const TLE_SNAP = /*TLE*/;
+const IMG_SNAP = /*IMG*/;
+const PAST_SNAP = /*PAST*/;
+const ROCKETS = /*ROCKETS*/;
+const STATS = /*STATS*/;
+const RCUT_SNAP = /*RCUT*/;
+</script>
+<script>/*APP_JS*/</script>
+</body>
+</html>

@@ -11,7 +11,7 @@ def open(f,mode='r',**k):
     return _open(f,mode,**k)
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 b=str(ROOT)+'/'
-h=open(b+'src/template.html').read()
+h=open(b+'src/index.html').read()  # App-Code kommt aus build/ (scripts/bundle.js)
 # Datum des Schnappschusses = Änderungsdatum von upcoming.json
 SNAP_DATE=datetime.datetime.fromtimestamp(os.path.getmtime(b+'data/raw/upcoming.json')).strftime('%d.%m.%Y')
 def pick(o,keys): return {k:o.get(k) for k in keys} if isinstance(o,dict) else None
@@ -109,6 +109,9 @@ print('Stats',STATS['total'],STATS['status'])
 
 tle=J({g:open(b+'data/tle/'+g+'.txt').read() for g in ['stations','starlink','gnss']})
 rd=lambda p: open(b+'node_modules/'+p).read().replace('</script','<\\/script')
+for k,f in [('/*APP_CSS*/','build/app.css'),('/*APP_JS*/','build/app.js')]:
+    if not os.path.exists(b+f): raise SystemExit(f+' fehlt – zuerst "npm run build" (bündelt src/js) ausführen')
+    h=h.replace(k,open(b+f).read())
 rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
      '/*LEAFLET_JS*/':rd('leaflet/dist/leaflet.js'),
      '/*D3_JS*/':rd('d3-array/dist/d3-array.min.js')+"\n"+rd('d3-geo/dist/d3-geo.min.js'),

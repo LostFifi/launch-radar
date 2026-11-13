@@ -10,7 +10,8 @@ Die fertige App ist **eine einzige HTML-Datei** (`dist/index.html`, ~3,5 MB) –
 
 ```bash
 npm install          # Bibliotheken (Leaflet, d3-geo, satellite.js, Weltkarte)
-npm run build        # src/template.html + data/ → dist/index.html
+npm run build        # src/ + data/ → dist/index.html
+npm run watch        # beim Entwickeln: baut bei jeder Änderung in src/ automatisch neu
 npm run serve        # http://localhost:8000  (Webserver nötig, sonst blockt YouTube)
 npm run fetch        # optional: neuen Daten-Schnappschuss laden (~12 API-Abfragen!)
 ```
@@ -21,8 +22,13 @@ Python 3 (+ Pillow) und Node.js werden gebraucht.
 
 | Pfad | Inhalt |
 |---|---|
-| `src/template.html` | **Der eigentliche Quellcode** (HTML, CSS, JS in einer Datei) mit Platzhaltern wie `/*LEAFLET_JS*/`, `/*SNAP*/` |
-| `scripts/build.py` | Ersetzt die Platzhalter: Bibliotheken, Schnappschuss-Daten, Vorschaubilder → `dist/index.html` |
+| `src/index.html` | HTML-Gerüst mit Platzhaltern wie `/*APP_JS*/`, `/*LEAFLET_JS*/`, `/*SNAP*/` |
+| `src/css/app.css` | Gesamtes Styling |
+| `src/js/NNN-*.js` | **Der eigentliche Quellcode**, ein Abschnitt pro Datei. Werden in Namensreihenfolge zusammengefügt und teilen sich den globalen Bereich (wegen `onclick="…"` im HTML) – also **keine** `import`/`export` |
+| `scripts/bundle.js` | Fügt `src/js` + `src/css` mit esbuild zusammen (inkl. Syntaxprüfung mit Datei/Zeile) → `build/` |
+| `scripts/build.py` | Ersetzt die Platzhalter: App-Code, Bibliotheken, Schnappschuss-Daten, Vorschaubilder → `dist/index.html` |
+| `scripts/py.js` | Startet Python 3 auf Windows, macOS und Linux |
+| `.github/workflows/pages.yml` | Veröffentlicht `dist/` bei jedem Push auf GitHub Pages |
 | `scripts/fetch_data.sh` | Lädt frische Rohdaten nach `data/raw/` und `data/tle/` |
 | `scripts/make_world.js` | Erzeugt `data/world.json` (Ländergrenzen) |
 | `data/raw/` | Rohdaten von Launch Library 2: `upcoming.json`, `previous.json`, `cfg_*.json` (Raketen), `y_*.json` (Starts des Jahres) |
@@ -31,10 +37,10 @@ Python 3 (+ Pillow) und Node.js werden gebraucht.
 | `data/world.json` | Weltkarte (GeoJSON) |
 | `dist/index.html` | Fertige App (Build-Ergebnis) |
 
-### Platzhalter im Template
-`/*LEAFLET_CSS*/ /*LEAFLET_JS*/ /*D3_JS*/ /*SAT_JS*/ /*WORLD*/ /*SNAP*/ /*PAST*/ /*ROCKETS*/ /*STATS*/ /*TLE*/ /*IMG*/ /*SNAPTS*/ /*RCUT*/`
+### Platzhalter in `src/index.html`
+`/*APP_CSS*/ /*APP_JS*/ /*LEAFLET_CSS*/ /*LEAFLET_JS*/ /*D3_JS*/ /*SAT_JS*/ /*WORLD*/ /*SNAP*/ /*PAST*/ /*ROCKETS*/ /*STATS*/ /*TLE*/ /*IMG*/ /*SNAPTS*/ /*RCUT*/`
 
-### Aufbau von `template.html` (Abschnitte mit `// ===== … =====` markiert)
+### Dateien in `src/js/` (in dieser Reihenfolge)
 Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Detailfenster (`select`) · Bahn-Schätzung (`estimateProfile`, `groundTrack`, `trackPoint`) · Route zeichnen (`drawRoute`, `placeRocket`) · Ausgesetzte Nutzlasten (`payloadPlan`, `updateDeploy`) · Stufen-Karten (`stageCard`, `boosterBlock`, `shipBlock`) · 3D-Globus (d3-geo, Canvas) · Simulierte Zeit · Ebenen & Satelliten (satellite.js/SGP4) · Live-Status · Tag/Nacht · Zeitraffer · Erinnerungen · Vergangene Starts · Objekte eines Starts · Statistik · Raketen-Datenbank & Vergleich · Info-Fenster einklappen · Echte Telemetrie (OCR) · Mini-Fenster · Statistik/DB nachführen + Vollprüfung · Layout & Start.
 
 ## Funktionen
@@ -97,8 +103,8 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 
 ## Ideen / nächste Schritte
 
-1. Auf **GitHub Pages** veröffentlichen (fester Link, Livestream funktioniert, aufs Handy-Homescreen legen)
-2. `template.html` in Module aufteilen (JS-Dateien), Build mit esbuild/Vite
+1. ~~Auf GitHub Pages veröffentlichen~~ – erledigt: https://lostfifi.github.io/launch-radar/
+2. ~~`template.html` in Module aufteilen, Build mit esbuild~~ – erledigt (`src/js/`)
 3. PWA mit echten Push-Benachrichtigungen (Service Worker – geht nur gehostet)
 4. Bessere Bahnen: Startazimut aus FlightClub oder Mission-Profilen, echte Aufstiegskurven je Rakete
 5. Satelliten-Überflüge für den eigenen Standort (wann ist die ISS sichtbar)

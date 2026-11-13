@@ -4,7 +4,8 @@
   "private": true,
   "description": "LaunchRadar – Raketenstarts live verfolgen (Flightradar-Stil)",
   "scripts": {
-    "build": "node scripts/py.js scripts/build.py",
+    "build": "node scripts/bundle.js && node scripts/py.js scripts/build.py",
+    "watch": "node scripts/bundle.js --watch",
     "fetch": "bash scripts/fetch_data.sh",
     "world": "node scripts/make_world.js",
     "serve": "node scripts/py.js -m http.server 8000 --directory dist"
@@ -16,5 +17,8 @@
     "satellite.js": "5.0.0",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
   }
 }
