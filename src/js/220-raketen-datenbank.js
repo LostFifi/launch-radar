@@ -8,13 +8,13 @@ function fmtCell(r,k){ const v=rVal(r,k); if(v==null||v==="") return '<span clas
     case "n": return `<b>${esc(r.n)}</b>${r.reu?' <span title="wiederverwendbar">'+ICON.reuse+'</span>':""}`;
     case "man": return esc(v)+(r.cty?` <span class="mute">${esc(r.cty)}</span>`:"");
     case "act": return r.act?'<span class="pill" style="background:#1f4d33;color:#7be07b">aktiv</span>':'<span class="pill" style="background:#33384a;color:#aab">inaktiv</span>';
-    case "leo": case "gto": return v.toLocaleString("de-CH",{maximumFractionDigits:1});
-    case "thr": case "mass": return Math.round(v).toLocaleString("de-CH");
+    case "leo": case "gto": return v.toLocaleString(LOC,{maximumFractionDigits:1});
+    case "thr": case "mass": return Math.round(v).toLocaleString(LOC);
     case "len": return v.toFixed(1);
     case "rate": return (v*100).toFixed(0)+" %";
     case "sl": return `${r.sl}/${r.al}`;
     case "first": return String(v).slice(0,4);
-    case "cost": return v.toLocaleString("de-CH",{maximumFractionDigits:0});
+    case "cost": return v.toLocaleString(LOC,{maximumFractionDigits:0});
     default: return esc(v); } }
 function dbRows(){ const q=DB.q.toLowerCase().trim();
   const rows=ROCKETS.filter(r=>(DB.f==="all"||(DB.f==="act")===r.act)&&(!DB.flown||r.tot>0)&&(!DB.reu||r.reu)&&(!q||(r.n+" "+r.fam+" "+r.man+" "+r.mab).toLowerCase().includes(q)));
@@ -49,7 +49,7 @@ function openCompare(ids){
   const row=(lab,k,fmt,bar)=>{ const vals=rs.map(r=>rVal(r,k)), mx=Math.max(...vals.filter(v=>typeof v==="number"),0);
     return `<tr><th>${lab}</th>${rs.map((r,i)=>{ const v=vals[i]; const txt=fmt?fmt(r,v):fmtCell(r,k);
       return `<td>${txt}${bar&&typeof v==="number"&&mx>0?`<div class="mb" style="width:${(v/mx*100).toFixed(0)}%"></div>`:""}</td>`; }).join("")}</tr>`; };
-  const n=(v,d=0)=>v==null?'<span class="mute">–</span>':v.toLocaleString("de-CH",{maximumFractionDigits:d});
+  const n=(v,d=0)=>v==null?'<span class="mute">–</span>':v.toLocaleString(LOC,{maximumFractionDigits:d});
   P.innerHTML=`<div class="hd"><h2>Vergleich</h2><button class="x" onclick="closeP()">×</button></div>
    <div class="dbctl"><button class="chip" onclick="openDB()">← zurück zur Tabelle</button></div>
    <div class="tw" style="padding:0 6px 10px"><table class="cmp">

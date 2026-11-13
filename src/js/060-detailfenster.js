@@ -76,7 +76,7 @@ function select(l){
   if(failed) html+=`<div class="sec" style="background:#2a0f14"><h3>Achtung: ${esc(l.status?.name)}</h3><div>${esc(l.failreason||"Fehlstart gemeldet.")} Die wirkliche Position ist unbekannt – die Route unten ist nur der Plan.</div></div>`;
   if(l.updates?.length){
     html+=`<div class="sec"><h3>Live-Updates</h3><ul class="tl">`+
-      l.updates.slice(0,6).map(u=>`<li><span>${new Date(u.created_on).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span><span>${esc(u.comment)}</span></li>`).join("")+`</ul></div>`;
+      l.updates.slice(0,6).map(u=>`<li><span>${new Date(u.created_on).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span><span>${esc(u.comment)}</span></li>`).join("")+`</ul></div>`;
   }
   // Route-Details (Erklärungen) weiter unten
   html+=`<div class="sec"><h3>Route & Bahn</h3>

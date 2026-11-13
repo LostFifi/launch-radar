@@ -36,9 +36,11 @@ function liveBanner(){
   const info=(pollOk>DATA.ts?`Abfrage vor ${Math.round((Date.now()-pollOk)/60e3)} Min`:dataInfo())+(pollFail===429&&DATA.src!=="cache"?" · API-Limit":"");
   const late=Math.round((Date.now()-new Date(l.net))/60e3);
   B.classList.toggle("warn",st==="unconfirmed");
+  // Jeder Teil in eigenem <span> → einzeln übersetzbar (005-i18n.js)
+  const lateTxt=late>=60?`${Math.floor(late/60)} h ${late%60} Min`:`${late} Min`;
   B.innerHTML = st==="unconfirmed"
-    ? `<span style="color:var(--tbd)">●</span> <b>Start nicht bestätigt</b> · ${nm} · Status „${esc(l.status?.name||"?")}“ · Startzeit war vor ${late>=60?Math.floor(late/60)+" h "+(late%60)+" Min":late+" Min"} – evtl. verschoben${info?` · ${info}`:""}`
-    : `<span style="color:var(--live)">●</span> <b>LIVE-Modus</b> · ${nm} · ${esc(l.status?.name||"")}${st==="likely"?" (Start noch nicht bestätigt)":""} · ${countdown(l.net)}${info?` · ${info}`:""}`;
+    ? `<span style="color:var(--tbd)">●</span> <b>Start nicht bestätigt</b> · <span translate="no">${nm}</span> · <span>Status „${esc(l.status?.name||"?")}“</span> · <span>Startzeit war vor ${lateTxt}</span> – <span>evtl. verschoben</span>${info?` · <span>${esc(info)}</span>`:""}`
+    : `<span style="color:var(--live)">●</span> <b>LIVE-Modus</b> · <span translate="no">${nm} · ${esc(l.status?.name||"")}</span>${st==="likely"?" <span>(Start noch nicht bestätigt)</span>":""} · <span translate="no">${countdown(l.net)}</span>${info?` · <span>${esc(info)}</span>`:""}`;
   B.style.display="block"; B.onclick=()=>select(l);
 }
 setInterval(()=>{ livePoll(false); },20e3);

@@ -124,9 +124,9 @@ function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;
     b.textContent=off?"aus":fresh?"● gemessen":"keine Werte"; b.style.background=off?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off?"#aab":fresh?"#7be07b":"#f5b041";
-    document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString("de-CH")+" km/h":"–";
-    document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString("de-CH")+" km":"–"; }
-  document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString("de-CH")+" km":"–";
+    document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
+    document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }
+  document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString(LOC)+" km":"–";
   const r=TELE.S.s1.rate; document.getElementById("tR_s1").textContent=r!=null&&TELE.use1?(r>=0?"+":"")+r.toFixed(1)+" km/s":"–";
   const st=k=>`${TLAB[k]}: ${TELE.S[k].ok} gelesen, ${TELE.S[k].bad} verworfen${TELE.S[k].raw?` („${TELE.S[k].raw}“)`:""}`;
   document.getElementById("tStat").textContent=st("s2")+(TELE.use1?" · "+st("s1"):"");
@@ -139,13 +139,13 @@ function teleChart(id,col,title,unit){
   c.setTransform(r,0,0,r,0,0); c.fillStyle="#0f1525"; c.fillRect(0,0,W,H);
   const ser=["s2","s1"].filter(k=>k==="s2"||TELE.use1).map(k=>({k,h:TELE.S[k].hist})).filter(s=>s.h.length);
   const pad={l:42,r:8,t:16,b:16};
-  c.font="11px sans-serif"; c.fillStyle="#8a96ad"; c.textBaseline="alphabetic"; c.textAlign="left"; c.fillText(title+" ("+unit+")",pad.l,11);
-  if(!ser.length){ c.fillText("noch keine Messwerte",pad.l,H/2+8); return; }
+  c.font="11px sans-serif"; c.fillStyle="#8a96ad"; c.textBaseline="alphabetic"; c.textAlign="left"; c.fillText(i18n(title+" ("+unit+")"),pad.l,11);
+  if(!ser.length){ c.fillText(i18n("noch keine Messwerte"),pad.l,H/2+8); return; }
   const all=ser.flatMap(s=>s.h), t0=Math.min(...all.map(q=>q[0])), t1=Math.max(t0+10,...all.map(q=>q[0]));
   const ymax=niceMax(Math.max(1,...all.map(q=>q[col])));
   const X=t=>pad.l+(t-t0)/(t1-t0)*(W-pad.l-pad.r), Y=v=>H-pad.b-v/ymax*(H-pad.t-pad.b);
   c.strokeStyle="#232c3f"; c.lineWidth=1; c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right";
-  for(let i=0;i<=4;i+=2){ const v=ymax*i/4, y=Y(v); c.beginPath(); c.moveTo(pad.l,y); c.lineTo(W-pad.r,y); c.stroke(); c.fillText(v.toLocaleString("de-CH"),pad.l-4,y+3); }
+  for(let i=0;i<=4;i+=2){ const v=ymax*i/4, y=Y(v); c.beginPath(); c.moveTo(pad.l,y); c.lineTo(W-pad.r,y); c.stroke(); c.fillText(v.toLocaleString(LOC),pad.l-4,y+3); }
   c.textAlign="center"; const step=niceMax((t1-t0)/Math.max(2,Math.floor(W/90)));
   for(let t=Math.ceil(t0/step)*step;t<=t1;t+=step) c.fillText((t<0?"T−":"T+")+mmss(Math.abs(t)),X(t),H-3);
   c.textAlign="left";
@@ -153,7 +153,7 @@ function teleChart(id,col,title,unit){
   if(curTrack?.prof && selected && TELE.t0==null){ const P=curTrack.prof; c.save(); c.beginPath(); c.rect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b); c.clip();
     c.beginPath(); let first=true; for(let t=Math.max(0,t0);t<=Math.min(t1,profEnd(P));t+=Math.max(1,(t1-t0)/120)){ const q=profAt(P,t), y=Y(col===1?q.h:q.v); first?c.moveTo(X(t),y):c.lineTo(X(t),y); first=false; }
     c.setLineDash([4,4]); c.strokeStyle="#8a96ad"; c.lineWidth=1.5; c.stroke(); c.restore();
-    c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right"; c.fillText("- - Schätzung",W-pad.r,11); c.textAlign="left"; }
+    c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right"; c.fillText(i18n("- - Schätzung"),W-pad.r,11); c.textAlign="left"; }
   ser.forEach(s=>{ c.beginPath(); s.h.forEach((q,i)=>i?c.lineTo(X(q[0]),Y(q[col])):c.moveTo(X(q[0]),Y(q[col]))); c.strokeStyle=TCOL[s.k]; c.lineWidth=2; c.stroke();
     const q=s.h[s.h.length-1]; c.beginPath(); c.arc(X(q[0]),Y(q[col]),3,0,7); c.fillStyle=TCOL[s.k]; c.fill(); });
 }

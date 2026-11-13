@@ -737,6 +737,310 @@ const SNAP_AT = "2026-11-13T17:45:48Z";   // genauer Zeitpunkt des Schnappschuss
 const CONFIG = {"worker":"https://launch-radar.lostfifi.workers.dev","vapidPublic":"BGxDrlg81pGBcPUX-yRuy7kFIFzmlfGbON4D6wQ9wUPMA1X-rWzUb-tyCc0chtr-xv3Rx81Y6GNCO_LVXN0pKEo"};   // src/config.json: Worker-Adresse + VAPID-Schlüssel (leer = ohne Worker)
 </script>
 <script>
+// ---- 004-i18n-en.js ----
+// ===================== Englische Übersetzungen =====================
+// Schlüssel = deutscher Text genau so, wie er angezeigt wird. {0},{1} … = variable Teile (werden selbst wieder übersetzt).
+// Neue Texte: `node scripts/i18n-harvest.js` listet alle deutschen Texte, die in Englisch noch fehlen (npm test prüft das auch).
+var I18N_EN = {
+  // ---------- Kopfzeile, Allgemeines ----------
+  "Launch Radar – Raketenstarts live":"Launch Radar – live rocket launches",
+  "Alle":"All","Liste":"List","Globus":"Globe","Karte":"Map","Ebenen":"Layers","Statistik":"Statistics","Raketen":"Rockets",
+  "Nächster:":"Next:","Keine Starts":"No launches","Lade Starts…":"Loading launches…","Schliessen":"Close","Grösse":"Size",
+  "Ein-/ausklappen":"Collapse/expand","Teilen":"Share","löschen":"delete","ändern":"change","nein":"no","Jetzt":"Now",
+  "Zoom in":"Zoom in","Zoom out":"Zoom out","Sprache":"Language","Aktiv":"Active","Inaktiv":"Inactive","aktiv":"active","inaktiv":"inactive",
+  "Erfolg":"Success","Fehlschläge":"Failures","Fehlstarts":"Failures","Andere":"Other","Name":"Name","Status":"Status","Typ":"Type",
+  "Rakete":"Rocket","Betreiber":"Provider","Mission":"Mission","Startplatz":"Launch site","Zielbahn":"Target orbit","Bahnneigung":"Inclination",
+  "Startrichtung":"Launch azimuth","Position":"Position","Entfernung":"Distance","Bodendistanz":"Downrange","Höhe":"Altitude","Tempo":"Speed",
+  "Geschwindigkeit":"Speed","Steigrate":"Climb rate","Ergebnis":"Result","Abflug":"Departure","Ankunft":"Arrival","Standort":"Location",
+  "Satelliten":"Satellites","Starts":"Launches","Start":"Launch","gestartet":"launched","km/h":"km/h",
+  "(geschätzt)":"(estimated)","· geschätzt":"· estimated","geschätzt":"estimated","(geschätzt, inkl. Erddrehung)":"(estimated, incl. Earth's rotation)",
+  "{0} Start":"{0} launch","{0} Starts":"{0} launches","{0} von {1}":"{0} of {1}","{0}: {1} Starts":"{0}: {1} launches",
+  "{0} Tage {1} Std":"{0} days {1} h","{0} Tage":"{0} days","{0} Std":"{0} h","{0} Min":"{0} min","{0} h {1} Min":"{0} h {1} min",
+  "(vor {0} Tagen)":"({0} days ago)","(heute)":"(today)","(gestern)":"(yesterday)","({0} Tage)":"({0} days)","({0} Monate)":"({0} months)",
+  "({0} Monate, energiesparende Bahn)":"({0} months, low-energy trajectory)","({0} Tage, energiesparende Bahn)":"({0} days, low-energy trajectory)",
+  "Bild: {0}":"Image: {0}","Daten ↗":"Data ↗","Wikipedia ↗":"Wikipedia ↗",
+  // Länder, Monate, Himmelsrichtungen
+  "Frankreich (Kourou)":"France (Kourou)","Indien":"India","Kasachstan":"Kazakhstan","Neuseeland":"New Zealand","Russland":"Russia",
+  "Südkorea":"South Korea","Nordkorea":"North Korea","Norwegen":"Norway","Schweden":"Sweden","Australien":"Australia","Grossbritannien":"United Kingdom","Auf See":"At sea",
+  "Mär":"Mar","Mai":"May","Okt":"Oct","Dez":"Dec","Dez: –":"Dec: –",
+  "NO":"NE","O":"E","SO":"SE",
+  // ---------- Liste, Filter, Startorte ----------
+  "Kommende":"Upcoming","Vergangene":"Past","Kommende Starts":"Upcoming launches","Vergangene Starts":"Past launches",
+  "Suchen: Rakete, Mission, Ort …":"Search: rocket, mission, site …","Alle Betreiber":"All providers","Alle Länder":"All countries",
+  "Filter löschen":"Clear filter","Keine Starts für diesen Filter.":"No launches for this filter.",
+  "Abonnieren":"Subscribe","Alle abonnieren":"Subscribe to all","abonniert":"subscribed","Abo aktiv – entfernen im Ebenen-Menü":"Subscription active – remove in the Layers menu",
+  "Bei jedem Start dieses Filters erinnern – auch künftigen":"Remind me of every launch matching this filter – including future ones",
+  "{0} Starts auf {1} Startkomplexen":"{0} launches at {1} launch complexes","Rampe noch offen":"Pad not yet assigned",
+  "{0} · Rampe noch offen":"{0} · pad not yet assigned","Startkomplex noch nicht bekannt gegeben · {0}":"Launch complex not yet announced · {0}",
+  "{0} Startkomplexe":"{0} launch complexes","· {0} Startkomplexe":"· {0} launch complexes",
+  "verschoben {0}":"delayed {0}","vorgezogen {0}":"moved up {0}","Vorher {0}":"Previously {0}","Landung ✓":"Landing ✓","Landung ✗":"Landing ✗",
+  "Startzeit vorbei, nicht bestätigt":"Launch time passed, not confirmed",
+  // ---------- Startfenster ----------
+  "Livestream":"Livestream","▶ Im Mini-Fenster abspielen":"▶ Play in mini player",
+  "Hinweis: YouTube spielt nur ab, wenn die Seite online ist (nicht als lokale Datei).":"Note: YouTube only plays when the page is online (not as a local file).",
+  "Noch kein Stream veröffentlicht (meist ca. 1 h vor Start).":"No stream published yet (usually about 1 h before launch).",
+  "Stream nicht einbettbar (z.B. auf X) – öffne ihn direkt:":"Stream can't be embedded (e.g. on X) – open it directly:",
+  "Start (NET)":"Launch (NET)","{0} · Wetter-Go: {1}%":"{0} · weather go: {1}%",
+  "10 Min vorher erinnern":"Remind me 10 min before","Erinnerung aktiv – entfernen":"Reminder set – remove",
+  "Missionsprofil":"Mission profile","Booster (1. Stufe)":"Booster (1st stage)","Ship (2. Stufe)":"Ship (2nd stage)",
+  "Noch keine Booster-Infos veröffentlicht.":"No booster info published yet.","Auf der Karte:":"On the map:",
+  "Objekte im Orbit":"Objects in orbit","COSPAR-Kennung: {0}":"COSPAR ID: {0}","Satelliten & Stufen dieses Starts zeigen":"Show satellites & stages of this launch",
+  "Noch keine COSPAR-Kennung vergeben – Bahndaten folgen meist 1–3 Tage nach dem Start.":"No COSPAR ID assigned yet – orbital data usually follows 1–3 days after launch.",
+  "Ablauf (Timeline)":"Sequence (timeline)","Live-Updates":"Live updates","Achtung: {0}":"Warning: {0}",
+  "Fehlstart gemeldet. Die wirkliche Position ist unbekannt – die Route unten ist nur der Plan.":"Launch failure reported. The real position is unknown – the route below is only the plan.",
+  "{0} Die wirkliche Position ist unbekannt – die Route unten ist nur der Plan.":"{0} The real position is unknown – the route below is only the plan.",
+  "Route & Bahn":"Route & orbit","Blass = noch kommend, kräftig = schon geflogen. Jeder Orbit hat eine eigene Farbe.":"Faint = still to come, bold = already flown. Each orbit has its own colour.",
+  "Blass = noch kommend, kräftig = schon geflogen. Jeder Orbit hat eine eigene Farbe; die Bahn endet mit der Wasserung.":"Faint = still to come, bold = already flown. Each orbit has its own colour; the track ends with splashdown.",
+  "Hinweis: Die Route ist eine Schätzung aus Startplatz + Bahnneigung. Raketen senden keine öffentlichen Positionsdaten wie Flugzeuge (ADS-B). Während eines echten Starts folgt das Raketen-Symbol automatisch der Zeit seit dem Start.":"Note: the route is an estimate from launch site + inclination. Rockets don't broadcast public position data like aircraft (ADS-B). During a real launch the rocket icon automatically follows the time since liftoff.",
+  "Präzise Bahn bei FlightClub.io":"Precise trajectory at FlightClub.io",
+  "Rückkehr: Deorbit-Burn T+{0}, Catch in Starbase T+{1} (laut Timeline). Die Bahn ist so berechnet, dass sie dort endet (Neigung ≈ {2}°, Umlaufzeit {3} min).":"Return: deorbit burn T+{0}, catch at Starbase T+{1} (per timeline). The track is computed to end there (inclination ≈ {2}°, period {3} min).",
+  "Oberstufe:":"Upper stage:","Oberstufe verlässt mit der Nutzlast die Erdumlaufbahn.":"Upper stage leaves Earth orbit with the payload.",
+  "Oberstufe bleibt in einer hohen Umlaufbahn (Weltraumschrott).":"Upper stage stays in a high orbit (space debris).",
+  "Oberstufe bleibt vermutlich im Orbit und tritt erst nach Wochen bis Jahren wieder ein.":"Upper stage probably stays in orbit and re-enters only after weeks to years.",
+  "Oberstufe: Deorbit-Burn, dann Wiedereintritt und Verglühen über dem Ozean · Deorbit-Burn T+{0}, Wiedereintritt ca. T+{1} ({2}).":"Upper stage: deorbit burn, then re-entry and burn-up over the ocean · deorbit burn T+{0}, re-entry approx. T+{1} ({2}).",
+  "laut Timeline":"per timeline","(laut offizieller Timeline)":"(per official timeline)",
+  "Oberstufe: Wiedereintritt bei T+{0} ({1})":"Upper stage: re-entry at T+{0} ({1})",
+  "Absturzgebiet 1. Stufe (geschätzt)":"1st stage impact area (estimated)","Booster: Einweg – stürzt ins Meer (Position geschätzt)":"Booster: expendable – falls into the sea (position estimated)",
+  "Drohnenschiff: {0} (Position geschätzt)":"Drone ship: {0} (position estimated)","Drohnenschiff: {0} (Position geschätzt) ·":"Drone ship: {0} (position estimated) ·",
+  "Booster-Landung: {0}":"Booster landing: {0}","Booster-Landung: {0} ·":"Booster landing: {0} ·",
+  "Booster: Catch am Turm / Golf (geplant)":"Booster: tower catch / Gulf (planned)","Ship: Rückkehr & Catch in Starbase bei T+{0}":"Ship: return & catch at Starbase at T+{0}",
+  "Ship: Wasserung Indischer Ozean (geschätzt)":"Ship: splashdown Indian Ocean (estimated)",
+  "Booster-Landung":"Booster landing","Drohnenschiff":"Drone ship","Catch / Rückkehr":"Catch / return","Wasserung":"Splashdown","Wiedereintritt":"Re-entry","Absturzgebiet":"Impact area",
+  // Simulation
+  "▶ Flug simulieren":"▶ Simulate flight","⏸ Pause":"⏸ Pause","Kamera folgt":"Camera follows","Echte Telemetrie":"Real telemetry",
+  "Echte Werte aus dem Livestream lesen":"Read real values from the livestream","Zum Aussetzen ({0})":"Jump to deployment ({0})",
+  "geschätzt {0} km Höhe":"est. altitude {0} km","GEMESSEN {0} km Höhe":"MEASURED altitude {0} km","{0} km Bodendistanz":"{0} km downrange",
+  "{0} ausgesetzt":"{0} deployed","Oberstufe verglüht":"Upper stage burned up","Oberstufe im Wiedereintritt":"Upper stage re-entering",
+  "{0} km Bodendistanz · {1}°, {2}°":"{0} km downrange · {1}°, {2}°",
+  "Start nicht bestätigt.":"Launch not confirmed.","Start nicht bestätigt":"Launch not confirmed",
+  "Die Startzeit ist vorbei, der Status ist aber noch „{0}“ – der Start ist wahrscheinlich verschoben. {1}. Die Simulation unten zeigt nur den Plan.":"The launch time has passed but the status is still “{0}” – the launch has probably been delayed. {1}. The simulation below only shows the plan.",
+  "Start vermutlich erfolgt, aber noch nicht bestätigt ({0}).":"Launch probably happened but is not confirmed yet ({0}).",
+  // Verschiebung
+  "Verschoben":"Delayed","Vorgezogen":"Moved up","um {0}: vorher {1} → jetzt {2}":"by {0}: previously {1} → now {2}",
+  "({0}× geändert, insgesamt {1})":"(changed {0}×, total {1})","Erkannt {0}":"Detected {0}",
+  "{0}: verschoben auf {1} ({2})":"{0}: delayed to {1} ({2})","{0}: vorgezogen auf {1} ({2})":"{0}: moved up to {1} ({2})",
+  // Booster / Ship-Karten
+  "Booster {0}":"Booster {0}","Booster-Steckbrief {0}":"Booster profile {0}","Ship-Steckbrief {0}":"Ship profile {0}","Raumschiff-Steckbrief {0}":"Spacecraft profile {0}",
+  "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
+  "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
+  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space",
+  "Erstflug":"First flight","Letzter Flug":"Last flight","Höhe (m)":"Height (m)","(Gesamthöhe − Ship)":"(total height − Ship)","Durchmesser":"Diameter",
+  "{0} · {1} Flug":"{0} · flight {1}","{0}. Flug":"flight {0}","Ergebnis noch offen":"Result pending","nicht geborgen (Einweg)":"not recovered (expendable)",
+  // ---------- Rückblick ----------
+  "Rückblick":"Review","Erfolgreich":"Successful","Teilerfolg":"Partial success","Fehlstart":"Launch failure","Ursprünglich":"Originally",
+  "{0} – erreicht":"{0} – reached","▶ Aufzeichnung ansehen":"▶ Watch recording","▶ Aufzeichnung":"▶ Recording","Deine Messung":"Your measurement",
+  "Gemessen mit „Echte Telemetrie“:":"Measured with “Real telemetry”:","· gestrichelt = Schätzung":"· dashed = estimate",
+  "· gestrichelt = Schätzung · höchstes gemessenes Tempo {0} km/h, Höhe {1} km":"· dashed = estimate · highest measured speed {0} km/h, altitude {1} km",
+  "Höhe (km)":"Altitude (km)","Tempo (km/h)":"Speed (km/h)","Höhe km":"Altitude km","Tempo km/h":"Speed km/h",
+  // ---------- Aufstiegsprofile ----------
+  "Aufstieg (geschätzt)":"Ascent (estimated)","Geschätztes Aufstiegsprofil":"Estimated ascent profile",
+  "Typisches Profil {0} (keine Timeline-Zeiten zum Anpassen). Höhe und Tempo sind Schätzungen, keine Messwerte.":"Typical {0} profile (no timeline times to fit). Altitude and speed are estimates, not measurements.",
+  "Typisches Profil {0}, an die Timeline dieses Starts angepasst ({1}). Höhe und Tempo sind Schätzungen, keine Messwerte.":"Typical {0} profile, fitted to this launch's timeline ({1}). Altitude and speed are estimates, not measurements.",
+  "MECO und SECO":"MECO and SECO","typische Rakete":"generic rocket","Langer Marsch / chinesische Rakete":"Long March / Chinese rocket","Sojus-2":"Soyuz-2",
+  "MECO (Brennschluss Stufe 1)":"MECO (stage 1 cutoff)","BECO (Brennschluss Stufe 1)":"BECO (stage 1 cutoff)","SECO-1 (Brennschluss Stufe 2)":"SECO-1 (stage 2 cutoff)",
+  "Stufentrennung":"Stage separation","Zündung Stufe 2 (SES-1)":"Stage 2 ignition (SES-1)","Zündung Stufe 2":"Stage 2 ignition","Verkleidung ab":"Fairing separation",
+  "Seitenbooster aus & Trennung":"Side boosters cutoff & separation","MECO (Zentralstufe)":"MECO (core stage)","MECO Super Heavy":"MECO Super Heavy",
+  "Booster: Boostback-Burn":"Booster: boostback burn","SECO Ship":"SECO Ship","Batteriewechsel":"Battery hot-swap","Kick-Stage getrennt":"Kick stage separated",
+  "Feststoffbooster ab":"Solid boosters separate","MECO-1 Centaur (Parkbahn)":"MECO-1 Centaur (parking orbit)","Kernstufe aus":"Core stage cutoff",
+  "Stufentrennung, Vinci zündet":"Stage separation, Vinci ignition","Vinci aus (Parkbahn)":"Vinci cutoff (parking orbit)","Booster ab (Korolev-Kreuz)":"Boosters separate (Korolev cross)",
+  "Kernstufe aus, Trennung":"Core stage cutoff, separation","Oberstufe aus":"Upper stage cutoff","Oberstufe aus (Transferbahn)":"Upper stage cutoff (transfer orbit)",
+  "Verkleidung / Oberstufe zündet":"Fairing / upper stage ignition","Brennschluss Stufe 1":"Stage 1 cutoff","Brennschluss Stufe 2":"Stage 2 cutoff","Brennschluss Oberstufe":"Upper stage cutoff",
+  "Booster ab":"Boosters separate","Booster-Landung auf dem Schiff":"Booster landing on the ship","Hot-Staging":"Hot staging",
+  "{0} · {1} km · {2} km/h":"{0} · {1} km · {2} km/h",
+  // Ausgesetzte Nutzlasten
+  "Aussetzen bei T+{0}":"deployment at T+{0}","{0} · Aussetzen bei T+{1}":"{0} · deployment at T+{1}","Aussetzen T+{0} bis T+{1}":"deployment T+{0} to T+{1}","{0} · Aussetzen T+{1} bis T+{2}":"{0} · deployment T+{1} to T+{2}",
+  "Die Satelliten erscheinen einzeln hinter der Rakete. Ihr Abstand ist vergrössert dargestellt, damit man sie auf der Karte unterscheiden kann.":"The satellites appear one by one behind the rocket. Their spacing is exaggerated so they can be told apart on the map.",
+  // ---------- Reise Mond/Mars ----------
+  "Reise zum Mond":"Journey to the Moon","Reise zum Mars":"Journey to Mars","Reise zum Lagrange-Punkt L1":"Journey to Lagrange point L1","Reise zum Lagrange-Punkt L2":"Journey to Lagrange point L2",
+  "· schematisch, geschätzt":"· schematic, estimated","geplant":"planned","in der Parkbahn":"in parking orbit","unterwegs":"en route","angekommen":"arrived",
+  "{0} · Tag {1} von ~{2} · {3}":"{0} · day {1} of ~{2} · {3}","{0} · Tag {1} von ~{2}":"{0} · day {1} of ~{2}","{0} km von der Erde":"{0} km from Earth","{0} Mio. km von der Sonne":"{0} million km from the Sun",
+  "{0} · {1}":"{0} · {1}","(nach der Parkbahn)":"(after parking orbit)","Erde":"Earth","Sonne":"Sun","Sonde":"Probe","Mond jetzt":"Moon now","bei Ankunft":"at arrival",
+  "Mars bei Ankunft":"Mars at arrival","→ zur Sonne":"→ to the Sun","Mars":"Mars",
+  "Blick von oben auf die Bahnebene, Abstände nicht massstäblich zur Grösse. Transferbahn als Ellipse vereinfacht – echte Missionen fliegen Korrekturen, Vorbeiflüge oder lange Spiralen.":"Top-down view of the orbital plane; distances not to scale with sizes. Transfer simplified as an ellipse – real missions fly corrections, flybys or long spirals.",
+  // ---------- Wetter ----------
+  "Wetter am Startplatz":"Weather at the launch site","Vorhersage wird geladen …":"Loading forecast …","Wetter gut":"Weather good","Wetter unsicher":"Weather uncertain","Wetter kritisch":"Weather critical",
+  "Wind (Böen)":"Wind (gusts)","aus {0}":"from {0}","Wolken":"Clouds","Regen {0} %":"Rain {0} %","Gewitter-Energie":"Storm energy","Höhenwind (~10 km)":"Upper winds (~10 km)",
+  "{0} °C am Boden":"{0} °C on the ground","klar":"clear","leicht bewölkt":"partly cloudy","bedeckt":"overcast","Nebel":"fog","Niesel":"drizzle","Regen":"rain","Schnee":"snow",
+  "Regenschauer":"rain showers","Schneeschauer":"snow showers","Gewitter":"thunderstorm",
+  "Starke Böen ({0} km/h) – über üblichen Grenzwerten":"Strong gusts ({0} km/h) – above usual limits","Böig ({0} km/h) – nahe an Grenzwerten":"Gusty ({0} km/h) – close to limits",
+  "Gewitter vorhergesagt – Blitzregeln verbieten den Start":"Thunderstorms forecast – lightning rules prohibit launch","Gewitter möglich (CAPE {0} J/kg)":"Thunderstorms possible (CAPE {0} J/kg)",
+  "Regen wahrscheinlich ({0} %) – oft mit dicken Wolken (Cumulus-Regel)":"Rain likely ({0} %) – often with thick clouds (cumulus rule)",
+  "Dichte Bewölkung – Risiko für ausgelöste Blitze":"Dense cloud cover – risk of triggered lightning","Sehr starker Höhenwind ({0} km/h) – Scherung kann zum Abbruch führen":"Very strong upper winds ({0} km/h) – shear can cause a scrub",
+  "Vorhersage Open-Meteo für die Startstunde. Einschätzung nach eigenen Faustregeln (geschätzt) – die Grenzwerte sind je Rakete verschieden.":"Open-Meteo forecast for the launch hour. Assessment by our own rules of thumb (estimated) – limits differ per rocket.",
+  "Offizielle Prognose des Betreibers:":"Official provider forecast:","{0}% Wetter-Go":"{0}% weather go",
+  "Wettervorhersage nicht erreichbar (offline?).":"Weather forecast unavailable (offline?).","Keine Vorhersage für diese Startzeit.":"No forecast for this launch time.",
+  // ---------- Von meinem Standort ----------
+  "Von meinem Standort aus":"From my location","Sieht man den Start von dir aus?":"Can you see the launch from where you are?","Standort festlegen":"Set location",
+  "sichtbar?":"visible?","Zu sehen":"Visible","T+{0} bis T+{1}":"T+{0} to T+{1}","Höchster Punkt":"Highest point","Bei dir":"At your location",
+  "{0}° über dem Horizont im {1} (T+{2})":"{0}° above the horizon in the {1} (T+{2})","Mindestabstand: {0} km.":"Closest distance: {0} km.",
+  "Tag (Sonne {0}°)":"Day (Sun {0}°)","Dämmerung (Sonne {0}°)":"Twilight (Sun {0}°)","späte Dämmerung (Sonne {0}°)":"Late twilight (Sun {0}°)","Nacht (Sonne {0}°)":"Night (Sun {0}°)",
+  "Nicht sichtbar – die Rakete bleibt unter deinem Horizont":"Not visible – the rocket stays below your horizon",
+  "Quallen-Effekt möglich: bei dir Dämmerung, die Abgasfahne oben noch im Sonnenlicht":"Jellyfish effect possible: twilight where you are, exhaust plume still sunlit up high",
+  "Nachts sichtbar als heller, wandernder Punkt (Triebwerk)":"Visible at night as a bright moving dot (engine)","Nachts knapp über dem Horizont – nur mit freier Sicht":"At night just above the horizon – only with a clear view",
+  "Tagsüber – Rauchsäule evtl. sichtbar":"Daytime – exhaust trail may be visible","Tagsüber – in dieser Entfernung kaum zu sehen":"Daytime – hardly visible at this distance",
+  "Aus der geschätzten Bahn und Höhe berechnet – Berge, Häuser und Wolken nicht berücksichtigt. Himmelskarte: Mitte = senkrecht über dir, durchgezogen = sichtbar.":"Computed from the estimated track and altitude – mountains, buildings and clouds not considered. Sky chart: centre = straight overhead, solid = visible.",
+  "≈ {0}° ({1})":"≈ {0}° ({1})","Bahn am Himmel":"Path across the sky",
+  // ---------- Ebenen-Menü ----------
+  "Startplätze & Routen":"Launch sites & routes","Live-Status bei laufenden Starts":"Live status during launches","Erde & Zeit":"Earth & time","Tag/Nacht-Grenze":"Day/night terminator",
+  "Zeitraffer-Leiste":"Time-lapse bar","Raumstationen (ISS, Tiangong)":"Space stations (ISS, Tiangong)","Navigation (GPS, Galileo, …)":"Navigation (GPS, Galileo, …)",
+  "Wettersatelliten":"Weather satellites","Neueste Starts hervorheben":"Highlight latest launches","Mein Standort":"My location","Standort & ISS-Sichtkreis":"Location & ISS visibility circle",
+  "ISS-Überflüge bei mir":"ISS passes over me","Abos":"Subscriptions","Abo entfernen":"Remove subscription",
+  "Noch keine. In der Liste filtern (z.B. Starship oder ein Land) und „Abonnieren“ tippen – du wirst dann bei jedem passenden Start erinnert.":"None yet. Filter the list (e.g. Starship or a country) and tap “Subscribe” – you'll be reminded of every matching launch.",
+  "App & Benachrichtigungen":"App & notifications","App installieren":"Install app","Läuft als installierte App.":"Running as an installed app.",
+  "iPhone/iPad: in Safari auf Teilen → „Zum Home-Bildschirm“.":"iPhone/iPad: in Safari tap Share → “Add to Home Screen”.",
+  "Installieren: im Browser-Menü „App installieren“ oder „Zum Startbildschirm hinzufügen“.":"Install: in the browser menu choose “Install app” or “Add to Home screen”.",
+  "Benachrichtigungen:":"Notifications:","erlaubt":"allowed","noch nicht erlaubt":"not allowed yet","nicht unterstützt":"not supported",
+  "blockiert – in den Website-Einstellungen des Browsers ändern":"blocked – change in the browser's site settings","Erlauben":"Allow","Test senden":"Send test",
+  "Echte Push-Nachrichten über den LaunchRadar-Server: Erinnerungen und Verschiebungen kommen auch bei geschlossener App pünktlich.":"Real push notifications via the LaunchRadar server: reminders and delays arrive on time even when the app is closed.",
+  "Hintergrund-Prüfung aktiv: Erinnerungen kommen auch bei geschlossener App. Den Zeitpunkt bestimmt der Browser – sie können sich verspäten.":"Background check active: reminders arrive even when the app is closed. The browser decides the timing – they may be late.",
+  "Erinnerungen kommen, solange die App offen ist (auch als Hintergrund-Tab).":"Reminders arrive while the app is open (also as a background tab).",
+  "Erinnerungen kommen, solange die App offen ist (auch als Hintergrund-Tab). Als installierte App (Chrome/Edge) prüft sie zusätzlich im Hintergrund.":"Reminders arrive while the app is open (also as a background tab). Installed as an app (Chrome/Edge) it also checks in the background.",
+  "Satelliten-Daten":"Satellite data","Simulierte Zeit für Satelliten & Tag/Nacht":"Simulated time for satellites & day/night",
+  // ---------- Satelliten / Überflüge ----------
+  "Live-Position (berechnet)":"Live position (computed)","Bahn":"Orbit","NORAD-ID":"NORAD ID","Inklination":"Inclination","Umlaufzeit":"Period","Umläufe/Tag":"Orbits/day","Bahndaten-Alter":"Orbital data age",
+  "Position wird jede Sekunde aus den Bahnelementen (TLE, CelesTrak) mit dem SGP4-Modell berechnet – genau auf wenige km.":"Position is computed every second from the orbital elements (TLE, CelesTrak) with the SGP4 model – accurate to a few km.",
+  "Wann ist sie bei mir sichtbar?":"When is it visible from my location?","Hervorgehoben":"Highlighted","Tiangong":"Tiangong",
+  "Überflüge bei mir":"Passes over me","Wann fliegt die ISS (oder Tiangong) sichtbar über dich? Dafür brauche ich deinen Standort.":"When does the ISS (or Tiangong) pass visibly over you? I need your location for that.",
+  "Standort ermitteln (GPS)":"Find my location (GPS)","Auf der Karte wählen":"Pick on the map",
+  "Der Standort wird auf ~1 km gerundet und nur in diesem Browser gespeichert – er wird nirgends hingeschickt.":"Your location is rounded to ~1 km and stored only in this browser – it is never sent anywhere.",
+  "Nur sichtbare":"Visible only","Berechne Überflüge der nächsten {0} Tage …":"Computing passes for the next {0} days …",
+  "Berechnet aus Bahndaten vom {0} (SGP4). Mehr als ~3 Tage im Voraus können die Zeiten um Minuten abweichen – Station manövriert gelegentlich.":"Computed from orbital data {0} (SGP4). More than ~3 days ahead, times may be off by minutes – the station occasionally manoeuvres.",
+  "heute":"from today","{0} Tagen":"{0} days old",
+  "Sichtbar = Station von der Sonne beleuchtet, bei dir Dämmerung oder Nacht, mind. 10° hoch. Zeiten sind geschätzt.":"Visible = station lit by the Sun, twilight or night where you are, at least 10° high. Times are estimates.",
+  "Keine Überflüge in den nächsten {0} Tagen.":"No passes in the next {0} days.","Keine sichtbaren Überflüge in den nächsten {0} Tagen. Tipp: „Nur sichtbare“ ausschalten.":"No visible passes in the next {0} days. Tip: turn off “Visible only”.",
+  "max. Höhe":"max. altitude","von {0} nach {1}":"from {0} to {1}","von {0} – verschwindet im {1} im Erdschatten":"from {0} – disappears in the {1} into Earth's shadow",
+  "Tageslicht":"daylight","im Erdschatten":"in Earth's shadow","sehr gut sichtbar":"very well visible","gut sichtbar":"well visible","tief am Horizont":"low on the horizon",
+  "Auf Karte zeigen (Zeitraffer)":"Show on map (time-lapse)","10 Min vorher erinnern ":"Remind me 10 min before",
+  "Himmelskarte: Mitte = senkrecht über dir, Rand = Horizont. Durchgezogen = sichtbar. Nach Süden schauend ist Osten links.":"Sky chart: centre = straight overhead, edge = horizon. Solid = visible. Facing south, east is on the left.",
+  "Keine Bahndaten für {0} gefunden.":"No orbital data found for {0}.","{0}-Überflug":"{0} pass","{0} in {1} Min – {2}":"{0} in {1} min – {2}","von {0} nach {1}, max. {2}°":"from {0} to {1}, max. {2}°",
+  // ---------- Statistik / Datenbank ----------
+  "Raumfahrt-Statistik {0}":"Spaceflight statistics {0}","Orbitale Starts bisher":"Orbital launches so far","Erfolgsquote":"Success rate","Anteil SpaceX ({0})":"SpaceX share ({0})",
+  "Starts pro Monat":"Launches per month","Laufender Monat (blasser) noch nicht vollständig.":"Current month (fainter) not complete yet.","Nach Betreiber":"By provider",
+  "Nach Land (Startplatz)":"By country (launch site)","Nach Rakete":"By rocket","Dazu {0} weitere Starts bis Ende {1} geplant (aus der aktuellen Liste).":"Plus {0} more launches planned until the end of {1} (from the current list).",
+  "Quelle: The Space Devs (Launch Library 2) · {0}. Gezählt werden orbitale Startversuche ab 1.1.{1}.":"Source: The Space Devs (Launch Library 2) · {0}. Counting orbital launch attempts since 1 Jan {1}.",
+  "Schnappschuss vom {0} (offline)":"snapshot from {0} (offline)","vollständig geprüft {0} · nachgeführt {1}":"fully checked {0} · updated {1}","vollständig geprüft {0} · nachgeführt {1} (+{2} Starts)":"fully checked {0} · updated {1} (+{2} launches)",
+  "aktualisiert {0}":"updated {0}","aktualisiert {0} · {1} neue Starts seit Schnappschuss eingerechnet":"updated {0} · {1} new launches since snapshot included",
+  "Raketen-Datenbank":"Rocket database","{0} Raketen & Varianten · {1}":"{0} rockets & variants · {1}","Suchen: Falcon, Ariane, Long March, SpaceX …":"Search: Falcon, Ariane, Long March, SpaceX …",
+  "nur geflogene":"flown only","wiederverwendbar":"reusable","Wiederverwendbar":"Reusable","Vergleichen ({0})":"Compare ({0})","Vergleich":"Comparison","← zurück zur Tabelle":"← back to table",
+  "Bis zu 4 Raketen antippen (☑), dann „Vergleichen“. Spaltenkopf antippen = sortieren.":"Tap up to 4 rockets (☑), then “Compare”. Tap a column header = sort.",
+  "Balken = Wert im Verhältnis zum grössten der verglichenen Raketen. Quelle: The Space Devs, Stand {0}.":"Bar = value relative to the largest of the compared rockets. Source: The Space Devs, as of {0}.",
+  "Flüge ▼":"Flights ▼","Familie":"Family","Hersteller":"Manufacturer","Baureihe":"Series","Erstflug Baureihe":"Series first flight","Nutzlast LEO":"Payload LEO","Nutzlast GTO":"Payload GTO",
+  "Nutzlast SSO":"Payload SSO","LEO (t)":"LEO (t)","GTO (t)":"GTO (t)","Schub (kN)":"Thrust (kN)","Startschub":"Liftoff thrust","Masse (t)":"Mass (t)","Startmasse":"Liftoff mass",
+  "Preis (Mio $)":"Price ($M)","Preis pro Start":"Price per launch","{0} Mio $":"${0}M","Landungen in Serie":"Landings in a row","Beschreibung":"Description","Land":"Country",
+  "{0}: {1} Flüge · {2} Landungen":"{0}: {1} flights · {2} landings","Nutzlast:":"Payload:","· {0} Treffer":"· {0} results",
+  "Maximal 4 Raketen gleichzeitig vergleichen":"Compare at most 4 rockets at once","Zuerst Raketen in der Tabelle antippen":"Tap rockets in the table first","Rakete nicht in der Datenbank gefunden":"Rocket not found in the database",
+  // ---------- Objekte eines Starts ----------
+  "{0} Objekte gefunden,":"{0} objects found,","pink":"pink","markiert ·":"highlighted ·","ausblenden":"hide","Keine neuen Objekte gefunden":"No new objects found",
+  "Keine Bahndaten gefunden – noch nicht katalogisiert, oder offline (CelesTrak nicht erreichbar).":"No orbital data found – not catalogued yet, or offline (CelesTrak unreachable).",
+  "Pink: {0} Objekte der 3 neuesten Starts ({1}) – frische Starlink-Züge!":"Pink: {0} objects from the 3 latest launches ({1}) – fresh Starlink trains!",
+  // ---------- Telemetrie / Mini-Fenster ----------
+  "Öffne den Livestream (YouTube oder X) in einem":"Open the livestream (YouTube or X) in a","anderen Tab":"different tab","und lass ihn laufen.":"and let it play.",
+  "Tippe unten auf „Stream-Tab teilen“ und wähle diesen Tab aus.":"Tap “Share stream tab” below and choose that tab.",
+  "Ziehe in der Vorschau je einen Rahmen um die Anzeige von Stufe 1 und Stufe 2 (Geschwindigkeit + Höhe).":"In the preview, drag a frame around the stage 1 and stage 2 readouts (speed + altitude).",
+  "Stream-Tab teilen":"Share stream tab","Mini-Fenster verwenden (1 Klick)":"Use mini player (1 click)","Einfacher:":"Easier:",
+  "Stream im Mini-Fenster abspielen und dort „Telemetrie“ drücken – dann nur noch „Diesen Tab teilen“ bestätigen.":"Play the stream in the mini player and press “Telemetry” there – then just confirm “Share this tab”.",
+  "Funktioniert in Chrome oder Edge am Computer (Bildschirm teilen gibt es auf dem Handy nicht). Die Werte werden lokal per Texterkennung gelesen, nichts wird hochgeladen.":"Works in Chrome or Edge on a computer (screen sharing isn't available on phones). Values are read locally via text recognition, nothing is uploaded.",
+  "Stufe 1":"Stage 1","Stufe 2":"Stage 2","wartet":"waiting","aus":"off","● gemessen":"● measured","keine Werte":"no values","Rahmen für:":"Frame for:","Stufe 1 lesen":"Read stage 1",
+  "Messwerte als CSV-Datei speichern":"Save readings as CSV file","Rahmen ziehen":"Drag frame","Texterkennung wird geladen …":"Loading text recognition …",
+  "{0}: {1} gelesen, {2} verworfen":"{0}: {1} read, {2} rejected","{0}: {1} gelesen, {2} verworfen · {3}: {4} gelesen, {5} verworfen":"{0}: {1} read, {2} rejected · {3}: {4} read, {5} rejected",
+  "Messung beendet – Diagramme und CSV bleiben bis zum Schliessen erhalten.":"Measurement ended – charts and CSV remain until you close.",
+  "noch keine Messwerte":"no readings yet","- - Schätzung":"- - estimate","Höhe ({0})":"Altitude ({0})","Tempo ({0})":"Speed ({0})",
+  "Telemetrie":"Telemetry","Telemetrie automatisch aus diesem Fenster lesen":"Read telemetry automatically from this player","Schliessen ":"Close",
+  // ---------- Live-Banner, Datenstand ----------
+  "LIVE-Modus":"LIVE mode","Status „{0}“":"Status “{0}”","Startzeit war vor {0}":"Launch time was {0} ago","evtl. verschoben":"possibly delayed","(Start noch nicht bestätigt)":"(launch not confirmed yet)",
+  "Daten vor {0} Min":"Data {0} min old","Daten vor {0} Min (API-Limit)":"Data {0} min old (API limit)","Ersatzdaten, Stand {0}":"Fallback data as of {0}","Daten vom {0}":"Data from {0}",
+  "Schnappschuss {0}":"Snapshot {0}","Abfrage vor {0} Min":"Checked {0} min ago","{0} · API-Limit":"{0} · API limit","API-Limit":"API limit",
+  // ---------- Meldungen (toast) ----------
+  "API-Limit erreicht (max. ~15 Abfragen pro Stunde)":"API limit reached (max. ~15 requests per hour)","Live-API nicht erreichbar":"Live API unreachable",
+  "{0} – zeige Daten von vor {1} Min. Neuer Versuch in 15 Min.":"{0} – showing data from {1} min ago. Retrying in 15 min.",
+  "{0} – zeige Daten vom {1}. Neuer Versuch in 15 Min.":"{0} – showing data from {1}. Retrying in 15 min.",
+  "{0} – Ersatzdaten vom Test-Server, Stand {1}. Verschiebungen fehlen evtl.!":"{0} – fallback data from the test server as of {1}. Delays may be missing!",
+  "Offline – zeige zwischengespeicherte Daten":"Offline – showing cached data",
+  "Live-Daten blockiert – zeige Schnappschuss vom {0}. Im Browser (Chrome) öffnen für Live-Daten.":"Live data blocked – showing snapshot from {0}. Open in a browser (Chrome) for live data.",
+  "Link kopiert:":"Link copied:","Link zum Kopieren:":"Link to copy:","Dieser Start ist nicht mehr in der Liste":"This launch is no longer in the list",
+  "{0}: nur online verfügbar (im Browser öffnen)":"{0}: only available online (open in a browser)","{0}: Bahndaten vom {1} (Positionen trotzdem live berechnet)":"{0}: orbital data from {1} (positions still computed live)",
+  "Kein GPS verfügbar – tippe auf die Karte":"No GPS available – tap the map","Standort wird ermittelt …":"Finding your location …",
+  "Standort nicht freigegeben – tippe stattdessen auf die Karte":"Location not shared – tap the map instead","Tippe auf der Karte auf deinen Standort":"Tap your location on the map",
+  "Zeitraffer 60× ab 1 Min vor dem Überflug – „Jetzt“ in der Zeitleiste setzt zurück":"Time-lapse 60× from 1 min before the pass – “Now” in the time bar resets",
+  "Erinnerung gesetzt – 10 Min vor dem Überflug":"Reminder set – 10 min before the pass","Erinnerung gesetzt – 10 Min vor dem Start":"Reminder set – 10 min before launch",
+  "Erinnerung gesetzt – 10 Min vor dem Start (App offen lassen)":"Reminder set – 10 min before launch (keep the app open)",
+  "{0}: Status → {1}":"{0}: status → {1}","Update: {0}":"Update: {0}","Livestream ist gestartet":"Livestream has started",
+  "{0} startet in {1} Min!":"{0} launches in {1} min!",
+  "Dieses Abo gibt es schon":"This subscription already exists","Abo „{0}“ aktiv – {1} kommende Starts, neue kommen automatisch dazu":"Subscription “{0}” active – {1} upcoming launches, new ones are added automatically",
+  "Abo „{0}“ entfernt":"Subscription “{0}” removed","Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)":"No filter: really remind you of ALL launches worldwide? (about 5 per week)",
+  "Alle Starts":"All launches",
+  "Bildschirm teilen geht hier nicht – Datei in Chrome oder Edge am Computer öffnen":"Screen sharing doesn't work here – open in Chrome or Edge on a computer",
+  "Teilen abgebrochen":"Sharing cancelled","Texterkennung konnte nicht geladen werden (Internet nötig)":"Text recognition could not be loaded (internet needed)",
+  "Texterkennung konnte nicht geladen werden":"Text recognition could not be loaded","Noch keine Messwerte":"No readings yet","Geht nur in Chrome oder Edge am Computer":"Only works in Chrome or Edge on a computer",
+  "LaunchRadar ist jetzt als App installiert":"LaunchRadar is now installed as an app","Benachrichtigung konnte nicht angezeigt werden":"Notification could not be shown",
+  "Test: So sehen Start-Erinnerungen aus.":"Test: this is what launch reminders look like.","Hinweis: Fallback-Daten (dev-Server) – evtl. nicht ganz aktuell":"Note: fallback data (dev server) – may not be fully up to date",
+  "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs"
+};
+
+// ---- 005-i18n.js ----
+// ===================== Sprache (Deutsch / Englisch) =====================
+// Quelltexte sind Deutsch. Für Englisch übersetzt eine Schicht alle angezeigten Texte (Textknoten + title/placeholder/
+// aria-label) über das Wörterbuch I18N_EN (006-i18n-en.js): exakte Treffer oder Muster mit Platzhaltern {0},{1} …
+// Texte ausserhalb des Fensters (Meldungen, Benachrichtigungen, Canvas) laufen über i18n().
+// Sprache: ?lang=en|de → gespeicherte Wahl (lr_lang) → Browser-Sprache (de* = Deutsch, sonst Englisch).
+var LANG=(()=>{ const q=new URLSearchParams(location.search).get("lang"); if(q==="en"||q==="de"){ try{ localStorage.setItem("lr_lang",q); }catch(e){} return q; }
+  try{ const s=localStorage.getItem("lr_lang"); if(s==="en"||s==="de") return s; }catch(e){}
+  return /^de\b/i.test(navigator.language||"de")?"de":"en"; })();
+const LOC=LANG==="en"?"en-GB":"de-CH";
+document.documentElement.lang=LANG;
+function setLang(l){ try{ localStorage.setItem("lr_lang",l); }catch(e){} const u=new URL(location.href); u.searchParams.delete("lang"); location.href=u.toString(); }
+
+// Wörterbuch vorbereiten: exakte Einträge (Map) + Muster ({0}… → Regex)
+let I18N_MAP=null, I18N_PAT=null;
+function i18nPrep(){
+  if(I18N_MAP) return; I18N_MAP=new Map(); I18N_PAT=[];
+  const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  for(const [de,en] of Object.entries(typeof I18N_EN==="object"?I18N_EN:{})){
+    if(/\{\d\}/.test(de)){ const parts=de.split(/(\{\d\})/), order=[];
+      const rx=parts.map(p=>{ const m=p.match(/^\{(\d)\}$/); if(m){ order.push(+m[1]); return "(.+?)"; } return esc(p); }).join("");
+      I18N_PAT.push({rx:new RegExp("^"+rx+"$"),order,en}); }
+    else I18N_MAP.set(de,en); }
+  I18N_PAT.sort((a,b)=>b.rx.source.length-a.rx.source.length);   // spezifischere Muster zuerst
+}
+// Übersetzt einen ganzen Text (Leerraum aussen bleibt erhalten). Platzhalter werden selbst wieder übersetzt (z.B. „{0} Starts“).
+function i18n(s,depth){
+  if(LANG!=="en"||s==null) return s; s=String(s); i18nPrep();
+  const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/), core=m[2]; if(!core) return s;
+  let r=I18N_MAP.get(core);
+  if(r==null && !(depth>2)) for(const p of I18N_PAT){ const x=core.match(p.rx); if(x){ const v=x.slice(1); r=p.en.replace(/\{(\d)\}/g,(_,i)=>i18n(v[p.order.indexOf(+i)],(depth||0)+1)); break; } }
+  return r==null?s:m[1]+r+m[3];
+}
+// Live-Übersetzung des Fensters
+const I18N_ATTR=["title","placeholder","aria-label"];
+function i18nNode(n){
+  if(n.nodeType===3){ const v=n.nodeValue; if(v&&v.trim()){ const r=i18n(v); if(r!==v) n.nodeValue=r; } return; }
+  if(n.nodeType!==1||n.tagName==="SCRIPT"||n.tagName==="STYLE"||n.closest?.("[translate=no]")) return;
+  for(const a of I18N_ATTR){ const v=n.getAttribute&&n.getAttribute(a); if(v){ const r=i18n(v); if(r!==v) n.setAttribute(a,r); } }
+  for(const c of n.childNodes) i18nNode(c);
+}
+if(LANG==="en"){
+  const run=()=>{ i18nNode(document.body);
+    new MutationObserver(ms=>{ for(const m of ms){
+      if(m.type==="characterData") i18nNode(m.target);
+      else if(m.type==="attributes") i18nNode(m.target);
+      else m.addedNodes.forEach(i18nNode); } })
+    .observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:I18N_ATTR}); };
+  if(document.body) run(); else addEventListener("DOMContentLoaded",run);
+  document.title=i18n(document.title);
+}
+// Umschalter (im Ebenen-Menü) – Sprachnamen stehen in beiden Sprachen gleich, daher translate="no"
+function langMenuHtml(){ return `<h4>Sprache</h4><div translate="no" style="display:flex;gap:6px;margin:4px 0">
+  <button class="chip ${LANG==="de"?"on":""}" onclick="setLang('de')">Deutsch</button><button class="chip ${LANG==="en"?"on":""}" onclick="setLang('en')">English</button></div>`; }
+// Werkzeug: deutsche Texte im Fenster finden (Sammeln fürs Wörterbuch / Test auf Reste in Englisch)
+const DE_HINT=/[äöüÄÖÜß]|\b(der|die|das|und|nicht|mit|von|für|bei|noch|kein|keine|Starts?|Höhe|Bahn|geschätzt|jetzt|zeigen|Liste|Ebenen|Raketen?|erinnern|Erinnerung|Tage|Woche|Monate|Stunden?|wird|werden|ist|sind|oder|aus|nach|vor|über|unter|zum|zur|im|am|Ort|Ziel|Stufe|Wetter|Wolken|Regen|Böen|Sicht|sichtbar|Mond|Sonne|Erde|Verkleidung|Brennschluss|Abflug|Ankunft|Daten|Stand|Uhr)\b/;
+function findGerman(root){
+  const out=new Set(), w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);
+  for(let n=w.currentNode;n;n=w.nextNode()){
+    if(n.nodeType===1){ if(n.closest("[translate=no],script,style")) continue; for(const a of I18N_ATTR){ const v=n.getAttribute(a); if(v&&DE_HINT.test(v)) out.add(v.trim()); } }
+    else if(n.parentElement && !n.parentElement.closest("[translate=no],script,style")){ const v=n.nodeValue.trim(); if(v&&DE_HINT.test(v)) out.add(v); } }
+  return [...out];
+}
+
 // ---- 010-icons.js ----
 // ===================== Icons (SVG statt Emojis) =====================
 const RK_PATH="M12 1.5c2.6 2.3 4.1 5.8 4.1 9.8v4.2l2.4 2.9v2.1l-4.6-1.6h-3.8l-4.6 1.6v-2.1l2.4-2.9v-4.2c0-4 1.5-7.5 4.1-9.8z";
@@ -845,7 +1149,7 @@ async function load(){
   launches = SNAPSHOT; Object.assign(DATA,{src:"snap",ts:snapT}); render();
   toast("Live-Daten blockiert – zeige Schnappschuss vom "+SNAP_TS+". Im Browser (Chrome) öffnen für Live-Daten.");
 }
-function fmtStand(t){ return t?new Date(t).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"unbekannt"; }
+function fmtStand(t){ return t?new Date(t).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"unbekannt"; }
 // Kurzer Text, wie aktuell die Startdaten sind
 function dataInfo(){
   const m=t=>Math.max(0,Math.round((Date.now()-t)/60e3));
@@ -913,14 +1217,15 @@ function trackNet(list){
   if(ch) try{ localStorage.setItem("lr_net",JSON.stringify(NETH)); }catch(e){}
 }
 function fmtShift(ms){ const s=ms<0?"−":"+", m=Math.round(Math.abs(ms)/60e3), d=Math.floor(m/1440), h=Math.floor(m%1440/60), mi=m%60;
-  return s+(d?d+" T ":"")+(d||h?h+" h ":"")+(d?"":mi+" Min"); }
+  const D=LANG==="en"?" d ":" T ", M=LANG==="en"?" min":" Min";
+  return (s+(d?d+D:"")+(d||h?h+" h ":"")+(d?"":mi+M)).trim(); }
 // Letzte Verschiebung eines Starts (nur wenn sie in den letzten 7 Tagen erkannt wurde)
 function postponed(l){ const h=NETH[l.id]; if(!h||!h.prev||Date.now()-h.at>7*864e5) return null;
   return {prev:h.prev, net:h.net, shift:new Date(h.net)-new Date(h.prev), total:new Date(h.net)-new Date(h.first), n:h.n, at:h.at}; }
 function postponedPill(l){ const p=postponed(l); if(!p) return "";
   return `<span class="pill shift" title="Vorher ${esc(fmtDate(p.prev))}">${p.shift>0?"verschoben":"vorgezogen"} ${fmtShift(p.shift)}</span>`; }
 function postponedNote(l){ const p=postponed(l); if(!p) return "";
-  return `<div class="warnbox" style="margin-top:8px"><b>${p.shift>0?"Verschoben":"Vorgezogen"}</b> um ${fmtShift(p.shift)}: vorher ${esc(fmtDate(p.prev))} → jetzt ${esc(fmtDate(p.net))}${p.n>1?` <span class="mute">(${p.n}× geändert, insgesamt ${fmtShift(p.total)})</span>`:""}<br><span class="mute" style="font-size:12px">Erkannt ${esc(new Date(p.at).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</span></div>`; }
+  return `<div class="warnbox" style="margin-top:8px"><b>${p.shift>0?"Verschoben":"Vorgezogen"}</b> um ${fmtShift(p.shift)}: vorher ${esc(fmtDate(p.prev))} → jetzt ${esc(fmtDate(p.net))}${p.n>1?` <span class="mute">(${p.n}× geändert, insgesamt ${fmtShift(p.total)})</span>`:""}<br><span class="mute" style="font-size:12px">Erkannt ${esc(new Date(p.at).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</span></div>`; }
 // Meldung, wenn ein Start mit Erinnerung verschoben wurde
 function onPostponed(l,h){
   if(!REM[l.id]) return;
@@ -1030,10 +1335,10 @@ function launchUrl(l){ return location.origin+location.pathname+"#start="+encode
 async function shareLaunch(id){
   const l=[...launches,...(PAST||[])].find(x=>x.id===id); if(!l) return;
   const name=(l.name.split("|")[1]||l.name).trim(), url=launchUrl(l);
-  const text=`${name} – ${new Date(l.net)>Date.now()?"Start "+fmtDate(l.net):"gestartet "+fmtDate(l.net)}`;
+  const text=`${name} – ${i18n(new Date(l.net)>Date.now()?"Start":"gestartet")} ${fmtDate(l.net)}`;
   if(navigator.share){ try{ await navigator.share({title:"LaunchRadar: "+name,text,url}); return; }catch(e){ if(e.name==="AbortError") return; } }
-  try{ await navigator.clipboard.writeText(url); toast("Link kopiert: "+url); }
-  catch(e){ prompt("Link zum Kopieren:",url); }
+  try{ await navigator.clipboard.writeText(url); toast(i18n("Link kopiert:")+" "+url); }
+  catch(e){ prompt(i18n("Link zum Kopieren:"),url); }
 }
 // Beim ersten Laden: Start aus der Adresse öffnen (kommende, sonst vergangene Starts)
 var hashDone=false;
@@ -1125,7 +1430,7 @@ function select(l){
   if(failed) html+=`<div class="sec" style="background:#2a0f14"><h3>Achtung: ${esc(l.status?.name)}</h3><div>${esc(l.failreason||"Fehlstart gemeldet.")} Die wirkliche Position ist unbekannt – die Route unten ist nur der Plan.</div></div>`;
   if(l.updates?.length){
     html+=`<div class="sec"><h3>Live-Updates</h3><ul class="tl">`+
-      l.updates.slice(0,6).map(u=>`<li><span>${new Date(u.created_on).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span><span>${esc(u.comment)}</span></li>`).join("")+`</ul></div>`;
+      l.updates.slice(0,6).map(u=>`<li><span>${new Date(u.created_on).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span><span>${esc(u.comment)}</span></li>`).join("")+`</ul></div>`;
   }
   // Route-Details (Erklärungen) weiter unten
   html+=`<div class="sec"><h3>Route & Bahn</h3>
@@ -1220,11 +1525,11 @@ function reviewTele(T,est){
     const X=t=>pl+(t-t0)/Math.max(1,t1-t0)*(W-pl-pr), Y=v=>H-pb-Math.min(v,ym)/ym*(H-pt-pb);
     const line=(pts,c,dash)=>`<polyline points="${pts.map(q=>X(q[0]).toFixed(1)+","+Y(q[col]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="${dash?1.5:2}" ${dash?'stroke-dasharray="4 4"':""}/>`;
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;display:block;margin-top:6px"><g font-size="10" fill="#8a96ad">
-      <text x="${pl}" y="10">${title} (${unit})</text><text x="${pl-4}" y="${pt+4}" text-anchor="end">${ym.toLocaleString("de-CH")}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
+      <text x="${pl}" y="10">${title} (${unit})</text><text x="${pl-4}" y="${pt+4}" text-anchor="end">${ym.toLocaleString(LOC)}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
       <text x="${pl}" y="${H-4}">T+${mmss(t0)}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">T+${mmss(t1)}</text></g>
       <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${est.length?line(est,"#8a96ad",true):""}${ser.map(s=>line(s[1],s[0])).join("")}</svg>`; };
   return `<h3 style="margin-top:12px">Deine Messung</h3>
-    <div class="mute" style="font-size:12px">Gemessen mit „Echte Telemetrie“: <span style="color:#4ea1ff">Stufe 2</span>${T.s1.length?`, <span style="color:#f5a142">Stufe 1</span>`:""} · gestrichelt = Schätzung${mx(2)!=null?` · höchstes gemessenes Tempo ${mx(2).toLocaleString("de-CH")} km/h, Höhe ${mx(1)} km`:""}</div>
+    <div class="mute" style="font-size:12px">Gemessen mit „Echte Telemetrie“: <span style="color:#4ea1ff">Stufe 2</span>${T.s1.length?`, <span style="color:#f5a142">Stufe 1</span>`:""} · gestrichelt = Schätzung${mx(2)!=null?` · höchstes gemessenes Tempo ${mx(2).toLocaleString(LOC)} km/h, Höhe ${mx(1)} km`:""}</div>
     ${chart(1,"Höhe","km")}${chart(2,"Tempo","km/h")}`;
 }
 
@@ -1307,7 +1612,7 @@ function profileSvg(P){
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;height:auto;display:block" role="img" aria-label="Geschätztes Aufstiegsprofil">
     <g font-size="10" fill="#8a96ad">${ticks}
     <text x="${pl-4}" y="${pt+4}" text-anchor="end" fill="#4ea1ff">${hM}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
-    <text x="${W-pr+4}" y="${pt+4}" fill="#f5a142">${(vM/1000).toLocaleString("de-CH")}k</text>
+    <text x="${W-pr+4}" y="${pt+4}" fill="#f5a142">${(vM/1000).toLocaleString(LOC)}k</text>
     <text x="${pl+4}" y="${pt+10}" fill="#4ea1ff">Höhe km</text><text x="${W-pr-4}" y="${pt+10}" text-anchor="end" fill="#f5a142">Tempo km/h</text></g>
     <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${evs}${line(p=>Yh(p[1]),"#4ea1ff")}${line(p=>Yv(p[2]),"#f5a142")}</svg>`;
 }
@@ -1315,7 +1620,7 @@ function profileSection(l,est){
   const P=est.prof; if(!P) return "";
   const fmtV=v=>Math.round(v/100)*100;
   return `<div class="sec"><h3>Aufstieg (geschätzt)</h3>${profileSvg(P)}
-    <ul class="tl" style="margin-top:8px">${P.ev.map(e=>{ const q=profAt(P,e[0]); return `<li><span>T+${mmss(e[0])}</span><span>${esc(e[1])} <span class="mute">· ${Math.round(q.h)} km · ${fmtV(q.v).toLocaleString("de-CH")} km/h</span></span></li>`; }).join("")}</ul>
+    <ul class="tl" style="margin-top:8px">${P.ev.map(e=>{ const q=profAt(P,e[0]); return `<li><span>T+${mmss(e[0])}</span><span>${esc(e[1])} <span class="mute">· ${Math.round(q.h)} km · ${fmtV(q.v).toLocaleString(LOC)} km/h</span></span></li>`; }).join("")}</ul>
     <div class="note">Typisches Profil ${esc(P.name)}${P.fit?`, an die Timeline dieses Starts angepasst (${P.fit===2?"MECO und SECO":"MECO"})`:" (keine Timeline-Zeiten zum Anpassen)"}. Höhe und Tempo sind Schätzungen, keine Messwerte.</div></div>`;
 }
 
@@ -1365,7 +1670,7 @@ function deepSvg(l,est,D){
     g+=`<circle cx="${nx}" cy="${ny}" r="6" fill="#c9ced8"/><text x="${nx}" y="${ny-10}" text-anchor="middle">Mond jetzt</text>`;
     if(Math.hypot(mx-nx,my-ny)>14) g+=`<circle cx="${mx}" cy="${my}" r="5" fill="none" stroke="#c9ced8" stroke-dasharray="2 2"/><text x="${mx}" y="${my+16}" text-anchor="middle">bei Ankunft</text>`;
     g+=`<circle cx="${c}" cy="${c}" r="9" fill="#2f6fd6"/><text x="${c}" y="${c+22}" text-anchor="middle">Erde</text>`;
-    if(S.f>=0&&S.f<=1){ const q=transferPoint(rp,ra,S.f), [sx,sy]=P(q.r*k,th+q.nu/deg); g+=sonde(sx,sy); note=`${Math.round(q.r).toLocaleString("de-CH")} km von der Erde`; }
+    if(S.f>=0&&S.f<=1){ const q=transferPoint(rp,ra,S.f), [sx,sy]=P(q.r*k,th+q.nu/deg); g+=sonde(sx,sy); note=`${Math.round(q.r).toLocaleString(LOC)} km von der Erde`; }
   } else if(D.kind==="mars"){
     const RE=78, RM=RE*1.524, lE=planetLon("earth",S.tDep), mA=planetLon("mars",S.tArr);
     g+=`<circle cx="${c}" cy="${c}" r="${RE}" fill="none" stroke="#1f3b66"/><circle cx="${c}" cy="${c}" r="${RM}" fill="none" stroke="#5a2a1f"/>`;
@@ -1382,14 +1687,14 @@ function deepSvg(l,est,D){
     g+=`<path d="M${c} ${c}Q${c+sgn*R*.5} ${c-60} ${lx} ${ly}" fill="none" stroke="#4ea1ff" stroke-width="1.6" stroke-dasharray="5 4"/>`;
     g+=`<circle cx="${c}" cy="${c}" r="9" fill="#2f6fd6"/><text x="${c}" y="${c+22}" text-anchor="middle">Erde</text>`;
     g+=`<circle cx="${lx}" cy="${ly}" r="4" fill="none" stroke="#ffd25a"/><text x="${lx}" y="${ly+18}" text-anchor="middle">${D.kind.toUpperCase()}</text>`;
-    if(S.f>=0&&S.f<=1){ const f=S.f, x=(1-f)*(1-f)*c+2*(1-f)*f*(c+sgn*R*.5)+f*f*lx, y=(1-f)*(1-f)*c+2*(1-f)*f*(c-60)+f*f*ly; g+=sonde(x,y); note=`${Math.round(f*1.5e6).toLocaleString("de-CH")} km von der Erde`; }
+    if(S.f>=0&&S.f<=1){ const f=S.f, x=(1-f)*(1-f)*c+2*(1-f)*f*(c+sgn*R*.5)+f*f*lx, y=(1-f)*(1-f)*c+2*(1-f)*f*(c-60)+f*f*ly; g+=sonde(x,y); note=`${Math.round(f*1.5e6).toLocaleString(LOC)} km von der Erde`; }
   }
   return {svg:`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;display:block;margin:0 auto" role="img" aria-label="${esc(D.label)}"><rect width="${W}" height="${H}" rx="10" fill="#070a10"/><g font-size="10" fill="#8a96ad">${g}</g></svg>`,S,note};
   function sonde(x,y){ return `<circle cx="${x}" cy="${y}" r="8" fill="#4ea1ff33"/><circle cx="${x}" cy="${y}" r="3.5" fill="#fff"/><text x="${x+8}" y="${y-8}" fill="#fff">Sonde</text>`; }
 }
 function deepSection(l,est){
   const D=deepInfo(l); if(!D) return "";
-  const {svg,S,note}=deepSvg(l,est,D), dd=t=>new Date(t).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const {svg,S,note}=deepSvg(l,est,D), dd=t=>new Date(t).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"});
   const prog=S.f>0&&S.f<1?`Tag ${Math.floor((Date.now()-S.tDep)/864e5)+1} von ~${Math.round(D.days)}`:"";
   return `<div class="sec"><h3>${esc(D.label)} <span class="mute" style="text-transform:none;letter-spacing:0">· schematisch, geschätzt</span></h3>${svg}
     <div class="grid" style="margin-top:8px"><b>Status</b><span>${S.phase}${prog?" · "+prog:""}${note?" · "+note:""}</span>
@@ -1600,7 +1905,16 @@ function placeRocket(t){
   if(follow){ if(G.on){ G.target=null; G.rot[0]=-curPos[1]; G.rot[1]=-curPos[0]; } else map.panTo(curPos,{animate:false}); }
   const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
   if(tl) tl.textContent="T+ "+mmss(t);
-  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:curTrack.prof&&t>0&&t<profEnd(curTrack.prof)?(q=>`geschätzt ${Math.round(q.h)} km Höhe · ${(Math.round(q.v/100)*100).toLocaleString("de-CH")} km/h · `)(profAt(curTrack.prof,t)):""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
+  if(pl){ // Teile einzeln in <span> (einzeln übersetzbar), getrennt durch „·“
+    const parts=[], st=curTrack.stage;
+    if(st?.mode==="deorbit"&&t>st.Tre) parts.push("Oberstufe verglüht"); else if(st?.mode==="deorbit"&&t>st.Td) parts.push("Oberstufe im Wiedereintritt");
+    if(td!=null&&TELE.h!=null) parts.push(`GEMESSEN ${TELE.h} km Höhe`,`${TELE.v.toLocaleString(LOC)} km/h`);
+    else if(curTrack.prof&&t>0&&t<profEnd(curTrack.prof)){ const q=profAt(curTrack.prof,t); parts.push(`geschätzt ${Math.round(q.h)} km Höhe`,`${(Math.round(q.v/100)*100).toLocaleString(LOC)} km/h`); }
+    if(DEP&&dc) parts.push(`${dc}/${DEP.n} ${DEP.label} ausgesetzt`);
+    if(curTrack.orbits>1&&t>540) parts.push(`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits}`);
+    parts.push(`${Math.round(d).toLocaleString(LOC)} km Bodendistanz`,`${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`);
+    const html="· "+parts.map(x=>`<span>${esc(x)}</span>`).join(" · ");
+    if(pl.dataset.h!==html){ pl.dataset.h=html; pl.innerHTML=html; } }
 }
 
 // ---- 080-nutzlasten.js ----
@@ -1683,7 +1997,7 @@ function boosterHeight(l,fam){
   if(/starship/.test(nm) && fam?.len && sc?.height) return fmtN(fam.len-sc.height,"m",1)+' <span class="mute">(Gesamthöhe − Ship)</span>';
   for(const k in STAGE1_H) if(nm.startsWith(k)) return fmtN(STAGE1_H[k],"m",1);
   return null; }
-const fmtN=(v,u,d=0)=>v==null?null:(+v).toLocaleString("de-CH",{maximumFractionDigits:d})+" "+u;
+const fmtN=(v,u,d=0)=>v==null?null:(+v).toLocaleString(LOC,{maximumFractionDigits:d})+" "+u;
 function boosterBlock(l,s){
   const la=s.launcher||{}, ld=s.landing||{}, loc=ld.landing_location||ld.location||{}, cfg=l.rocket?.configuration||{};
   const isSS=/starship/i.test(cfg.name||""), st=typeof la.status==="object"?la.status?.name:la.status;
@@ -1782,7 +2096,7 @@ function hav(a,b){ const r=Math.PI/180, dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r;
   const h=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2; return 2*R_E*Math.asin(Math.sqrt(h)); }
 function ytId(u){ if(!u) return null; const m=u.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([\w-]{11})/); return m?m[1]:null; }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function fmtDate(d){ return new Date(d).toLocaleString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+function fmtDate(d){ return new Date(d).toLocaleString(LOC,{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }
 function mmss(t){ t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); return (h?h+":":"")+String(Math.floor(t%3600/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
 function countdown(net){
   let s=Math.floor((new Date(net)-Date.now())/1000), sign="T−";
@@ -1809,7 +2123,7 @@ const SNAPF={}; function snapData(k){
 function imgFail(el){ el.onerror=null;
   snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
     if(s && el.src!==s) el.src=s; else if(el.classList.contains("th")) el.style.visibility="hidden"; else el.closest(".hero")?.remove(); }); }
-function toast(t){ const m=document.getElementById("msg"); m.textContent=t; m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }
+function toast(msg){ const m=document.getElementById("msg"); m.textContent=i18n(msg); m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }
 
 // ---- 110-ui.js ----
 // ===================== UI =====================
@@ -1937,7 +2251,7 @@ function buildLayerMenu(){
     +row("fresh","Neueste Starts hervorheben","#ff4fd8")
     +`<h4>Mein Standort</h4>${row("home","Standort & ISS-Sichtkreis","#ffd25a")}
       <button class="chip ic" style="margin:4px 0 2px" onclick="document.getElementById('layers').style.display='none';openPasses()">${ICON.eye} ISS-Überflüge bei mir</button>`
-    +subsMenuHtml()+pwaMenuHtml();
+    +subsMenuHtml()+pwaMenuHtml()+langMenuHtml();
   el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
@@ -2065,7 +2379,7 @@ function selectSat(s,g){
   if(G.on) G.target=[-s.lon,-s.lat]; else map.panTo([s.lat,s.lon]);
 }
 function updateSatPanel(){ if(!selSat) return; const s=selSat.s, H=document.getElementById("sH"); if(!H||!s.ok) return;
-  H.textContent=s.h.toFixed(0)+" km"; document.getElementById("sV").textContent=(s.v*3600).toLocaleString("de-CH",{maximumFractionDigits:0})+" km/h ("+s.v.toFixed(2)+" km/s)";
+  H.textContent=s.h.toFixed(0)+" km"; document.getElementById("sV").textContent=(s.v*3600).toLocaleString(LOC,{maximumFractionDigits:0})+" km/h ("+s.v.toFixed(2)+" km/s)";
   document.getElementById("sP").textContent=s.lat.toFixed(2)+"°, "+s.lon.toFixed(2)+"°"; }
 
 // ---- 145-ueberfluege.js ----
@@ -2191,7 +2505,7 @@ function renderPasses(){
   document.getElementById("passNote").innerHTML=`Berechnet aus Bahndaten vom ${age<1?"heute":age.toFixed(1)+" Tagen"} (SGP4). Mehr als ~3 Tage im Voraus können die Zeiten um Minuten abweichen – Station manövriert gelegentlich.
     <br>Sichtbar = Station von der Sonne beleuchtet, bei dir Dämmerung oder Nacht, mind. ${PASS_MINEL}° hoch. Zeiten sind geschätzt.`;
   if(!show.length){ box.innerHTML=`<div class="sec mute">Keine ${PASS.all?"":"sichtbaren "}Überflüge in den nächsten ${PASS_DAYS} Tagen.${PASS.all?"":" Tipp: „Nur sichtbare“ ausschalten."}</div>`; return; }
-  const tm=t=>new Date(t).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"});
+  const tm=t=>new Date(t).toLocaleTimeString(LOC,{hour:"2-digit",minute:"2-digit"});
   box.innerHTML=show.slice(0,40).map((p,i)=>{
     const a=p.vis?p.visStart:p.start, e=p.vis?p.visEnd:p.end, el=p.vis?p.visMax:p.maxEl;
     const f=p.pts.find(x=>x[2])||p.pts[0], l=[...p.pts].reverse().find(x=>x[2])||p.pts[p.pts.length-1];
@@ -2199,7 +2513,7 @@ function renderPasses(){
     const qc=!p.vis?"#3a4560":el>=50?"var(--go)":el>=25?"#8fc8ff":"var(--tbd)";
     const id="pass-"+PASS.sat+"-"+Math.round(a/60e3);
     return `<div class="pass ${p.vis?"":"dim"}" onclick="PASS.open=PASS.open===${i}?null:${i};renderPasses()">
-      <div><b>${new Date(a).toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit"})}</b><br><span class="tn">${tm(a)} – ${tm(e)}</span></div>
+      <div><b>${new Date(a).toLocaleDateString(LOC,{weekday:"short",day:"2-digit",month:"2-digit"})}</b><br><span class="tn">${tm(a)} – ${tm(e)}</span></div>
       <div class="pe"><b>${Math.round(el)}°</b><small>max. Höhe</small></div>
       <div>von ${compass(f[0])} ${p.fade?`– verschwindet im ${compass(l[0])} im Erdschatten`:`nach ${compass(l[0])}`}<br><span class="pill" style="background:${qc};color:${p.vis?"#000":"var(--text)"}">${q}</span></div>
       <div class="pa" onclick="event.stopPropagation()">
@@ -2228,7 +2542,7 @@ function showPass(start){
 }
 function passRem(id,t,txt){
   if(REM[id]) delete REM[id];
-  else { REM[id]={name:STATIONS[PASS.sat].label+"-Überflug",net:new Date(t).toISOString(),fired:false,kind:"pass",txt};
+  else { REM[id]={name:i18n(STATIONS[PASS.sat].label+"-Überflug"),net:new Date(t).toISOString(),fired:false,kind:"pass",txt:i18n(txt)};
     pwaAsk(); beep(true); toast("Erinnerung gesetzt – 10 Min vor dem Überflug"); }
   saveRem(); renderPasses();
 }
@@ -2269,7 +2583,7 @@ function viewSection(l,est){
   if(!HOME) return `<div class="sec"><h3>Von meinem Standort aus</h3><div class="mute">Sieht man den Start von dir aus?</div>
     <button class="btn sec2" onclick="openPasses()">${ICON.home} Standort festlegen</button></div>`;
   const v=launchView(l,est); if(!v) return "";
-  const b=v.best, km=x=>Math.round(x).toLocaleString("de-CH");
+  const b=v.best, km=x=>Math.round(x).toLocaleString(LOC);
   return `<div class="sec"><h3>Von meinem Standort aus <span class="mute" style="text-transform:none;letter-spacing:0">· geschätzt</span></h3>
     <div class="wxhead"><span class="pill" style="background:${v.col};color:${v.col==="#3a4560"?"var(--text)":"#000"}">${b?"sichtbar?":"nein"}</span><span>${esc(v.verdict)}</span></div>
     ${b?`<div class="sky">${skySvg({pts:v.pts.filter(q=>q[4]>-2).map(q=>[q[0],q[1],q[4]>1&&(q[5]||v.sunMe<-4)])})}<div class="grid">
@@ -2320,9 +2634,11 @@ function liveBanner(){
   const info=(pollOk>DATA.ts?`Abfrage vor ${Math.round((Date.now()-pollOk)/60e3)} Min`:dataInfo())+(pollFail===429&&DATA.src!=="cache"?" · API-Limit":"");
   const late=Math.round((Date.now()-new Date(l.net))/60e3);
   B.classList.toggle("warn",st==="unconfirmed");
+  // Jeder Teil in eigenem <span> → einzeln übersetzbar (005-i18n.js)
+  const lateTxt=late>=60?`${Math.floor(late/60)} h ${late%60} Min`:`${late} Min`;
   B.innerHTML = st==="unconfirmed"
-    ? `<span style="color:var(--tbd)">●</span> <b>Start nicht bestätigt</b> · ${nm} · Status „${esc(l.status?.name||"?")}“ · Startzeit war vor ${late>=60?Math.floor(late/60)+" h "+(late%60)+" Min":late+" Min"} – evtl. verschoben${info?` · ${info}`:""}`
-    : `<span style="color:var(--live)">●</span> <b>LIVE-Modus</b> · ${nm} · ${esc(l.status?.name||"")}${st==="likely"?" (Start noch nicht bestätigt)":""} · ${countdown(l.net)}${info?` · ${info}`:""}`;
+    ? `<span style="color:var(--tbd)">●</span> <b>Start nicht bestätigt</b> · <span translate="no">${nm}</span> · <span>Status „${esc(l.status?.name||"?")}“</span> · <span>Startzeit war vor ${lateTxt}</span> – <span>evtl. verschoben</span>${info?` · <span>${esc(info)}</span>`:""}`
+    : `<span style="color:var(--live)">●</span> <b>LIVE-Modus</b> · <span translate="no">${nm} · ${esc(l.status?.name||"")}</span>${st==="likely"?" <span>(Start noch nicht bestätigt)</span>":""} · <span translate="no">${countdown(l.net)}</span>${info?` · <span>${esc(info)}</span>`:""}`;
   B.style.display="block"; B.onclick=()=>select(l);
 }
 setInterval(()=>{ livePoll(false); },20e3);
@@ -2370,7 +2686,7 @@ function buildTimebar(){ const T=document.getElementById("timebar");
      <button class="chip" id="tbNow" onclick="simReset()">Jetzt</button>`; }
 function updTimeUI(){ const T=document.getElementById("timebar"); if(!T||!T.firstChild) return;
   if(!LAYERS.time){ T.style.display="none"; return; } T.style.display="flex";
-  const t=simNow(); document.getElementById("tbT").textContent=t.toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const t=simNow(); document.getElementById("tbT").textContent=t.toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
   T.querySelectorAll("[data-sp]").forEach(b=>b.classList.toggle("on",+b.dataset.sp===SIM.speed));
   document.getElementById("tbNow").style.display=(SIM.speed!==1||Math.abs(t-Date.now())>5000)?"":"none"; }
 
@@ -2418,7 +2734,7 @@ function saveSubs(){ try{ localStorage.setItem("lr_subs",JSON.stringify(SUBS)); 
 function subscribeFilter(){
   const r=currentRule();
   if(SUBS.some(x=>ruleKey(x)===ruleKey(r))) return toast("Dieses Abo gibt es schon");
-  if(!r.chip&&!r.prov&&!r.cty&&!r.q && !confirm("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)")) return;
+  if(!r.chip&&!r.prov&&!r.cty&&!r.q && !confirm(i18n("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)"))) return;
   SUBS.push(r); saveSubs(); pwaAsk(); beep(true);
   const n=launches.filter(l=>new Date(l.net)>Date.now()&&matchRule(r,l)).length;
   toast(`Abo „${ruleLabel(r)}“ aktiv – ${n} kommende Starts, neue kommen automatisch dazu`);
@@ -2480,7 +2796,7 @@ async function applyListFilter(keepFocus){
 }
 function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
 function fmtDur(iso){ const m=/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso||""); if(!m) return iso; return [m[1]&&m[1]+" Tage",m[2]&&m[2]+" Std",!m[1]&&m[3]&&m[3]+" Min"].filter(Boolean).join(" "); }
-function fmtDay(d){ return new Date(d).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"}); }
+function fmtDay(d){ return new Date(d).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"}); }
 function boosterCard(s){ const la=s.launcher; if(!la||la.flights==null) return "";
   const st=typeof la.status==="object"?la.status?.name:la.status;
   return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--acc)">Booster-Steckbrief ${esc(la.serial_number||"")}</summary>
@@ -2565,13 +2881,13 @@ function fmtCell(r,k){ const v=rVal(r,k); if(v==null||v==="") return '<span clas
     case "n": return `<b>${esc(r.n)}</b>${r.reu?' <span title="wiederverwendbar">'+ICON.reuse+'</span>':""}`;
     case "man": return esc(v)+(r.cty?` <span class="mute">${esc(r.cty)}</span>`:"");
     case "act": return r.act?'<span class="pill" style="background:#1f4d33;color:#7be07b">aktiv</span>':'<span class="pill" style="background:#33384a;color:#aab">inaktiv</span>';
-    case "leo": case "gto": return v.toLocaleString("de-CH",{maximumFractionDigits:1});
-    case "thr": case "mass": return Math.round(v).toLocaleString("de-CH");
+    case "leo": case "gto": return v.toLocaleString(LOC,{maximumFractionDigits:1});
+    case "thr": case "mass": return Math.round(v).toLocaleString(LOC);
     case "len": return v.toFixed(1);
     case "rate": return (v*100).toFixed(0)+" %";
     case "sl": return `${r.sl}/${r.al}`;
     case "first": return String(v).slice(0,4);
-    case "cost": return v.toLocaleString("de-CH",{maximumFractionDigits:0});
+    case "cost": return v.toLocaleString(LOC,{maximumFractionDigits:0});
     default: return esc(v); } }
 function dbRows(){ const q=DB.q.toLowerCase().trim();
   const rows=ROCKETS.filter(r=>(DB.f==="all"||(DB.f==="act")===r.act)&&(!DB.flown||r.tot>0)&&(!DB.reu||r.reu)&&(!q||(r.n+" "+r.fam+" "+r.man+" "+r.mab).toLowerCase().includes(q)));
@@ -2606,7 +2922,7 @@ function openCompare(ids){
   const row=(lab,k,fmt,bar)=>{ const vals=rs.map(r=>rVal(r,k)), mx=Math.max(...vals.filter(v=>typeof v==="number"),0);
     return `<tr><th>${lab}</th>${rs.map((r,i)=>{ const v=vals[i]; const txt=fmt?fmt(r,v):fmtCell(r,k);
       return `<td>${txt}${bar&&typeof v==="number"&&mx>0?`<div class="mb" style="width:${(v/mx*100).toFixed(0)}%"></div>`:""}</td>`; }).join("")}</tr>`; };
-  const n=(v,d=0)=>v==null?'<span class="mute">–</span>':v.toLocaleString("de-CH",{maximumFractionDigits:d});
+  const n=(v,d=0)=>v==null?'<span class="mute">–</span>':v.toLocaleString(LOC,{maximumFractionDigits:d});
   P.innerHTML=`<div class="hd"><h2>Vergleich</h2><button class="x" onclick="closeP()">×</button></div>
    <div class="dbctl"><button class="chip" onclick="openDB()">← zurück zur Tabelle</button></div>
    <div class="tw" style="padding:0 6px 10px"><table class="cmp">
@@ -2800,9 +3116,9 @@ function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;
     b.textContent=off?"aus":fresh?"● gemessen":"keine Werte"; b.style.background=off?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off?"#aab":fresh?"#7be07b":"#f5b041";
-    document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString("de-CH")+" km/h":"–";
-    document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString("de-CH")+" km":"–"; }
-  document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString("de-CH")+" km":"–";
+    document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
+    document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }
+  document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString(LOC)+" km":"–";
   const r=TELE.S.s1.rate; document.getElementById("tR_s1").textContent=r!=null&&TELE.use1?(r>=0?"+":"")+r.toFixed(1)+" km/s":"–";
   const st=k=>`${TLAB[k]}: ${TELE.S[k].ok} gelesen, ${TELE.S[k].bad} verworfen${TELE.S[k].raw?` („${TELE.S[k].raw}“)`:""}`;
   document.getElementById("tStat").textContent=st("s2")+(TELE.use1?" · "+st("s1"):"");
@@ -2815,13 +3131,13 @@ function teleChart(id,col,title,unit){
   c.setTransform(r,0,0,r,0,0); c.fillStyle="#0f1525"; c.fillRect(0,0,W,H);
   const ser=["s2","s1"].filter(k=>k==="s2"||TELE.use1).map(k=>({k,h:TELE.S[k].hist})).filter(s=>s.h.length);
   const pad={l:42,r:8,t:16,b:16};
-  c.font="11px sans-serif"; c.fillStyle="#8a96ad"; c.textBaseline="alphabetic"; c.textAlign="left"; c.fillText(title+" ("+unit+")",pad.l,11);
-  if(!ser.length){ c.fillText("noch keine Messwerte",pad.l,H/2+8); return; }
+  c.font="11px sans-serif"; c.fillStyle="#8a96ad"; c.textBaseline="alphabetic"; c.textAlign="left"; c.fillText(i18n(title+" ("+unit+")"),pad.l,11);
+  if(!ser.length){ c.fillText(i18n("noch keine Messwerte"),pad.l,H/2+8); return; }
   const all=ser.flatMap(s=>s.h), t0=Math.min(...all.map(q=>q[0])), t1=Math.max(t0+10,...all.map(q=>q[0]));
   const ymax=niceMax(Math.max(1,...all.map(q=>q[col])));
   const X=t=>pad.l+(t-t0)/(t1-t0)*(W-pad.l-pad.r), Y=v=>H-pad.b-v/ymax*(H-pad.t-pad.b);
   c.strokeStyle="#232c3f"; c.lineWidth=1; c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right";
-  for(let i=0;i<=4;i+=2){ const v=ymax*i/4, y=Y(v); c.beginPath(); c.moveTo(pad.l,y); c.lineTo(W-pad.r,y); c.stroke(); c.fillText(v.toLocaleString("de-CH"),pad.l-4,y+3); }
+  for(let i=0;i<=4;i+=2){ const v=ymax*i/4, y=Y(v); c.beginPath(); c.moveTo(pad.l,y); c.lineTo(W-pad.r,y); c.stroke(); c.fillText(v.toLocaleString(LOC),pad.l-4,y+3); }
   c.textAlign="center"; const step=niceMax((t1-t0)/Math.max(2,Math.floor(W/90)));
   for(let t=Math.ceil(t0/step)*step;t<=t1;t+=step) c.fillText((t<0?"T−":"T+")+mmss(Math.abs(t)),X(t),H-3);
   c.textAlign="left";
@@ -2829,7 +3145,7 @@ function teleChart(id,col,title,unit){
   if(curTrack?.prof && selected && TELE.t0==null){ const P=curTrack.prof; c.save(); c.beginPath(); c.rect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b); c.clip();
     c.beginPath(); let first=true; for(let t=Math.max(0,t0);t<=Math.min(t1,profEnd(P));t+=Math.max(1,(t1-t0)/120)){ const q=profAt(P,t), y=Y(col===1?q.h:q.v); first?c.moveTo(X(t),y):c.lineTo(X(t),y); first=false; }
     c.setLineDash([4,4]); c.strokeStyle="#8a96ad"; c.lineWidth=1.5; c.stroke(); c.restore();
-    c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right"; c.fillText("- - Schätzung",W-pad.r,11); c.textAlign="left"; }
+    c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right"; c.fillText(i18n("- - Schätzung"),W-pad.r,11); c.textAlign="left"; }
   ser.forEach(s=>{ c.beginPath(); s.h.forEach((q,i)=>i?c.lineTo(X(q[0]),Y(q[col])):c.moveTo(X(q[0]),Y(q[col]))); c.strokeStyle=TCOL[s.k]; c.lineWidth=2; c.stroke();
     const q=s.h[s.h.length-1]; c.beginPath(); c.arc(X(q[0]),Y(q[col]),3,0,7); c.fillStyle=TCOL[s.k]; c.fill(); });
 }
@@ -2913,10 +3229,10 @@ async function refreshCounts(force){
   INC.busy=false; refreshOpenViews();
 }
 function standText(kind){
-  const f=d=>new Date(d).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  const f=d=>new Date(d).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
   const full=kind==="db"?FULL.db:FULL.stats;
   if(full && INC.ts) return `vollständig geprüft ${f(full)} · nachgeführt ${f(INC.ts)}${INC.n?` (+${INC.n} Starts)`:""}`;
-  return INC.ts ? `aktualisiert ${new Date(INC.ts).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${INC.n?` · ${INC.n} neue Starts seit Schnappschuss eingerechnet`:""}` : `Schnappschuss vom ${STATS0.asof} (offline)`; }
+  return INC.ts ? `aktualisiert ${new Date(INC.ts).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${INC.n?` · ${INC.n} neue Starts seit Schnappschuss eingerechnet`:""}` : `Schnappschuss vom ${STATS0.asof} (offline)`; }
 function refreshOpenViews(){ const P=document.getElementById("panel"); if(P.style.display!=="block") return; const h2=P.querySelector(".hd h2")?.textContent||"";
   if(/Raumfahrt-Statistik/.test(h2)) openStats(); else if(/Raketen-Datenbank/.test(h2)) renderDBTable(); }
 
@@ -2930,7 +3246,7 @@ async function getAll(url,maxPages){ let out=[], next=url, k=0;
 function cacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
 function cacheSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
 function statsFrom(list,year){
-  const S={year,asof:new Date().toLocaleDateString("de-CH"),cut:list.reduce((m,x)=>x.net>m?x.net:m,year+"-01-01T00:00:00Z"),
+  const S={year,asof:new Date().toLocaleDateString(LOC),cut:list.reduce((m,x)=>x.net>m?x.net:m,year+"-01-01T00:00:00Z"),
     provAll:{},ctyAll:{},rockAll:{},total:0,status:{},month:Array(12).fill(0)};
   list.forEach(l=>{ const a=l.status?.abbrev||"?"; S.total++; S.status[a]=(S.status[a]||0)+1; S.month[new Date(l.net).getMonth()]++;
     const pv=l.launch_service_provider?.name||"?", cn=l.pad?.country?.name||l.pad?.location?.country?.name||"?", rk=l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"?";
@@ -3045,6 +3361,7 @@ async function syncRem(){
   try{ const c=await caches.open("lr-data"), r=await c.match("rem.json");
     if(r){ const sw=await r.json(); for(const id in sw) if(REM[id] && sw[id].fired && sw[id].net===REM[id].net) REM[id].fired=true; }
     await c.put("rem.json",new Response(JSON.stringify(REM),{headers:{"content-type":"application/json"}}));
+    await c.put("lang.txt",new Response(LANG));   // Sprache für die Texte des Service Workers
   }catch(e){}
   pushSync();
 }
@@ -3061,13 +3378,14 @@ async function pushSyncNow(){
       const k=Uint8Array.from(atob(CONFIG.vapidPublic.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
       sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k}); }
     const rem={}; for(const id in REM){ const r=REM[id]; rem[id]={net:r.net,name:r.name,kind:r.kind,txt:r.txt}; }
-    const body=JSON.stringify({sub:sub.toJSON(),rem,rules:SUBS,off:Object.keys(REMOFF)}); if(body===pushLast) return;
+    const body=JSON.stringify({sub:sub.toJSON(),rem,rules:SUBS,off:Object.keys(REMOFF),lang:LANG}); if(body===pushLast) return;
     const r=await fetch(CONFIG.worker+"/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body});
     if(r.ok){ pushLast=body; PWA.push=true; }
   }catch(e){ console.warn("Push:",e); PWA.push=false; }
 }
 // Benachrichtigung anzeigen – über den Service Worker (Android verlangt das), sonst direkt
 async function notify(body,tag){
+  body=i18n(body);
   try{ if(!window.Notification || Notification.permission!=="granted") return false;
     const reg=PWA.reg||(PWA_OK?await navigator.serviceWorker.getRegistration():null);
     if(reg) await reg.showNotification("LaunchRadar",{body,tag,icon:"icons/icon-192.png",badge:"icons/badge-96.png",data:{url:"./"}});

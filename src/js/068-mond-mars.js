@@ -43,7 +43,7 @@ function deepSvg(l,est,D){
     g+=`<circle cx="${nx}" cy="${ny}" r="6" fill="#c9ced8"/><text x="${nx}" y="${ny-10}" text-anchor="middle">Mond jetzt</text>`;
     if(Math.hypot(mx-nx,my-ny)>14) g+=`<circle cx="${mx}" cy="${my}" r="5" fill="none" stroke="#c9ced8" stroke-dasharray="2 2"/><text x="${mx}" y="${my+16}" text-anchor="middle">bei Ankunft</text>`;
     g+=`<circle cx="${c}" cy="${c}" r="9" fill="#2f6fd6"/><text x="${c}" y="${c+22}" text-anchor="middle">Erde</text>`;
-    if(S.f>=0&&S.f<=1){ const q=transferPoint(rp,ra,S.f), [sx,sy]=P(q.r*k,th+q.nu/deg); g+=sonde(sx,sy); note=`${Math.round(q.r).toLocaleString("de-CH")} km von der Erde`; }
+    if(S.f>=0&&S.f<=1){ const q=transferPoint(rp,ra,S.f), [sx,sy]=P(q.r*k,th+q.nu/deg); g+=sonde(sx,sy); note=`${Math.round(q.r).toLocaleString(LOC)} km von der Erde`; }
   } else if(D.kind==="mars"){
     const RE=78, RM=RE*1.524, lE=planetLon("earth",S.tDep), mA=planetLon("mars",S.tArr);
     g+=`<circle cx="${c}" cy="${c}" r="${RE}" fill="none" stroke="#1f3b66"/><circle cx="${c}" cy="${c}" r="${RM}" fill="none" stroke="#5a2a1f"/>`;
@@ -60,14 +60,14 @@ function deepSvg(l,est,D){
     g+=`<path d="M${c} ${c}Q${c+sgn*R*.5} ${c-60} ${lx} ${ly}" fill="none" stroke="#4ea1ff" stroke-width="1.6" stroke-dasharray="5 4"/>`;
     g+=`<circle cx="${c}" cy="${c}" r="9" fill="#2f6fd6"/><text x="${c}" y="${c+22}" text-anchor="middle">Erde</text>`;
     g+=`<circle cx="${lx}" cy="${ly}" r="4" fill="none" stroke="#ffd25a"/><text x="${lx}" y="${ly+18}" text-anchor="middle">${D.kind.toUpperCase()}</text>`;
-    if(S.f>=0&&S.f<=1){ const f=S.f, x=(1-f)*(1-f)*c+2*(1-f)*f*(c+sgn*R*.5)+f*f*lx, y=(1-f)*(1-f)*c+2*(1-f)*f*(c-60)+f*f*ly; g+=sonde(x,y); note=`${Math.round(f*1.5e6).toLocaleString("de-CH")} km von der Erde`; }
+    if(S.f>=0&&S.f<=1){ const f=S.f, x=(1-f)*(1-f)*c+2*(1-f)*f*(c+sgn*R*.5)+f*f*lx, y=(1-f)*(1-f)*c+2*(1-f)*f*(c-60)+f*f*ly; g+=sonde(x,y); note=`${Math.round(f*1.5e6).toLocaleString(LOC)} km von der Erde`; }
   }
   return {svg:`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;display:block;margin:0 auto" role="img" aria-label="${esc(D.label)}"><rect width="${W}" height="${H}" rx="10" fill="#070a10"/><g font-size="10" fill="#8a96ad">${g}</g></svg>`,S,note};
   function sonde(x,y){ return `<circle cx="${x}" cy="${y}" r="8" fill="#4ea1ff33"/><circle cx="${x}" cy="${y}" r="3.5" fill="#fff"/><text x="${x+8}" y="${y-8}" fill="#fff">Sonde</text>`; }
 }
 function deepSection(l,est){
   const D=deepInfo(l); if(!D) return "";
-  const {svg,S,note}=deepSvg(l,est,D), dd=t=>new Date(t).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const {svg,S,note}=deepSvg(l,est,D), dd=t=>new Date(t).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"});
   const prog=S.f>0&&S.f<1?`Tag ${Math.floor((Date.now()-S.tDep)/864e5)+1} von ~${Math.round(D.days)}`:"";
   return `<div class="sec"><h3>${esc(D.label)} <span class="mute" style="text-transform:none;letter-spacing:0">· schematisch, geschätzt</span></h3>${svg}
     <div class="grid" style="margin-top:8px"><b>Status</b><span>${S.phase}${prog?" · "+prog:""}${note?" · "+note:""}</span>

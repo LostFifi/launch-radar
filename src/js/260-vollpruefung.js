@@ -7,7 +7,7 @@ async function getAll(url,maxPages){ let out=[], next=url, k=0;
 function cacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
 function cacheSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
 function statsFrom(list,year){
-  const S={year,asof:new Date().toLocaleDateString("de-CH"),cut:list.reduce((m,x)=>x.net>m?x.net:m,year+"-01-01T00:00:00Z"),
+  const S={year,asof:new Date().toLocaleDateString(LOC),cut:list.reduce((m,x)=>x.net>m?x.net:m,year+"-01-01T00:00:00Z"),
     provAll:{},ctyAll:{},rockAll:{},total:0,status:{},month:Array(12).fill(0)};
   list.forEach(l=>{ const a=l.status?.abbrev||"?"; S.total++; S.status[a]=(S.status[a]||0)+1; S.month[new Date(l.net).getMonth()]++;
     const pv=l.launch_service_provider?.name||"?", cn=l.pad?.country?.name||l.pad?.location?.country?.name||"?", rk=l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"?";

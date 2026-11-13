@@ -6,10 +6,10 @@ function launchUrl(l){ return location.origin+location.pathname+"#start="+encode
 async function shareLaunch(id){
   const l=[...launches,...(PAST||[])].find(x=>x.id===id); if(!l) return;
   const name=(l.name.split("|")[1]||l.name).trim(), url=launchUrl(l);
-  const text=`${name} – ${new Date(l.net)>Date.now()?"Start "+fmtDate(l.net):"gestartet "+fmtDate(l.net)}`;
+  const text=`${name} – ${i18n(new Date(l.net)>Date.now()?"Start":"gestartet")} ${fmtDate(l.net)}`;
   if(navigator.share){ try{ await navigator.share({title:"LaunchRadar: "+name,text,url}); return; }catch(e){ if(e.name==="AbortError") return; } }
-  try{ await navigator.clipboard.writeText(url); toast("Link kopiert: "+url); }
-  catch(e){ prompt("Link zum Kopieren:",url); }
+  try{ await navigator.clipboard.writeText(url); toast(i18n("Link kopiert:")+" "+url); }
+  catch(e){ prompt(i18n("Link zum Kopieren:"),url); }
 }
 // Beim ersten Laden: Start aus der Adresse öffnen (kommende, sonst vergangene Starts)
 var hashDone=false;

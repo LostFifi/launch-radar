@@ -38,7 +38,7 @@ async function applyListFilter(keepFocus){
 }
 function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
 function fmtDur(iso){ const m=/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso||""); if(!m) return iso; return [m[1]&&m[1]+" Tage",m[2]&&m[2]+" Std",!m[1]&&m[3]&&m[3]+" Min"].filter(Boolean).join(" "); }
-function fmtDay(d){ return new Date(d).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"}); }
+function fmtDay(d){ return new Date(d).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"}); }
 function boosterCard(s){ const la=s.launcher; if(!la||la.flights==null) return "";
   const st=typeof la.status==="object"?la.status?.name:la.status;
   return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--acc)">Booster-Steckbrief ${esc(la.serial_number||"")}</summary>

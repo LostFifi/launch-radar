@@ -59,6 +59,11 @@ check("kein doppelter Push", pushes.length === 1);
   await worker.scheduled({ scheduledTime: Date.now() }, env, {});
   const p = await (await call("/push/pending?e=" + encodeURIComponent("https://push.example/r"))).json();
   check("Abo: neuer Starship-Start erkannt, abgewählter + Falcon ausgelassen", pushes.length === 1 && p.length === 1 && p[0].body.includes("Flug 20"), p.map(x => x.body).join(" | "));
+  // Englisch: gleiche Abo-Logik, Text auf Englisch
+  await call("/push/subscribe", { method: "POST", body: JSON.stringify({ sub: { endpoint: "https://push.example/en" }, rem: {}, rules: [{ chip: "starship" }], off: ["s2"], lang: "en" }) });
+  await worker.scheduled({ scheduledTime: Date.now() }, env, {});
+  const pe = await (await call("/push/pending?e=" + encodeURIComponent("https://push.example/en"))).json();
+  check("Push-Text auf Englisch", pe.length === 1 && /launches in \d+ min!/.test(pe[0].body), pe.map(x => x.body).join(" | "));
 }
 
 // 3) API gesperrt (429) → Wartezeit merken + GitHub-Schnappschuss als Reserve

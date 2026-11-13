@@ -28,7 +28,7 @@ function boosterHeight(l,fam){
   if(/starship/.test(nm) && fam?.len && sc?.height) return fmtN(fam.len-sc.height,"m",1)+' <span class="mute">(Gesamthöhe − Ship)</span>';
   for(const k in STAGE1_H) if(nm.startsWith(k)) return fmtN(STAGE1_H[k],"m",1);
   return null; }
-const fmtN=(v,u,d=0)=>v==null?null:(+v).toLocaleString("de-CH",{maximumFractionDigits:d})+" "+u;
+const fmtN=(v,u,d=0)=>v==null?null:(+v).toLocaleString(LOC,{maximumFractionDigits:d})+" "+u;
 function boosterBlock(l,s){
   const la=s.launcher||{}, ld=s.landing||{}, loc=ld.landing_location||ld.location||{}, cfg=l.rocket?.configuration||{};
   const isSS=/starship/i.test(cfg.name||""), st=typeof la.status==="object"?la.status?.name:la.status;

@@ -4,7 +4,7 @@ function hav(a,b){ const r=Math.PI/180, dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r;
   const h=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2; return 2*R_E*Math.asin(Math.sqrt(h)); }
 function ytId(u){ if(!u) return null; const m=u.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([\w-]{11})/); return m?m[1]:null; }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function fmtDate(d){ return new Date(d).toLocaleString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+function fmtDate(d){ return new Date(d).toLocaleString(LOC,{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }
 function mmss(t){ t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); return (h?h+":":"")+String(Math.floor(t%3600/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
 function countdown(net){
   let s=Math.floor((new Date(net)-Date.now())/1000), sign="T−";
@@ -31,4 +31,4 @@ const SNAPF={}; function snapData(k){
 function imgFail(el){ el.onerror=null;
   snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
     if(s && el.src!==s) el.src=s; else if(el.classList.contains("th")) el.style.visibility="hidden"; else el.closest(".hero")?.remove(); }); }
-function toast(t){ const m=document.getElementById("msg"); m.textContent=t; m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }
+function toast(msg){ const m=document.getElementById("msg"); m.textContent=i18n(msg); m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }

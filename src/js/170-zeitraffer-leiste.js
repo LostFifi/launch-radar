@@ -9,6 +9,6 @@ function buildTimebar(){ const T=document.getElementById("timebar");
      <button class="chip" id="tbNow" onclick="simReset()">Jetzt</button>`; }
 function updTimeUI(){ const T=document.getElementById("timebar"); if(!T||!T.firstChild) return;
   if(!LAYERS.time){ T.style.display="none"; return; } T.style.display="flex";
-  const t=simNow(); document.getElementById("tbT").textContent=t.toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const t=simNow(); document.getElementById("tbT").textContent=t.toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
   T.querySelectorAll("[data-sp]").forEach(b=>b.classList.toggle("on",+b.dataset.sp===SIM.speed));
   document.getElementById("tbNow").style.display=(SIM.speed!==1||Math.abs(t-Date.now())>5000)?"":"none"; }

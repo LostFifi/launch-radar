@@ -101,6 +101,12 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 - Klick → Höhe, Tempo, Bahn der nächsten ~90 min; „Objekte eines Starts“ über COSPAR-Kennung
 - **Überflüge bei mir** (`145-ueberfluege.js`): Standort per GPS oder Klick (gerundet ~1 km, nur `localStorage` `lr_home`), ISS/Tiangong-Überflüge der nächsten 10 Tage. Sichtbar = Station beleuchtet (Erdschatten-Zylinder), Sonne beim Beobachter < −6°, Höhe ≥ 10°. Himmelskarte je Überflug, Erinnerung 10 Min vorher, „Zeigen“ springt im Zeitraffer hin. Ebene „Standort & ISS-Sichtkreis“
 
+**Deutsch / Englisch** (`005-i18n.js`, Wörterbuch `004-i18n-en.js`)
+- Sprache nach Browser (de* = Deutsch, sonst Englisch), Umschalter im Ebenen-Menü, Link `?lang=en` / `?lang=de`
+- Eine Übersetzungs-Schicht übersetzt alle angezeigten Texte (exakt oder per Muster mit Platzhaltern); API-Texte (Missionsbeschreibungen) bleiben englisch
+- Datum/Zahlen im Sprachformat (`LOC`), Push-Texte von Service Worker und Worker ebenfalls zweisprachig
+- `node scripts/i18n-harvest.js` listet fehlende Übersetzungen, `npm test` prüft beide Sprachen
+
 **App (PWA)** (`src/pwa/`, `285-pwa.js`)
 - Installierbar (Manifest, Icons aus `scripts/make_icons.py`), startet offline (Service Worker: Seite zuerst aus dem Netz, sonst aus dem Cache)
 - Benachrichtigungen über den Service Worker (nötig auf Android), Test-Knopf im Ebenen-Menü

@@ -27,6 +27,7 @@ async function syncRem(){
   try{ const c=await caches.open("lr-data"), r=await c.match("rem.json");
     if(r){ const sw=await r.json(); for(const id in sw) if(REM[id] && sw[id].fired && sw[id].net===REM[id].net) REM[id].fired=true; }
     await c.put("rem.json",new Response(JSON.stringify(REM),{headers:{"content-type":"application/json"}}));
+    await c.put("lang.txt",new Response(LANG));   // Sprache für die Texte des Service Workers
   }catch(e){}
   pushSync();
 }
@@ -43,13 +44,14 @@ async function pushSyncNow(){
       const k=Uint8Array.from(atob(CONFIG.vapidPublic.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
       sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k}); }
     const rem={}; for(const id in REM){ const r=REM[id]; rem[id]={net:r.net,name:r.name,kind:r.kind,txt:r.txt}; }
-    const body=JSON.stringify({sub:sub.toJSON(),rem,rules:SUBS,off:Object.keys(REMOFF)}); if(body===pushLast) return;
+    const body=JSON.stringify({sub:sub.toJSON(),rem,rules:SUBS,off:Object.keys(REMOFF),lang:LANG}); if(body===pushLast) return;
     const r=await fetch(CONFIG.worker+"/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body});
     if(r.ok){ pushLast=body; PWA.push=true; }
   }catch(e){ console.warn("Push:",e); PWA.push=false; }
 }
 // Benachrichtigung anzeigen – über den Service Worker (Android verlangt das), sonst direkt
 async function notify(body,tag){
+  body=i18n(body);
   try{ if(!window.Notification || Notification.permission!=="granted") return false;
     const reg=PWA.reg||(PWA_OK?await navigator.serviceWorker.getRegistration():null);
     if(reg) await reg.showNotification("LaunchRadar",{body,tag,icon:"icons/icon-192.png",badge:"icons/badge-96.png",data:{url:"./"}});

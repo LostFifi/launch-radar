@@ -27,7 +27,7 @@ function buildLayerMenu(){
     +row("fresh","Neueste Starts hervorheben","#ff4fd8")
     +`<h4>Mein Standort</h4>${row("home","Standort & ISS-Sichtkreis","#ffd25a")}
       <button class="chip ic" style="margin:4px 0 2px" onclick="document.getElementById('layers').style.display='none';openPasses()">${ICON.eye} ISS-Überflüge bei mir</button>`
-    +subsMenuHtml()+pwaMenuHtml();
+    +subsMenuHtml()+pwaMenuHtml()+langMenuHtml();
   el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
@@ -155,5 +155,5 @@ function selectSat(s,g){
   if(G.on) G.target=[-s.lon,-s.lat]; else map.panTo([s.lat,s.lon]);
 }
 function updateSatPanel(){ if(!selSat) return; const s=selSat.s, H=document.getElementById("sH"); if(!H||!s.ok) return;
-  H.textContent=s.h.toFixed(0)+" km"; document.getElementById("sV").textContent=(s.v*3600).toLocaleString("de-CH",{maximumFractionDigits:0})+" km/h ("+s.v.toFixed(2)+" km/s)";
+  H.textContent=s.h.toFixed(0)+" km"; document.getElementById("sV").textContent=(s.v*3600).toLocaleString(LOC,{maximumFractionDigits:0})+" km/h ("+s.v.toFixed(2)+" km/s)";
   document.getElementById("sP").textContent=s.lat.toFixed(2)+"°, "+s.lon.toFixed(2)+"°"; }

@@ -76,7 +76,7 @@ function profileSvg(P){
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;height:auto;display:block" role="img" aria-label="Geschätztes Aufstiegsprofil">
     <g font-size="10" fill="#8a96ad">${ticks}
     <text x="${pl-4}" y="${pt+4}" text-anchor="end" fill="#4ea1ff">${hM}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
-    <text x="${W-pr+4}" y="${pt+4}" fill="#f5a142">${(vM/1000).toLocaleString("de-CH")}k</text>
+    <text x="${W-pr+4}" y="${pt+4}" fill="#f5a142">${(vM/1000).toLocaleString(LOC)}k</text>
     <text x="${pl+4}" y="${pt+10}" fill="#4ea1ff">Höhe km</text><text x="${W-pr-4}" y="${pt+10}" text-anchor="end" fill="#f5a142">Tempo km/h</text></g>
     <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${evs}${line(p=>Yh(p[1]),"#4ea1ff")}${line(p=>Yv(p[2]),"#f5a142")}</svg>`;
 }
@@ -84,6 +84,6 @@ function profileSection(l,est){
   const P=est.prof; if(!P) return "";
   const fmtV=v=>Math.round(v/100)*100;
   return `<div class="sec"><h3>Aufstieg (geschätzt)</h3>${profileSvg(P)}
-    <ul class="tl" style="margin-top:8px">${P.ev.map(e=>{ const q=profAt(P,e[0]); return `<li><span>T+${mmss(e[0])}</span><span>${esc(e[1])} <span class="mute">· ${Math.round(q.h)} km · ${fmtV(q.v).toLocaleString("de-CH")} km/h</span></span></li>`; }).join("")}</ul>
+    <ul class="tl" style="margin-top:8px">${P.ev.map(e=>{ const q=profAt(P,e[0]); return `<li><span>T+${mmss(e[0])}</span><span>${esc(e[1])} <span class="mute">· ${Math.round(q.h)} km · ${fmtV(q.v).toLocaleString(LOC)} km/h</span></span></li>`; }).join("")}</ul>
     <div class="note">Typisches Profil ${esc(P.name)}${P.fit?`, an die Timeline dieses Starts angepasst (${P.fit===2?"MECO und SECO":"MECO"})`:" (keine Timeline-Zeiten zum Anpassen)"}. Höhe und Tempo sind Schätzungen, keine Messwerte.</div></div>`;
 }

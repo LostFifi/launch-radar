@@ -120,7 +120,7 @@ function renderPasses(){
   document.getElementById("passNote").innerHTML=`Berechnet aus Bahndaten vom ${age<1?"heute":age.toFixed(1)+" Tagen"} (SGP4). Mehr als ~3 Tage im Voraus können die Zeiten um Minuten abweichen – Station manövriert gelegentlich.
     <br>Sichtbar = Station von der Sonne beleuchtet, bei dir Dämmerung oder Nacht, mind. ${PASS_MINEL}° hoch. Zeiten sind geschätzt.`;
   if(!show.length){ box.innerHTML=`<div class="sec mute">Keine ${PASS.all?"":"sichtbaren "}Überflüge in den nächsten ${PASS_DAYS} Tagen.${PASS.all?"":" Tipp: „Nur sichtbare“ ausschalten."}</div>`; return; }
-  const tm=t=>new Date(t).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"});
+  const tm=t=>new Date(t).toLocaleTimeString(LOC,{hour:"2-digit",minute:"2-digit"});
   box.innerHTML=show.slice(0,40).map((p,i)=>{
     const a=p.vis?p.visStart:p.start, e=p.vis?p.visEnd:p.end, el=p.vis?p.visMax:p.maxEl;
     const f=p.pts.find(x=>x[2])||p.pts[0], l=[...p.pts].reverse().find(x=>x[2])||p.pts[p.pts.length-1];
@@ -128,7 +128,7 @@ function renderPasses(){
     const qc=!p.vis?"#3a4560":el>=50?"var(--go)":el>=25?"#8fc8ff":"var(--tbd)";
     const id="pass-"+PASS.sat+"-"+Math.round(a/60e3);
     return `<div class="pass ${p.vis?"":"dim"}" onclick="PASS.open=PASS.open===${i}?null:${i};renderPasses()">
-      <div><b>${new Date(a).toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit"})}</b><br><span class="tn">${tm(a)} – ${tm(e)}</span></div>
+      <div><b>${new Date(a).toLocaleDateString(LOC,{weekday:"short",day:"2-digit",month:"2-digit"})}</b><br><span class="tn">${tm(a)} – ${tm(e)}</span></div>
       <div class="pe"><b>${Math.round(el)}°</b><small>max. Höhe</small></div>
       <div>von ${compass(f[0])} ${p.fade?`– verschwindet im ${compass(l[0])} im Erdschatten`:`nach ${compass(l[0])}`}<br><span class="pill" style="background:${qc};color:${p.vis?"#000":"var(--text)"}">${q}</span></div>
       <div class="pa" onclick="event.stopPropagation()">
@@ -157,7 +157,7 @@ function showPass(start){
 }
 function passRem(id,t,txt){
   if(REM[id]) delete REM[id];
-  else { REM[id]={name:STATIONS[PASS.sat].label+"-Überflug",net:new Date(t).toISOString(),fired:false,kind:"pass",txt};
+  else { REM[id]={name:i18n(STATIONS[PASS.sat].label+"-Überflug"),net:new Date(t).toISOString(),fired:false,kind:"pass",txt:i18n(txt)};
     pwaAsk(); beep(true); toast("Erinnerung gesetzt – 10 Min vor dem Überflug"); }
   saveRem(); renderPasses();
 }

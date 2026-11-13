@@ -200,5 +200,14 @@ function placeRocket(t){
   if(follow){ if(G.on){ G.target=null; G.rot[0]=-curPos[1]; G.rot[1]=-curPos[0]; } else map.panTo(curPos,{animate:false}); }
   const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
   if(tl) tl.textContent="T+ "+mmss(t);
-  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:curTrack.prof&&t>0&&t<profEnd(curTrack.prof)?(q=>`geschätzt ${Math.round(q.h)} km Höhe · ${(Math.round(q.v/100)*100).toLocaleString("de-CH")} km/h · `)(profAt(curTrack.prof,t)):""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
+  if(pl){ // Teile einzeln in <span> (einzeln übersetzbar), getrennt durch „·“
+    const parts=[], st=curTrack.stage;
+    if(st?.mode==="deorbit"&&t>st.Tre) parts.push("Oberstufe verglüht"); else if(st?.mode==="deorbit"&&t>st.Td) parts.push("Oberstufe im Wiedereintritt");
+    if(td!=null&&TELE.h!=null) parts.push(`GEMESSEN ${TELE.h} km Höhe`,`${TELE.v.toLocaleString(LOC)} km/h`);
+    else if(curTrack.prof&&t>0&&t<profEnd(curTrack.prof)){ const q=profAt(curTrack.prof,t); parts.push(`geschätzt ${Math.round(q.h)} km Höhe`,`${(Math.round(q.v/100)*100).toLocaleString(LOC)} km/h`); }
+    if(DEP&&dc) parts.push(`${dc}/${DEP.n} ${DEP.label} ausgesetzt`);
+    if(curTrack.orbits>1&&t>540) parts.push(`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits}`);
+    parts.push(`${Math.round(d).toLocaleString(LOC)} km Bodendistanz`,`${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`);
+    const html="· "+parts.map(x=>`<span>${esc(x)}</span>`).join(" · ");
+    if(pl.dataset.h!==html){ pl.dataset.h=html; pl.innerHTML=html; } }
 }

@@ -33,10 +33,10 @@ function reviewTele(T,est){
     const X=t=>pl+(t-t0)/Math.max(1,t1-t0)*(W-pl-pr), Y=v=>H-pb-Math.min(v,ym)/ym*(H-pt-pb);
     const line=(pts,c,dash)=>`<polyline points="${pts.map(q=>X(q[0]).toFixed(1)+","+Y(q[col]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="${dash?1.5:2}" ${dash?'stroke-dasharray="4 4"':""}/>`;
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;display:block;margin-top:6px"><g font-size="10" fill="#8a96ad">
-      <text x="${pl}" y="10">${title} (${unit})</text><text x="${pl-4}" y="${pt+4}" text-anchor="end">${ym.toLocaleString("de-CH")}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
+      <text x="${pl}" y="10">${title} (${unit})</text><text x="${pl-4}" y="${pt+4}" text-anchor="end">${ym.toLocaleString(LOC)}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
       <text x="${pl}" y="${H-4}">T+${mmss(t0)}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">T+${mmss(t1)}</text></g>
       <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${est.length?line(est,"#8a96ad",true):""}${ser.map(s=>line(s[1],s[0])).join("")}</svg>`; };
   return `<h3 style="margin-top:12px">Deine Messung</h3>
-    <div class="mute" style="font-size:12px">Gemessen mit „Echte Telemetrie“: <span style="color:#4ea1ff">Stufe 2</span>${T.s1.length?`, <span style="color:#f5a142">Stufe 1</span>`:""} · gestrichelt = Schätzung${mx(2)!=null?` · höchstes gemessenes Tempo ${mx(2).toLocaleString("de-CH")} km/h, Höhe ${mx(1)} km`:""}</div>
+    <div class="mute" style="font-size:12px">Gemessen mit „Echte Telemetrie“: <span style="color:#4ea1ff">Stufe 2</span>${T.s1.length?`, <span style="color:#f5a142">Stufe 1</span>`:""} · gestrichelt = Schätzung${mx(2)!=null?` · höchstes gemessenes Tempo ${mx(2).toLocaleString(LOC)} km/h, Höhe ${mx(1)} km`:""}</div>
     ${chart(1,"Höhe","km")}${chart(2,"Tempo","km/h")}`;
 }

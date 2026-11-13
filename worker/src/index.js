@@ -26,14 +26,14 @@ export default {
       if (url.pathname === "/push/key") return json({ key: pubKey(env) || null }, 200, cors);
       if (url.pathname === "/status") return json(await env.LR.get("status", "json") || {}, 200, cors);
       if (url.pathname === "/push/subscribe" && req.method === "POST") {
-        const { sub, rem, rules, off } = await req.json();
+        const { sub, rem, rules, off, lang } = await req.json();
         if (!sub || !sub.endpoint || !/^https:\/\//.test(sub.endpoint)) return json({ error: "ungültig" }, 400, cors);
         const id = await hash(sub.endpoint), old = (await env.LR.get("sub:" + id, "json")) || {};
         const r = {}; for (const k in rem || {}) { const x = rem[k]; if (x && x.net) r[k] = { net: x.net, name: String(x.name || "").slice(0, 120), kind: x.kind === "pass" ? "pass" : "launch", txt: String(x.txt || "").slice(0, 120), sent: old.rem?.[k]?.sent && old.rem[k].net === x.net } }
         const S = v => String(v || "").slice(0, 80);
         const ru = (Array.isArray(rules) ? rules : []).slice(0, 20).map(x => ({ chip: ["spacex", "starship"].includes(x.chip) ? x.chip : "", prov: S(x.prov), cty: S(x.cty), q: S(x.q) }));
         const of = (Array.isArray(off) ? off : []).slice(0, 300).map(S);
-        await env.LR.put("sub:" + id, JSON.stringify({ sub, rem: r, rules: ru, off: of, pending: old.pending || [] }), { expirationTtl: 40 * 86400 });
+        await env.LR.put("sub:" + id, JSON.stringify({ sub, rem: r, rules: ru, off: of, lang: lang === "en" ? "en" : "de", pending: old.pending || [] }), { expirationTtl: 40 * 86400 });
         return json({ ok: true, n: Object.keys(r).length }, 200, cors);
       }
       if (url.pathname === "/push/unsubscribe" && req.method === "POST") {
@@ -110,13 +110,14 @@ async function sendReminders(env) {
       for (const id in s.rem) {
         const r = s.rem[id];
         if (net[id] && net[id] !== r.net) {            // verschoben → melden und neu planen
-          s.pending.push({ title: "LaunchRadar", body: `${short(r.name)}: neue Startzeit ${fmt(net[id])}`, tag: "lr-shift-" + id });
+          s.pending.push({ title: "LaunchRadar", body: TXT[s.lang || "de"].shift(short(r.name), fmt(net[id], s.lang)), tag: "lr-shift-" + id });
           r.net = net[id]; r.sent = false; changed = push = true;
         }
         const t = new Date(r.net) - now;
         if (!r.sent && t <= 11 * 60e3 && t > -10 * 60e3) {
           const m = Math.max(0, Math.round(t / 60e3));
-          s.pending.push({ title: "LaunchRadar", body: r.kind === "pass" ? `${r.name} in ${m} Min – ${r.txt}` : `${short(r.name)} startet in ${m} Min!`, tag: "lr-" + id });
+          const T = TXT[s.lang || "de"];
+          s.pending.push({ title: "LaunchRadar", body: r.kind === "pass" ? T.pass(r.name, m, r.txt) : T.launch(short(r.name), m), tag: "lr-" + id });
           r.sent = true; changed = push = true;
         }
         if (t < -6 * 3600e3) { delete s.rem[id]; changed = true; }
@@ -171,7 +172,12 @@ function pubKey(env) { return (env.VAPID_PUBLIC || "").trim(); }   // Secrets k�
 function b64u(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
 async function hash(s) { return b64u(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).slice(0, 32); }
 function short(n) { return (String(n).split("|")[1] || n).trim(); }
-function fmt(iso) { return new Date(iso).toLocaleString("de-CH", { timeZone: "Europe/Zurich", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+// Push-Texte in der Sprache der App (lang beim Anmelden mitgeschickt)
+const TXT = {
+  de: { shift: (n, d) => `${n}: neue Startzeit ${d}`, launch: (n, m) => `${n} startet in ${m} Min!`, pass: (n, m, t) => `${n} in ${m} Min – ${t}` },
+  en: { shift: (n, d) => `${n}: new launch time ${d}`, launch: (n, m) => `${n} launches in ${m} min!`, pass: (n, m, t) => `${n} in ${m} min – ${t}` }
+};
+function fmt(iso, lang) { return new Date(iso).toLocaleString(lang === "en" ? "en-GB" : "de-CH", { timeZone: "Europe/Zurich", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
 function json(o, status, headers) { return new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", ...headers } }); }
 function corsHeaders(req, env) {
   const o = req.headers.get("origin") || "", allow = (env.ALLOW_ORIGIN || "https://lostfifi.github.io").split(",");

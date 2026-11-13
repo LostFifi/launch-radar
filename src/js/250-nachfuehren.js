@@ -42,9 +42,9 @@ async function refreshCounts(force){
   INC.busy=false; refreshOpenViews();
 }
 function standText(kind){
-  const f=d=>new Date(d).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  const f=d=>new Date(d).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
   const full=kind==="db"?FULL.db:FULL.stats;
   if(full && INC.ts) return `vollständig geprüft ${f(full)} · nachgeführt ${f(INC.ts)}${INC.n?` (+${INC.n} Starts)`:""}`;
-  return INC.ts ? `aktualisiert ${new Date(INC.ts).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${INC.n?` · ${INC.n} neue Starts seit Schnappschuss eingerechnet`:""}` : `Schnappschuss vom ${STATS0.asof} (offline)`; }
+  return INC.ts ? `aktualisiert ${new Date(INC.ts).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${INC.n?` · ${INC.n} neue Starts seit Schnappschuss eingerechnet`:""}` : `Schnappschuss vom ${STATS0.asof} (offline)`; }
 function refreshOpenViews(){ const P=document.getElementById("panel"); if(P.style.display!=="block") return; const h2=P.querySelector(".hd h2")?.textContent||"";
   if(/Raumfahrt-Statistik/.test(h2)) openStats(); else if(/Raketen-Datenbank/.test(h2)) renderDBTable(); }

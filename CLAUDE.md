@@ -4,6 +4,7 @@ Projekt von Fionn: **LaunchRadar**, Raketenstart-Tracker im Flightradar-Stil. Au
 
 ## Sprache & Stil
 - Antworten und UI-Texte auf **Deutsch (Schweiz, kein ß → ss)**.
+- Die App ist **zweisprachig** (DE/EN). Quelltexte bleiben Deutsch; jede neue Anzeige braucht einen Eintrag in `src/js/004-i18n-en.js` (exakt oder Muster mit {0}). Texte ausserhalb des Fensters (toast, notify, confirm, Canvas) über `i18n()`. Datum/Zahlen mit `LOC` statt "de-CH". `npm test` schlägt fehl, wenn in Englisch Deutsch übrig bleibt; `node scripts/i18n-harvest.js` listet die fehlenden Texte. Variable Teile möglichst in eigene `<span>` packen.
 - Fionn mag **kurze, strukturierte Antworten** (Stichpunkte, Tabellen).
 - Design: dunkel, professionell, **keine Emojis** in der Oberfläche (eigene SVG-Icons in `ICON`, Raketen-Symbol `RK_PATH`).
 

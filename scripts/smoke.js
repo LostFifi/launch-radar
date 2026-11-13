@@ -27,7 +27,7 @@ async function launchBrowser() {
   const check = (name, ok, info = '') => { results.push(`${ok ? '✓' : '✗'} ${name}${info ? ' – ' + info : ''}`); if (!ok) errors.push(name); };
   try {
     for (const vp of [{ name: 'Desktop', width: 1280, height: 800 }, { name: 'Handy', width: 390, height: 844 }]) {
-      const ctx = await browser.newContext({ viewport: vp, serviceWorkers: 'block' });
+      const ctx = await browser.newContext({ viewport: vp, serviceWorkers: 'block', locale: 'de-CH' });
       await ctx.route(u => !u.href.startsWith(base), r => r.abort());       // alles Externe blockieren
       const page = await ctx.newPage();
       page.on('pageerror', e => errors.push(`[${vp.name}] JS-Fehler: ${e.message}`));
@@ -92,7 +92,7 @@ async function launchBrowser() {
       await ctx.close();
     }
     // Offline-Datei (alles eingebettet) und ausgelagerte Reserve-Daten der Online-Version
-    const ctx = await browser.newContext({ serviceWorkers: 'block' });
+    const ctx = await browser.newContext({ serviceWorkers: 'block', locale: 'de-CH' });
     await ctx.route(u => !u.href.startsWith(base), r => r.abort());
     const page = await ctx.newPage();
     page.on('pageerror', e => errors.push(`[Offline-Datei] JS-Fehler: ${e.message}`));
@@ -111,6 +111,21 @@ async function launchBrowser() {
     const w = await page.evaluate(async b => { CONFIG.worker = b + 'mockworker'; localStorage.removeItem('lr_cache'); await load(); return { via: DATA.via, n: launches.length, name: launches[0].name }; }, base);
     check('[Worker] App nutzt eingetragenen Worker', w.via === 'worker' && w.name === 'Worker | Test');
     await ctx.close();
+    // Englisch: alle Ansichten durchklicken, kein deutscher Text darf übrig bleiben
+    {
+      const { visitAll, mockWeather } = require('./i18n-views.js');
+      const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block', locale: 'en-US' });
+      await ctx2.route(u => !u.href.startsWith(base), r => r.abort()); await mockWeather(ctx2);
+      const p2 = await ctx2.newPage(); p2.on('pageerror', e => errors.push(`[Englisch] JS-Fehler: ${e.message}`));
+      await p2.goto(base);
+      const lang = await p2.evaluate(() => LANG);
+      const left = await visitAll(p2);
+      check('[Englisch] Sprache automatisch erkannt', lang === 'en');
+      check('[Englisch] kein deutscher Text übrig', left.length === 0, left.length ? left.slice(0, 8).join(' | ') + (left.length > 8 ? ` … (+${left.length - 8})` : '') : 'alle Ansichten geprüft');
+      await p2.goto(base + '?lang=de'); const de = await p2.evaluate(() => [LANG, document.querySelector('[data-f=all]').textContent]);
+      check('[Englisch] Umschalten auf Deutsch (?lang=de)', de[0] === 'de' && de[1] === 'Alle');
+      await ctx2.close();
+    }
   } catch (e) { errors.push('Test abgebrochen: ' + e.message); }
   await browser.close(); server.close();
   console.log(results.join('\n'));

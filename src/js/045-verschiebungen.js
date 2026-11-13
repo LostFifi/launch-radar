@@ -14,14 +14,15 @@ function trackNet(list){
   if(ch) try{ localStorage.setItem("lr_net",JSON.stringify(NETH)); }catch(e){}
 }
 function fmtShift(ms){ const s=ms<0?"−":"+", m=Math.round(Math.abs(ms)/60e3), d=Math.floor(m/1440), h=Math.floor(m%1440/60), mi=m%60;
-  return s+(d?d+" T ":"")+(d||h?h+" h ":"")+(d?"":mi+" Min"); }
+  const D=LANG==="en"?" d ":" T ", M=LANG==="en"?" min":" Min";
+  return (s+(d?d+D:"")+(d||h?h+" h ":"")+(d?"":mi+M)).trim(); }
 // Letzte Verschiebung eines Starts (nur wenn sie in den letzten 7 Tagen erkannt wurde)
 function postponed(l){ const h=NETH[l.id]; if(!h||!h.prev||Date.now()-h.at>7*864e5) return null;
   return {prev:h.prev, net:h.net, shift:new Date(h.net)-new Date(h.prev), total:new Date(h.net)-new Date(h.first), n:h.n, at:h.at}; }
 function postponedPill(l){ const p=postponed(l); if(!p) return "";
   return `<span class="pill shift" title="Vorher ${esc(fmtDate(p.prev))}">${p.shift>0?"verschoben":"vorgezogen"} ${fmtShift(p.shift)}</span>`; }
 function postponedNote(l){ const p=postponed(l); if(!p) return "";
-  return `<div class="warnbox" style="margin-top:8px"><b>${p.shift>0?"Verschoben":"Vorgezogen"}</b> um ${fmtShift(p.shift)}: vorher ${esc(fmtDate(p.prev))} → jetzt ${esc(fmtDate(p.net))}${p.n>1?` <span class="mute">(${p.n}× geändert, insgesamt ${fmtShift(p.total)})</span>`:""}<br><span class="mute" style="font-size:12px">Erkannt ${esc(new Date(p.at).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</span></div>`; }
+  return `<div class="warnbox" style="margin-top:8px"><b>${p.shift>0?"Verschoben":"Vorgezogen"}</b> um ${fmtShift(p.shift)}: vorher ${esc(fmtDate(p.prev))} → jetzt ${esc(fmtDate(p.net))}${p.n>1?` <span class="mute">(${p.n}× geändert, insgesamt ${fmtShift(p.total)})</span>`:""}<br><span class="mute" style="font-size:12px">Erkannt ${esc(new Date(p.at).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</span></div>`; }
 // Meldung, wenn ein Start mit Erinnerung verschoben wurde
 function onPostponed(l,h){
   if(!REM[l.id]) return;

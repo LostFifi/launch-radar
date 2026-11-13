@@ -32,7 +32,7 @@ function viewSection(l,est){
   if(!HOME) return `<div class="sec"><h3>Von meinem Standort aus</h3><div class="mute">Sieht man den Start von dir aus?</div>
     <button class="btn sec2" onclick="openPasses()">${ICON.home} Standort festlegen</button></div>`;
   const v=launchView(l,est); if(!v) return "";
-  const b=v.best, km=x=>Math.round(x).toLocaleString("de-CH");
+  const b=v.best, km=x=>Math.round(x).toLocaleString(LOC);
   return `<div class="sec"><h3>Von meinem Standort aus <span class="mute" style="text-transform:none;letter-spacing:0">· geschätzt</span></h3>
     <div class="wxhead"><span class="pill" style="background:${v.col};color:${v.col==="#3a4560"?"var(--text)":"#000"}">${b?"sichtbar?":"nein"}</span><span>${esc(v.verdict)}</span></div>
     ${b?`<div class="sky">${skySvg({pts:v.pts.filter(q=>q[4]>-2).map(q=>[q[0],q[1],q[4]>1&&(q[5]||v.sunMe<-4)])})}<div class="grid">

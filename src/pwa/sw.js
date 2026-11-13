@@ -44,18 +44,24 @@ async function readRem() {
 async function writeRem(rem) {
   await (await caches.open(DATA)).put("rem.json", new Response(JSON.stringify(rem), { headers: { "content-type": "application/json" } }));
 }
+// Texte in der Sprache der App (die Seite legt lang.txt im Cache ab)
+async function lang() { try { const r = await (await caches.open(DATA)).match("lang.txt"); return r ? await r.text() : "de"; } catch (e) { return "de"; } }
+const TX = {
+  de: { soon: m => `in ca. ${m} Min`, now: "jetzt", ago: m => `vor ${m} Min`, launch: (n, w) => `${n} startet ${w}`, other: "Neue Meldung zu einem Start – tippen zum Öffnen" },
+  en: { soon: m => `in about ${m} min`, now: "now", ago: m => `${m} min ago`, launch: (n, w) => `${n} launches ${w}`, other: "News about a launch – tap to open" }
+};
 async function checkReminders() {
-  const rem = await readRem(), now = Date.now(); let changed = false;
+  const rem = await readRem(), now = Date.now(); let changed = false; const L = TX[await lang()] || TX.de;
   for (const id in rem) {
     const r = rem[id], t = new Date(r.net) - now;
     // Der Browser weckt uns unregelmässig: alles melden, was in den nächsten 20 Min kommt oder knapp verpasst wurde
     if (!r.fired && t <= 20 * 60e3 && t > -15 * 60e3) {
       r.fired = true; changed = true;
       const min = Math.round(t / 60e3), name = r.kind === "pass" ? r.name : (r.name.split("|")[1] || r.name).trim();
-      const when = min > 0 ? `in ca. ${min} Min` : min === 0 ? "jetzt" : `vor ${-min} Min`;
+      const when = min > 0 ? L.soon(min) : min === 0 ? L.now : L.ago(-min);
       try {
         await self.registration.showNotification("LaunchRadar", {
-          body: r.kind === "pass" ? `${name} ${when} – ${r.txt || ""}` : `${name} startet ${when}`,
+          body: r.kind === "pass" ? `${name} ${when} – ${r.txt || ""}` : L.launch(name, when),
           icon: "icons/icon-192.png", badge: "icons/badge-96.png", tag: "lr-" + id, data: { url: "./" }
         });
       } catch (err) { /* Benachrichtigungen nicht erlaubt – trotzdem als gemeldet markieren */ }
@@ -78,7 +84,7 @@ self.addEventListener("push", e => {
       await checkReminders();
       const shown = await self.registration.getNotifications();
       if (shown.length) return;
-      msgs = [{ title: "LaunchRadar", body: "Neue Meldung zu einem Start – tippen zum Öffnen", tag: "lr-push" }];
+      msgs = [{ title: "LaunchRadar", body: (TX[await lang()] || TX.de).other, tag: "lr-push" }];
     }
     for (const m of msgs) await self.registration.showNotification(m.title || "LaunchRadar",
       { body: m.body, tag: m.tag, icon: "icons/icon-192.png", badge: "icons/badge-96.png", data: { url: "./" } });

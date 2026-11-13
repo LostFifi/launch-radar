@@ -16,7 +16,7 @@ function saveSubs(){ try{ localStorage.setItem("lr_subs",JSON.stringify(SUBS)); 
 function subscribeFilter(){
   const r=currentRule();
   if(SUBS.some(x=>ruleKey(x)===ruleKey(r))) return toast("Dieses Abo gibt es schon");
-  if(!r.chip&&!r.prov&&!r.cty&&!r.q && !confirm("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)")) return;
+  if(!r.chip&&!r.prov&&!r.cty&&!r.q && !confirm(i18n("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)"))) return;
   SUBS.push(r); saveSubs(); pwaAsk(); beep(true);
   const n=launches.filter(l=>new Date(l.net)>Date.now()&&matchRule(r,l)).length;
   toast(`Abo „${ruleLabel(r)}“ aktiv – ${n} kommende Starts, neue kommen automatisch dazu`);

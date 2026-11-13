@@ -41,7 +41,7 @@ async function load(){
   launches = SNAPSHOT; Object.assign(DATA,{src:"snap",ts:snapT}); render();
   toast("Live-Daten blockiert – zeige Schnappschuss vom "+SNAP_TS+". Im Browser (Chrome) öffnen für Live-Daten.");
 }
-function fmtStand(t){ return t?new Date(t).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"unbekannt"; }
+function fmtStand(t){ return t?new Date(t).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"unbekannt"; }
 // Kurzer Text, wie aktuell die Startdaten sind
 function dataInfo(){
   const m=t=>Math.max(0,Math.round((Date.now()-t)/60e3));
