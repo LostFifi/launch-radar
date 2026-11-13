@@ -19,20 +19,10 @@ function closePip(){ const W=document.getElementById("pip"); W.style.display="no
 // Telemetrie mit einem Klick: diesen Tab teilen, Bereich = Mini-Fenster (unten rechts = Stufe 2)
 async function teleAuto(){
   if(!navigator.mediaDevices?.getDisplayMedia){ toast("Geht nur in Chrome oder Edge am Computer"); return; }
-  if(TELE.on) teleStop();
-  try{ TELE.stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,displaySurface:"browser"},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"}); }
+  let st; try{ st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,displaySurface:"browser"},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"}); }
   catch(e){ toast("Teilen abgebrochen"); return; }
-  const v=document.createElement("video"); v.muted=true; v.playsInline=true; v.srcObject=TELE.stream; await v.play().catch(()=>{}); TELE.video=v;
-  TELE.stream.getVideoTracks()[0].onended=teleStop;
-  TELE.on=true; TELE.auto=true; TELE.sub=TPRESET.s2; TELE.d=null; TELE.last=null; TELE.hist=[]; TELE.ok=0; TELE.bad=0;
-  document.getElementById("tele").style.display="block"; buildTeleBox();
-  document.querySelectorAll("#tele [data-tp]").forEach(b=>b.onclick=()=>{ TELE.sub=TPRESET[b.dataset.tp]; TELE.last=null; });
-  document.getElementById("tStat").textContent="Texterkennung wird geladen …";
-  try{ if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
-    TELE.worker=await Tesseract.createWorker("eng"); await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTU/ ",tessedit_pageseg_mode:"6"}); }
-  catch(e){ toast("Texterkennung konnte nicht geladen werden"); return teleStop(); }
-  TELE.timer=setInterval(teleTick,1000); teleTick();
+  teleBegin(st,true);
 }
-// Bereich im geteilten Tab aus der Lage des Mini-Fensters berechnen
-function autoRegion(){ const f=document.getElementById("pipFrame"); if(!f) return null; const r=f.getBoundingClientRect(), s=TELE.sub||TPRESET.s2;
+// Bereich im geteilten Tab aus der Lage des Mini-Fensters berechnen (s = Ausschnitt im Video, z.B. TPRESET.s1)
+function autoRegion(s){ const f=document.getElementById("pipFrame"); if(!f) return null; const r=f.getBoundingClientRect();
   return [(r.left+s[0]*r.width)/innerWidth,(r.top+s[1]*r.height)/innerHeight,s[2]*r.width/innerWidth,s[3]*r.height/innerHeight]; }

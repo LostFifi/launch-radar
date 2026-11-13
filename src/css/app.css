@@ -136,8 +136,13 @@ table.cmp img{width:100%;max-width:220px;aspect-ratio:4/3;object-fit:cover;borde
 #tele .tbig{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
 #tele .tbig div{background:#18203a;border-radius:8px;padding:6px 8px} #tele .tbig small{display:block;color:var(--mute);font-size:11px}
 #tele .tbig b{font-size:16px;font-variant-numeric:tabular-nums}
-#tele canvas{width:100%;display:block;border-radius:8px;background:#000;margin-bottom:6px} #tele #tSpark{background:#0f1525;height:54px}
-#tele #tPrev{cursor:crosshair;touch-action:none}
+#tele canvas{width:100%;display:block;border-radius:8px;background:#000;margin-bottom:6px}
+#tele .tst{border-left:3px solid var(--c);padding-left:8px;margin-bottom:8px}
+#tele .tsh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin-bottom:4px}
+#tele .tsh .pill{font-weight:600}
+#tele .tch canvas{background:#0f1525;height:auto;aspect-ratio:16/5}
+#tele .tbig div{min-width:0} #tele .tbig small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){#tele .tbig b{font-size:14px}}#tele #tPrev{cursor:crosshair;touch-action:none}
 #tele .tbtns{display:flex;gap:6px;flex-wrap:wrap} #tele .tsteps{margin:0 0 8px;padding-left:18px;font-size:13px} #tele .tsteps li{margin-bottom:4px}
 #pip{position:absolute;z-index:1005;right:460px;bottom:70px;width:340px;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none;box-shadow:0 10px 40px #000c}
 #pip.big{width:min(640px,calc(100vw - 24px))}

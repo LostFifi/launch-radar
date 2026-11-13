@@ -71,6 +71,8 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 - YouTube im verschiebbaren Mini-Fenster (nur wenn über http(s) ausgeliefert – YouTube blockt `file://`)
 - Telemetrie per Tesseract.js (lädt von jsDelivr): „Diesen Tab teilen“ (`getDisplayMedia` mit `preferCurrentTab`) → Bereich wird aus der Lage des Mini-Fensters berechnet (Stufe 2 unten rechts / Stufe 1 unten links). Alternativ manuell: anderer Tab + Rahmen ziehen
 - Plausibilitätsfilter, Bodendistanz aus √(v² − (dh/dt)²) integriert → Rakete bewegt sich nach Messwerten
+- **Stufe 1 und Stufe 2 gleichzeitig** (je eigener Bereich, eigene Grenzen; Stufe 1 abschaltbar), Steigrate Stufe 1
+- **Diagramme** Höhe und Tempo über T+ für beide Stufen, **CSV-Export**; nach Ende des Teilens bleiben die Diagramme stehen
 
 **Satelliten** (CelesTrak TLE, SGP4 via satellite.js)
 - Raumstationen (ISS/Tiangong mit Symbol), Starlink (~10 600), GNSS, Wetter (nur online)
@@ -109,4 +111,4 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 3. PWA mit echten Push-Benachrichtigungen (Service Worker – geht nur gehostet)
 4. Bessere Bahnen: Startazimut aus FlightClub oder Mission-Profilen, echte Aufstiegskurven je Rakete
 5. ~~Satelliten-Überflüge für den eigenen Standort~~ – erledigt (Ebenen-Menü → „ISS-Überflüge bei mir“)
-6. Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit
+6. ~~Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit~~ – erledigt
