@@ -1835,20 +1835,35 @@ function estimateProfile(l){
     // Landezeit aus der Timeline (Catch/Landung), sonst nach den angegebenen Orbits
     const Tl = tlx(/starship catch|starship landing/i) || (orbits*P+40*60);
     const Td = Math.min(tlx(/deorbit burn start/i) || (Tl-57*60), Tl-20*60);
-    // Periode + Neigung suchen, bei denen die Bahn zur Landezeit über Starbase liegt
-    const tgt=LZ.STARBASE; let best={c:1e9};
-    for(let ii=0; ii<=28; ii++){ const inc2=Math.max(Math.abs(lat)+0.05, 26.2+ii*0.25);
-      for(let jj=0; jj<=600; jj++){ const P2=P*(0.97+jj*0.0001);
-        const q=trackPoint(lat,lon,inc2,false,P2,Tl), c=hav([q[0],q[1]],tgt);
-        if(c<best.c) best={c,inc:inc2,P:P2}; } }
-    inc=best.inc; P=best.P; tMax=Tl; orbits=Math.ceil(Tl/P);
-    track=groundTrack(lat,lon,inc,false,tMax,P);
-    // Abstieg: ab dem Deorbit-Burn sanft zum Landeplatz führen
-    const kd=track.findIndex(p=>p[2]>=Td), last=track[track.length-1];
+    // Starship-Orbitalflug ab Starbase: Start nach Südosten (absteigend) durch die Yucatán-Strasse – so umgeht die Bahn
+    // Kuba und Florida (beobachtet auf der SpaceX-Telemetrie). Neigung + Umlaufzeit so suchen, dass
+    //   (1) der erste Überflug nahe an der Yucatán-Strasse liegt und (2) das Ship zur Catch-Zeit absteigend,
+    //   also von Nordwesten kommend, über Starbase steht.
+    // Zeitversatz: nach Brennschluss liegt das Ship um lag Sekunden hinter der gedachten Kreisbahn ab T-0.
+    const tgt=LZ.STARBASE, WP=[21.9,-85.8], tE=prof?profEnd(prof):540, dE=prof?prof.pts[prof.pts.length-1][3]:1800;
+    const lagOf=(i2,s2,P2)=>{ const tr=groundTrack(lat,lon,i2,s2,tE+400,P2), c=[0]; for(let k=1;k<tr.length;k++) c.push(c[k-1]+hav(tr[k-1],tr[k])); return lagT({cum:c},tE,dE); };
+    let best={c:1e9};
+    for(const s2 of [true,false]) for(let ii=0; ii<=56; ii++){ const inc2=Math.max(Math.abs(lat)+0.05, 26.2+ii*0.25);
+      const first=groundTrack(lat,lon,inc2,s2,1500,P); let cw=1e9; for(const p of first) cw=Math.min(cw,hav(p,WP));
+      if(cw>80) continue;                                             // Korridor (Yucatán-Strasse) ist Pflicht → Neigung ≈ 30–33°
+      const lg=lagOf(inc2,s2,P);
+      for(let jj=0; jj<=900; jj++){ const P2=P*(0.94+jj*0.0001), tl=Tl-lg;
+        const q=trackPoint(lat,lon,inc2,s2,P2,tl), q0=trackPoint(lat,lon,inc2,s2,P2,tl-240);
+        const desc=q0[0]>q[0]+0.3, c=hav([q[0],q[1]],tgt)+cw*3+(desc?0:600);   // Anflug von Norden (absteigend)
+        if(c<best.c) best={c,inc:inc2,P:P2,south:s2,lag:lg,km:hav([q[0],q[1]],tgt)}; } }
+    if(best.c>=1e9) best={inc:Math.max(Math.abs(lat)+0.05,26.2),P,south:false,lag:0,km:null};   // Notlösung
+    inc=best.inc; P=best.P; south=best.south; tMax=Tl; orbits=Math.ceil(Tl/P);
+    const tau=t=>t-best.lag;                                          // echte Zeit → Zeit auf der Bahn
+    track=groundTrack(lat,lon,inc,south,tau(Tl),P);
+    // Abstieg: ab dem Deorbit-Burn das letzte Stück sanft so VERSCHIEBEN, dass es in Starbase endet.
+    // (Verschieben statt Hinziehen: die Anflugform – absteigend aus Nordwesten – bleibt erhalten;
+    //  in echt gleicht das Ship die Abweichung beim Wiedereintritt seitlich aus.)
+    const kd=track.findIndex(p=>p[2]>=tau(Td)), last=track[track.length-1];
     if(kd>0){ let tl=tgt[1]; while(tl-last[1]>180) tl-=360; while(tl-last[1]<-180) tl+=360;
-      for(let k=kd;k<track.length;k++){ const f=(track[k][2]-Td)/(Tl-Td), w=f*f*(3-2*f);
-        track[k][0]=track[k][0]*(1-w)+tgt[0]*w; track[k][1]=track[k][1]*(1-w)+tl*w; } }
-    retFit={km:best.c,Td,Tl};
+      const dLa=tgt[0]-last[0], dLo=tl-last[1];
+      for(let k=kd;k<track.length;k++){ const f=(track[k][2]-tau(Td))/(Tl-Td), w=f*f*(3-2*f);
+        track[k][0]+=dLa*w; track[k][1]+=dLo*w; } }
+    retFit={km:best.km,Td,Tl};
   } else track=groundTrack(lat,lon,inc,south,tMax,P);
   let cut=track.length;
   if(suborbital){ // Starship: Wasserung im Indischen Ozean
@@ -1898,7 +1913,9 @@ function estimateProfile(l){
 function trackPoint(latD,lonD,incD,south,P,t){
   const d2r=Math.PI/180, phi=latD*d2r, i=incD*d2r; let s=Math.sin(phi)/Math.sin(i); s=Math.max(-1,Math.min(1,s));
   const u0= south ? Math.PI-Math.asin(s) : Math.asin(s), lam=u=>Math.atan2(Math.cos(i)*Math.sin(u),Math.cos(u)), Om=lonD*d2r-lam(u0);
-  const u=u0+2*Math.PI*t/P; return [Math.asin(Math.sin(i)*Math.sin(u))/d2r, norm((Om+lam(u)-OMEGA_E*t)/d2r)]; }
+  const u=u0+2*Math.PI*t/P; return [Math.asin(Math.sin(i)*Math.sin(u))/d2r, norm((Om+lam(u)+nodeRate(incD,P)*t-OMEGA_E*t)/d2r)]; }
+// Drehung der Bahnebene durch die Abplattung der Erde (J2): bei ~30° Neigung etwa −7° pro Tag (rad/s)
+function nodeRate(incD,P){ const n=2*Math.PI/P, a=Math.cbrt(398600.4418*(P/(2*Math.PI))**2); return -1.5*1.08263e-3*(6378.137/a)**2*Math.cos(incD*Math.PI/180)*n; }
 function onLand(p){ try{ return d3.geoContains(WORLD,[norm(p[1]),p[0]]); }catch(e){ return false; } }
 function nearestCum(tr,cum,p){ let bi=0,bd=1e9; tr.forEach((q,i)=>{ const d=hav([q[0],q[1]],p); if(d<bd){bd=d;bi=i;} }); return cum[bi]; }
 // Bodenspur einer Kreisbahn (LEO ~ 90 min), inkl. Erdrotation
@@ -1907,12 +1924,12 @@ function groundTrack(latD,lonD,incD,south,tMax,P=5400){
   let s=Math.sin(phi)/Math.sin(i); s=Math.max(-1,Math.min(1,s));
   const u0= south ? Math.PI-Math.asin(s) : Math.asin(s);
   const lam=u=>Math.atan2(Math.cos(i)*Math.sin(u),Math.cos(u));
-  const Om=lonD*d2r-lam(u0);
+  const Om=lonD*d2r-lam(u0), dOm=nodeRate(incD,P);
   const pts=[]; let prev=null, off=0;
   for(let t=0;t<=tMax;t+=20){
     const u=u0+2*Math.PI*t/P;
     const la=Math.asin(Math.sin(i)*Math.sin(u))/d2r;
-    let lo=(Om+lam(u)-OMEGA_E*t)/d2r;
+    let lo=(Om+lam(u)+dOm*t-OMEGA_E*t)/d2r;
     lo=norm(lo);
     if(prev!==null){ const dl=lo+off-prev; if(dl>180) off-=360; else if(dl<-180) off+=360; }
     prev=lo+off; pts.push([la,lo+off,t]);
@@ -1925,8 +1942,16 @@ function distAt(t,est){
   const P=est.prof, tE=P?profEnd(P):540, dE=P?P.pts[P.pts.length-1][3]:1800;
   if(t<tE) return P?profAt(P,t).d:1800*Math.pow(t/540,2);
   const c=est.cum; if(!c) return dE;
-  const ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
-  const lag=ct(tE)-dE; return ct(t)-lag*Math.exp(-(t-tE)/1500);
+  const ct=x=>{ x=Math.max(0,x); const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
+  // Ab Brennschluss mit Orbit-Tempo weiter – mit festem Zeitversatz gegenüber der gedachten Kreisbahn ab T-0
+  // (kein „Aufholen“ mehr, das machte die Rakete nach SECO ~20 Min lang zu schnell)
+  return ct(t-lagT(est,tE,dE));
+}
+// Zeitversatz: wie viel später als die gedachte Kreisbahn (Start bei T-0) die Rakete die Bodendistanz dE erreicht
+function lagT(est,tE,dE){
+  if(est._lag!=null) return est._lag; const c=est.cum; let k=c.findIndex(v=>v>=dE);
+  const tau=k<=0?0:(k-1+(dE-c[k-1])/Math.max(1e-9,c[k]-c[k-1]))*20;
+  const lg=Math.max(0,tE-tau); if(est.track) est._lag=lg; return lg;
 }
 // Bahn an der Datumsgrenze in Teilstücke schneiden (für viele Orbits nötig)
 function segs(pts){ const out=[]; let cur=[];
