@@ -39,6 +39,13 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;
 .item:hover{background:#18203a}
 .item small{color:var(--mute)}
 .mute{color:var(--mute)}
+.padgrp summary{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;padding:9px 14px 9px 30px;background:#141b2b;border-bottom:1px solid var(--line);cursor:pointer;list-style:none;position:relative}
+.padgrp summary::-webkit-details-marker{display:none}
+.padgrp summary::before{content:"";position:absolute;left:13px;top:15px;width:6px;height:6px;border:solid var(--mute);border-width:0 2px 2px 0;transform:rotate(-45deg);transition:transform .15s}
+.padgrp[open] summary::before{transform:rotate(45deg);top:13px}
+.padgrp summary .pt{font-weight:700}
+.padgrp summary small{grid-column:1/-1;color:var(--mute);font-size:11px}
+.padgrp summary:hover{background:#18203a}
 .note{font-size:12px;color:var(--mute);margin-top:6px}
 input[type=range]{width:100%}
 .pin{width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 10px #0008;position:relative}

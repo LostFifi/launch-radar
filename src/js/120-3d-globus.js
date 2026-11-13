@@ -36,7 +36,7 @@ function gDraw(){
   }
   G.hits=[];
   satDrawGlobe(gx,proj,path,vis,pt);
-  padGroups.forEach(list=>{ const l=list[0], ll=[+l.pad.latitude,+l.pad.longitude]; if(!vis(ll)) return; const q=pt(ll);
+  padGroups.forEach(list=>{ const l=list[0], ll=list.site?list.site.ll:[+l.pad.latitude,+l.pad.longitude]; if(!vis(ll)) return; const q=pt(ll);
     gx.beginPath(); gx.arc(q[0],q[1],7,0,7); gx.fillStyle=statusHex(l); gx.fill(); gx.lineWidth=2.5; gx.strokeStyle="#fff"; gx.stroke();
     if(list.length>1){ gx.font="bold 10px sans-serif"; gx.fillStyle="#fff"; gx.fillText(list.length,q[0]+11,q[1]-9); }
     G.hits.push({x:q[0],y:q[1],list}); });
@@ -65,7 +65,7 @@ function gUp(e){ const d=G.drag; G.ptr.delete(e.pointerId); if(G.ptr.size<2) G.p
   if(d && !d.moved){ let best=null,bd=20;
     G.hits.forEach(h=>{ if(h.list){ const dd=Math.hypot(h.x-e.clientX,h.y-e.clientY); if(dd<14){bd=-1;best=h;} } }); if(bd>=0) G.hits.forEach(h=>{ const dd=Math.hypot(h.x-e.clientX,h.y-e.clientY); if(dd<bd){bd=dd;best=h;} });
     if(best && best.sat) selectSat(best.sat,best.g);
-    else if(best) best.list.length>1 ? showList(best.list,best.list[0].pad.name) : select(best.list[0]); }
+    else if(best) openGroup(best.list); }
   G.drag=null; }
 gc.addEventListener("pointerup",gUp); gc.addEventListener("pointercancel",gUp);
 gc.addEventListener("wheel",e=>{ e.preventDefault(); G.scale=Math.max(80,Math.min(4000,G.scale*Math.exp(-e.deltaY*.0015))); },{passive:false});

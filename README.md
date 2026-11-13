@@ -49,7 +49,7 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 
 **Karte & Globus**
 - Leaflet-Karte: Esri Dark Gray (Retina-Kacheln auf hochauflösenden Bildschirmen) + Beschriftungs-Ebene darüber; eingebettete Weltkarte liegt darunter und ist nur offline sichtbar. Satelliten-Zeichenfläche liegt in einer Leaflet-Ebene und macht die Zoom-Animation mit (CARTO bräuchte inzwischen einen API-Schlüssel) und eigener 3D-Globus (d3-geo orthographisch, drehen/zoomen/antippen)
-- Startplätze mit Status-Farbe (grün Go, gelb TBD, rot Live/Fehlstart), Gruppierung pro Startplatz
+- Startplätze mit Status-Farbe (grün Go, gelb TBD, rot Live/Fehlstart). **Ein Punkt pro Startort** (`buildSites()`: gleicher Standort oder < 40 km, z.B. Cape Canaveral + Kennedy); Klick → Liste mit aufklappbaren Unterkapiteln je Startkomplex (SLC-40, LC-39A …)
 - Filter Alle / SpaceX / Starship, Liste (Kommende/Vergangene), Countdown zum nächsten Start
 - Tag/Nacht-Grenze, Zeitraffer-Leiste (1×–3600×) für Satelliten und Tag/Nacht
 - Ebenen-Menü: alles einzeln ausschaltbar, Auswahl wird gespeichert
