@@ -913,7 +913,8 @@ function select(l){
      <b>Zielbahn</b><span>${esc(m.orbit?.name||"–")} ${m.orbit?.abbrev?`(${esc(m.orbit.abbrev)})`:""}</span>
      <b>Startplatz</b><span>${esc(l.pad?.name||"")}, ${esc(l.pad?.location?.name||"")}</span>
      <b>Bahnneigung</b><span>≈ ${est.inc.toFixed(1)}° <span class="mute">(geschätzt)</span></span>
-   </div>${m.description?`<p>${esc(m.description)}</p>`:""}</div>`;
+     ${est.suborbital||!est.az?"":`<b>Startrichtung</b><span>≈ ${Math.round(est.az)}° (${compass(est.az)}) <span class="mute">(geschätzt, inkl. Erddrehung)</span></span>`}
+   </div>${m.description?`<p>${esc(m.description)}</p>`:""}</div>`+profileSection(l,est);
 
   // Booster & Landung
   html+=`<div class="sec"><h3>Booster (1. Stufe)</h3>`;
@@ -996,6 +997,86 @@ function stopSim(resetBtn=true){
   const b=document.getElementById("play"); if(b&&resetBtn!==false) b.textContent="▶ Flug simulieren";
 }
 
+// ---- 065-aufstiegsprofile.js ----
+// ===================== Aufstiegsprofile je Rakete =====================
+// Typische Aufstiegskurven aus veröffentlichten Webcast-Telemetrien und Presse-Kits (gerundet, GESCHÄTZT).
+// pts: [T+ s, Höhe km, Tempo km/h, Bodendistanz km]; ev: [T+ s, Ereignis]; meco/seco: Zeitpunkte zum Abgleich mit der Timeline.
+const PROFILES={
+  f9:{name:"Falcon 9",meco:150,seco:520,
+    pts:[[0,0,0,0],[30,2,550,.2],[72,12,1650,4],[100,26,3300,15],[120,40,4800,30],[150,68,8200,75],[160,76,8100,88],[205,108,8900,150],[260,140,10800,260],[330,168,14000,450],[400,186,17800,720],[460,196,22000,1060],[520,205,26800,1500],[540,207,27000,1650]],
+    ev:[[72,"Max-Q"],[150,"MECO (Brennschluss Stufe 1)"],[153,"Stufentrennung"],[160,"Zündung Stufe 2 (SES-1)"],[205,"Verkleidung ab"],[520,"SECO-1 (Brennschluss Stufe 2)"]]},
+  fh:{name:"Falcon Heavy",meco:184,seco:500,
+    pts:[[0,0,0,0],[66,12,1600,4],[150,62,7000,65],[184,90,10500,130],[260,140,12500,300],[380,180,18500,700],[500,200,26500,1450],[520,202,27000,1600]],
+    ev:[[66,"Max-Q"],[150,"Seitenbooster aus & Trennung"],[184,"MECO (Zentralstufe)"],[192,"Zündung Stufe 2"],[230,"Verkleidung ab"],[500,"SECO-1"]]},
+  ss:{name:"Starship",meco:160,seco:520,
+    pts:[[0,0,0,0],[62,11,1500,3],[100,25,2700,12],[160,66,5700,62],[200,84,6000,112],[300,128,10000,300],[400,152,16000,650],[520,165,26200,1450],[540,166,26500,1600]],
+    ev:[[62,"Max-Q"],[160,"MECO Super Heavy"],[163,"Hot-Staging"],[170,"Booster: Boostback-Burn"],[520,"SECO Ship"]]},
+  el:{name:"Electron",meco:150,seco:525,
+    pts:[[0,0,0,0],[70,11,1500,4],[150,78,7000,95],[185,100,7600,150],[300,175,13000,500],[420,210,19500,1000],[525,230,26500,1550],[540,232,27000,1650]],
+    ev:[[70,"Max-Q"],[150,"MECO"],[153,"Stufentrennung"],[185,"Verkleidung ab"],[270,"Batteriewechsel"],[525,"SECO"],[540,"Kick-Stage getrennt"]]},
+  vu:{name:"Vulcan / Atlas V (Centaur)",meco:300,seco:900,
+    pts:[[0,0,0,0],[60,10,1500,3],[140,55,5000,60],[300,150,14000,550],[450,175,18000,1150],[600,180,21500,1950],[750,182,24500,2900],[900,185,27500,3950]],
+    ev:[[60,"Max-Q"],[140,"Feststoffbooster ab"],[300,"BECO (Brennschluss Stufe 1)"],[306,"Stufentrennung"],[315,"Verkleidung ab"],[900,"MECO-1 Centaur (Parkbahn)"]]},
+  a6:{name:"Ariane 6",meco:468,seco:1000,
+    pts:[[0,0,0,0],[70,12,1600,5],[136,62,6000,70],[210,110,7800,180],[300,145,10500,380],[468,190,22000,1250],[700,195,25000,2300],[1000,200,27500,3700]],
+    ev:[[70,"Max-Q"],[136,"Feststoffbooster ab"],[210,"Verkleidung ab"],[468,"Kernstufe aus"],[474,"Stufentrennung, Vinci zündet"],[1000,"Vinci aus (Parkbahn)"]]},
+  so:{name:"Sojus-2",meco:287,seco:528,
+    pts:[[0,0,0,0],[60,9,1400,3],[118,42,5800,45],[155,65,6400,90],[287,165,13500,510],[400,190,19000,1050],[528,200,27000,1750]],
+    ev:[[118,"Booster ab (Korolev-Kreuz)"],[155,"Verkleidung ab"],[287,"Kernstufe aus, Trennung"],[528,"Oberstufe aus"]]},
+  lv:{name:"LVM3 / GSLV",meco:313,seco:960,
+    pts:[[0,0,0,0],[60,8,1300,2],[128,55,5800,50],[313,160,16000,700],[600,175,22000,2000],[960,180,33000,4600]],
+    ev:[[128,"Feststoffbooster ab"],[313,"Kernstufe aus"],[320,"Verkleidung / Oberstufe zündet"],[960,"Oberstufe aus (Transferbahn)"]]},
+  gen:{name:"typische Rakete",meco:165,seco:540,
+    pts:[[0,0,0,0],[70,12,1500,5],[165,80,7000,110],[300,160,14000,520],[420,190,20000,1060],[540,205,27000,1800]],
+    ev:[[70,"Max-Q"],[165,"Brennschluss Stufe 1"],[200,"Verkleidung ab"],[540,"Brennschluss Oberstufe"]]}
+};
+function profileKey(l){
+  const r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
+  if(r.includes("starship")) return "ss"; if(r.includes("falcon heavy")) return "fh"; if(r.includes("falcon 9")) return "f9";
+  if(r.includes("electron")) return "el"; if(/vulcan|atlas v/.test(r)) return "vu"; if(r.includes("ariane 6")) return "a6";
+  if(/soyuz|sojus/.test(r)) return "so"; if(/lvm3|gslv|mark-3|mk iii/.test(r)) return "lv"; return "gen";
+}
+// Profil holen und Zeiten an die Timeline dieses Starts anpassen (MECO, SECO)
+function profileFor(l){
+  const k=profileKey(l), B=PROFILES[k];
+  const tl=rx=>{ const e=(l.timeline||[]).find(t=>rx.test(t.type?.abbrev||"")); return e?relSec(e.relative_time):null; };
+  const kn=[[0,0]], mA=tl(/^(MECO|BECO)\b/i), sA=tl(/^SECO(-1)?$/i);
+  if(mA>30 && mA/B.meco>0.6 && mA/B.meco<1.6) kn.push([B.meco,mA]);
+  if(sA>(kn[kn.length-1][1]+30) && sA/B.seco>0.6 && sA/B.seco<1.6) kn.push([B.seco,sA]);
+  const warp=t=>{ for(let i=1;i<kn.length;i++) if(t<=kn[i][0]){ const [p0,a0]=kn[i-1],[p1,a1]=kn[i]; return a0+(t-p0)*(a1-a0)/(p1-p0); }
+    const [p0,a0]=kn[kn.length-1]; return a0+(t-p0); };
+  return {key:k,name:B.name,fit:kn.length-1,pts:B.pts.map(p=>[warp(p[0]),p[1],p[2],p[3]]),ev:B.ev.map(e=>[warp(e[0]),e[1]])};
+}
+function profAt(P,t){ const p=P.pts; if(t<=0) return {h:0,v:0,d:0};
+  for(let i=1;i<p.length;i++) if(t<=p[i][0]){ const f=(t-p[i-1][0])/(p[i][0]-p[i-1][0]), m=j=>p[i-1][j]+f*(p[i][j]-p[i-1][j]); return {h:m(1),v:m(2),d:m(3)}; }
+  const e=p[p.length-1]; return {h:e[1],v:e[2],d:e[3],orbit:true}; }
+function profEnd(P){ return P.pts[P.pts.length-1][0]; }
+// Startazimut: aus Bahnneigung + Breite (Kugel), korrigiert um die Erddrehung am Startplatz
+function launchAzimuth(lat,inc,south){ const r=Math.PI/180, s=Math.cos(inc*r)/Math.cos(lat*r);
+  let az=Math.asin(Math.max(-1,Math.min(1,s)))/r; if(south) az=180-az;
+  const v=7.8, vx=v*Math.sin(az*r)-0.4651*Math.cos(lat*r), vy=v*Math.cos(az*r); return (Math.atan2(vx,vy)/r+360)%360; }
+// Kleines SVG-Diagramm: Höhe (blau) und Tempo (orange) über T+, mit Ereignissen
+function profileSvg(P){
+  const W=400,H=170,pl=34,pr=40,pt=12,pb=22,tE=profEnd(P), hM=niceMax(Math.max(...P.pts.map(p=>p[1]))), vM=niceMax(Math.max(...P.pts.map(p=>p[2])));
+  const X=t=>pl+t/tE*(W-pl-pr), Yh=h=>H-pb-h/hM*(H-pt-pb), Yv=v=>H-pb-v/vM*(H-pt-pb);
+  const line=(f,c)=>`<polyline points="${P.pts.map(p=>X(p[0]).toFixed(1)+","+f(p).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="2"/>`;
+  const step=60*Math.max(1,niceMax(tE/60/5)); let ticks=""; for(let t=0;t<=tE;t+=step) ticks+=`<text x="${X(t)}" y="${H-6}" text-anchor="middle">T+${mmss(t)}</text>`;
+  const evs=P.ev.filter(e=>e[0]<=tE+1).map(e=>`<line x1="${X(e[0])}" x2="${X(e[0])}" y1="${pt}" y2="${H-pb}" stroke="#3a4560" stroke-dasharray="2 3"><title>${esc(e[1])}</title></line>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;height:auto;display:block" role="img" aria-label="Geschätztes Aufstiegsprofil">
+    <g font-size="10" fill="#8a96ad">${ticks}
+    <text x="${pl-4}" y="${pt+4}" text-anchor="end" fill="#4ea1ff">${hM}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
+    <text x="${W-pr+4}" y="${pt+4}" fill="#f5a142">${(vM/1000).toLocaleString("de-CH")}k</text>
+    <text x="${pl+4}" y="${pt+10}" fill="#4ea1ff">Höhe km</text><text x="${W-pr-4}" y="${pt+10}" text-anchor="end" fill="#f5a142">Tempo km/h</text></g>
+    <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${evs}${line(p=>Yh(p[1]),"#4ea1ff")}${line(p=>Yv(p[2]),"#f5a142")}</svg>`;
+}
+function profileSection(l,est){
+  const P=est.prof; if(!P) return "";
+  const fmtV=v=>Math.round(v/100)*100;
+  return `<div class="sec"><h3>Aufstieg (geschätzt)</h3>${profileSvg(P)}
+    <ul class="tl" style="margin-top:8px">${P.ev.map(e=>{ const q=profAt(P,e[0]); return `<li><span>T+${mmss(e[0])}</span><span>${esc(e[1])} <span class="mute">· ${Math.round(q.h)} km · ${fmtV(q.v).toLocaleString("de-CH")} km/h</span></span></li>`; }).join("")}</ul>
+    <div class="note">Typisches Profil ${esc(P.name)}${P.fit?`, an die Timeline dieses Starts angepasst (${P.fit===2?"MECO und SECO":"MECO"})`:" (keine Timeline-Zeiten zum Anpassen)"}. Höhe und Tempo sind Schätzungen, keine Messwerte.</div></div>`;
+}
+
 // ---- 070-bahn-schaetzung.js ----
 // ===================== Bahn-Schätzung =====================
 function estimateProfile(l){
@@ -1006,6 +1087,7 @@ function estimateProfile(l){
   let inc, south=false, suborbital=false, tMax=90*60;
 
   const sub = orb.startsWith("SUB");
+  const prof=(sub&&!rocket.includes("starship"))?null:profileFor(l);   // Aufstiegsprofil (065-aufstiegsprofile.js)
   if(rocket.includes("starship")){ inc=26.5; suborbital=sub; tMax=sub?70*60:90*60; }
   else if(sub){ inc=Math.abs(lat)+0.05; tMax=600; }
   else if(/shenzhou|tianzhou|tiangong|mengzhou/.test(name)) inc=41.5;
@@ -1022,7 +1104,7 @@ function estimateProfile(l){
   else inc=Math.max(Math.abs(lat)+2,45);
 
   if(vandenberg) south=true;
-  if(inc>80 && lat>30 && !vandenberg) south=true;      // z.B. China SSO → Richtung Süden
+  if(inc>80 && lat>10 && !vandenberg) south=true;      // Polar/SSO ab Florida, China, Indien, Norwegen → Richtung Süden (Kourou fliegt nach Norden)
   if(inc<Math.abs(lat)) inc=Math.abs(lat)+0.05;         // physikalisch nicht erreichbar → nach Osten
 
   const desc=l.mission?.description||"";
@@ -1098,7 +1180,7 @@ function estimateProfile(l){
     const nm2=(l.rocket?.configuration?.name||"").toLowerCase(), fam=ROCKETS.find(x=>x.n.toLowerCase()===nm2);
     if(!(fam&&fam.reu)) landings.push({pos:pointAt(tr,cum,450),label:"Absturzgebiet 1. Stufe (geschätzt)",kind:"impact"});
   }
-  if(stage&&stage.mode==="deorbit"){ stage.pos=pointAt(tr,cum,distAt(stage.Tre,{cum})); landings.push({pos:stage.pos,label:`Oberstufe: Wiedereintritt bei T+${mmss(stage.Tre)} (${stage.src})`,kind:"reentry"}); }
+  if(stage&&stage.mode==="deorbit"){ stage.pos=pointAt(tr,cum,distAt(stage.Tre,{cum,prof})); landings.push({pos:stage.pos,label:`Oberstufe: Wiedereintritt bei T+${mmss(stage.Tre)} (${stage.src})`,kind:"reentry"}); }
   if(rocket.includes("starship")){
     if(!landings.length) landings.push({pos:LZ.STARBASE,label:"Booster: Catch am Turm / Golf (geplant)",kind:"catch"});
     if(returns) landings.push({pos:LZ.STARBASE,label:`Ship: Rückkehr & Catch in Starbase bei T+${mmss(retFit.Tl)}`,kind:"catch"});
@@ -1110,7 +1192,8 @@ function estimateProfile(l){
     for(let k=1;k<=(x.kind==="reentry"?160:40);k++){ for(const sg of x.kind==="reentry"?[1]:[1,-1]){ const q=pointAt(tr,cum,Math.max(0,d0+sg*k*25)); if(!onLand(q)){ x.pos=q; x.moved=true; return; } } } });
   if(stage&&stage.pos){ const r=landings.find(x=>x.kind==="reentry"); if(r) stage.pos=r.pos; }
   landings.forEach(x=>x.pos=[x.pos[0],norm(x.pos[1])]);
-  return {inc,south,suborbital,orbits,P,retFit,stage,tMax: (suborbital||sub) ? tr[tr.length-1][2] : tMax, track:tr, cum, landings};
+  const az=launchAzimuth(lat,inc,south);
+  return {inc,south,suborbital,orbits,P,retFit,stage,prof,az,tMax: (suborbital||sub) ? tr[tr.length-1][2] : tMax, track:tr, cum, landings};
 }
 
 function trackPoint(latD,lonD,incD,south,P,t){
@@ -1137,11 +1220,14 @@ function groundTrack(latD,lonD,incD,south,tMax,P=5400){
   }
   return pts;
 }
-// Distanz-basiert: Rakete beschleunigt erst langsam (Aufstieg), dann Orbitgeschwindigkeit
+// Bodendistanz zur Zeit t: während des Aufstiegs aus dem Raketen-Profil (065-aufstiegsprofile.js),
+// danach Orbitgeschwindigkeit entlang der Bahn (Rückstand gegenüber der Kreisbahn baut sich langsam ab)
 function distAt(t,est){
-  if(t<540) return 1800*Math.pow(t/540,2);
-  const c=est.cum, ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
-  const lag=ct(540)-1800; return ct(t)-lag*Math.exp(-(t-540)/1500);
+  const P=est.prof, tE=P?profEnd(P):540, dE=P?P.pts[P.pts.length-1][3]:1800;
+  if(t<tE) return P?profAt(P,t).d:1800*Math.pow(t/540,2);
+  const c=est.cum; if(!c) return dE;
+  const ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
+  const lag=ct(tE)-dE; return ct(t)-lag*Math.exp(-(t-tE)/1500);
 }
 // Bahn an der Datumsgrenze in Teilstücke schneiden (für viele Orbits nötig)
 function segs(pts){ const out=[]; let cur=[];
@@ -1158,7 +1244,8 @@ function pointAt(tr,cum,dist){
 function drawRoute(l,est){
   routeLayer.clearLayers(); rocketMarker=null; curPos=null;
   const tr=est.track.map(p=>[p[0],p[1]]);
-  let kA=est.cum.findIndex(c=>c>=1800); if(kA<0) kA=tr.length-1;
+  const dA=est.prof?est.prof.pts[est.prof.pts.length-1][3]:1800;   // Ende des Aufstiegs (Brennschluss Oberstufe)
+  let kA=est.cum.findIndex(c=>c>=dA); if(kA<0) kA=tr.length-1;
   est.kA=kA;
   // Abschnitte: Aufstieg + jeder Orbit (eigene Farbe). Kommend = blass, geflogen = kräftig.
   const perOrbit=Math.round(est.P/20), cols=["#4ea1ff","#7b6cff","#c86bff","#ff6bb5","#ff8f5a","#ffd25a","#7be07b"];
@@ -1193,7 +1280,7 @@ function placeRocket(t){
   if(follow){ if(G.on){ G.target=null; G.rot[0]=-curPos[1]; G.rot[1]=-curPos[0]; } else map.panTo(curPos,{animate:false}); }
   const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
   if(tl) tl.textContent="T+ "+mmss(t);
-  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
+  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:curTrack.prof&&t>0&&t<profEnd(curTrack.prof)?(q=>`geschätzt ${Math.round(q.h)} km Höhe · ${(Math.round(q.v/100)*100).toLocaleString("de-CH")} km/h · `)(profAt(curTrack.prof,t)):""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
 }
 
 // ---- 080-nutzlasten.js ----
@@ -2230,6 +2317,11 @@ function teleChart(id,col,title,unit){
   c.textAlign="center"; const step=niceMax((t1-t0)/Math.max(2,Math.floor(W/90)));
   for(let t=Math.ceil(t0/step)*step;t<=t1;t+=step) c.fillText((t<0?"T−":"T+")+mmss(Math.abs(t)),X(t),H-3);
   c.textAlign="left";
+  // Schätzung aus dem Aufstiegsprofil zum Vergleich (gestrichelt), nur wenn die Zeitachse T+ des gewählten Starts ist
+  if(curTrack?.prof && selected && TELE.t0==null){ const P=curTrack.prof; c.save(); c.beginPath(); c.rect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b); c.clip();
+    c.beginPath(); let first=true; for(let t=Math.max(0,t0);t<=Math.min(t1,profEnd(P));t+=Math.max(1,(t1-t0)/120)){ const q=profAt(P,t), y=Y(col===1?q.h:q.v); first?c.moveTo(X(t),y):c.lineTo(X(t),y); first=false; }
+    c.setLineDash([4,4]); c.strokeStyle="#8a96ad"; c.lineWidth=1.5; c.stroke(); c.restore();
+    c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.textAlign="right"; c.fillText("- - Schätzung",W-pad.r,11); c.textAlign="left"; }
   ser.forEach(s=>{ c.beginPath(); s.h.forEach((q,i)=>i?c.lineTo(X(q[0]),Y(q[col])):c.moveTo(X(q[0]),Y(q[col]))); c.strokeStyle=TCOL[s.k]; c.lineWidth=2; c.stroke();
     const q=s.h[s.h.length-1]; c.beginPath(); c.arc(X(q[0]),Y(q[col]),3,0,7); c.fillStyle=TCOL[s.k]; c.fill(); });
 }

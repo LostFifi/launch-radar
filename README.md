@@ -59,7 +59,9 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 
 **Bahnen** (Schätzung – keine offiziellen Positionsdaten!)
 - Kreisbahn-Bodenspur mit Erdrotation; Neigung aus Missionsdaten/Faustregeln (ISS 51,6°, SSO 97,6°, Starlink-Gruppen, Vandenberg 70° Süd …)
-- Aufstiegsmodell `distAt()`: quadratisch bis T+9 min, danach Orbitgeschwindigkeit
+- **Aufstiegsprofile je Rakete** (`065-aufstiegsprofile.js`): Falcon 9, Falcon Heavy, Starship, Electron, Vulcan/Atlas, Ariane 6, Sojus, LVM3, sonst typisches Profil. Je Zeit → Höhe, Tempo, Bodendistanz + Ereignisse (Max-Q, MECO, SECO …), an MECO/SECO aus der Timeline des Starts angepasst. Detailfenster „Aufstieg (geschätzt)“, Kartenzeile zeigt geschätzte Höhe/Tempo, Telemetrie-Diagramm zeigt die Schätzung gestrichelt zum Vergleich
+- `distAt()`: Aufstieg aus dem Profil, danach Orbitgeschwindigkeit
+- **Startrichtung** aus Bahnneigung und Breite, korrigiert um die Erddrehung; Polar/SSO ab Florida, China, Indien nach Süden
 - Jeder Orbit eigene Farbe, durchgezogen; blass = kommend, kräftig = geflogen
 - **Starship**: Anzahl Orbits + Höhe aus Beschreibung; Rückkehr: Umlaufzeit/Neigung werden so gesucht, dass die Bahn zur Catch-Zeit (Timeline) über Starbase liegt, ab Deorbit-Burn weicher Übergang zum Turm
 - Suborbitale Starship-Flüge: Wasserung Indischer Ozean
@@ -109,6 +111,6 @@ Alles wird nur im Browser (`localStorage`) zwischengespeichert. Schlüssel: `lr_
 1. ~~Auf GitHub Pages veröffentlichen~~ – erledigt: https://lostfifi.github.io/launch-radar/
 2. ~~`template.html` in Module aufteilen, Build mit esbuild~~ – erledigt (`src/js/`)
 3. PWA mit echten Push-Benachrichtigungen (Service Worker – geht nur gehostet)
-4. Bessere Bahnen: Startazimut aus FlightClub oder Mission-Profilen, echte Aufstiegskurven je Rakete
+4. ~~Bessere Bahnen: Startazimut, Aufstiegskurven je Rakete~~ – erledigt mit eigenem Modell (FlightClub hat keine freie API). Weiter möglich: Dogleg-Manöver, Profile für Long March / H3 / New Glenn
 5. ~~Satelliten-Überflüge für den eigenen Standort~~ – erledigt (Ebenen-Menü → „ISS-Überflüge bei mir“)
 6. ~~Telemetrie auch für Stufe 1 gleichzeitig, Diagramme Höhe/Tempo über Zeit~~ – erledigt

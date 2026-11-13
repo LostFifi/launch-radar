@@ -7,6 +7,7 @@ function estimateProfile(l){
   let inc, south=false, suborbital=false, tMax=90*60;
 
   const sub = orb.startsWith("SUB");
+  const prof=(sub&&!rocket.includes("starship"))?null:profileFor(l);   // Aufstiegsprofil (065-aufstiegsprofile.js)
   if(rocket.includes("starship")){ inc=26.5; suborbital=sub; tMax=sub?70*60:90*60; }
   else if(sub){ inc=Math.abs(lat)+0.05; tMax=600; }
   else if(/shenzhou|tianzhou|tiangong|mengzhou/.test(name)) inc=41.5;
@@ -23,7 +24,7 @@ function estimateProfile(l){
   else inc=Math.max(Math.abs(lat)+2,45);
 
   if(vandenberg) south=true;
-  if(inc>80 && lat>30 && !vandenberg) south=true;      // z.B. China SSO → Richtung Süden
+  if(inc>80 && lat>10 && !vandenberg) south=true;      // Polar/SSO ab Florida, China, Indien, Norwegen → Richtung Süden (Kourou fliegt nach Norden)
   if(inc<Math.abs(lat)) inc=Math.abs(lat)+0.05;         // physikalisch nicht erreichbar → nach Osten
 
   const desc=l.mission?.description||"";
@@ -99,7 +100,7 @@ function estimateProfile(l){
     const nm2=(l.rocket?.configuration?.name||"").toLowerCase(), fam=ROCKETS.find(x=>x.n.toLowerCase()===nm2);
     if(!(fam&&fam.reu)) landings.push({pos:pointAt(tr,cum,450),label:"Absturzgebiet 1. Stufe (geschätzt)",kind:"impact"});
   }
-  if(stage&&stage.mode==="deorbit"){ stage.pos=pointAt(tr,cum,distAt(stage.Tre,{cum})); landings.push({pos:stage.pos,label:`Oberstufe: Wiedereintritt bei T+${mmss(stage.Tre)} (${stage.src})`,kind:"reentry"}); }
+  if(stage&&stage.mode==="deorbit"){ stage.pos=pointAt(tr,cum,distAt(stage.Tre,{cum,prof})); landings.push({pos:stage.pos,label:`Oberstufe: Wiedereintritt bei T+${mmss(stage.Tre)} (${stage.src})`,kind:"reentry"}); }
   if(rocket.includes("starship")){
     if(!landings.length) landings.push({pos:LZ.STARBASE,label:"Booster: Catch am Turm / Golf (geplant)",kind:"catch"});
     if(returns) landings.push({pos:LZ.STARBASE,label:`Ship: Rückkehr & Catch in Starbase bei T+${mmss(retFit.Tl)}`,kind:"catch"});
@@ -111,7 +112,8 @@ function estimateProfile(l){
     for(let k=1;k<=(x.kind==="reentry"?160:40);k++){ for(const sg of x.kind==="reentry"?[1]:[1,-1]){ const q=pointAt(tr,cum,Math.max(0,d0+sg*k*25)); if(!onLand(q)){ x.pos=q; x.moved=true; return; } } } });
   if(stage&&stage.pos){ const r=landings.find(x=>x.kind==="reentry"); if(r) stage.pos=r.pos; }
   landings.forEach(x=>x.pos=[x.pos[0],norm(x.pos[1])]);
-  return {inc,south,suborbital,orbits,P,retFit,stage,tMax: (suborbital||sub) ? tr[tr.length-1][2] : tMax, track:tr, cum, landings};
+  const az=launchAzimuth(lat,inc,south);
+  return {inc,south,suborbital,orbits,P,retFit,stage,prof,az,tMax: (suborbital||sub) ? tr[tr.length-1][2] : tMax, track:tr, cum, landings};
 }
 
 function trackPoint(latD,lonD,incD,south,P,t){
@@ -138,11 +140,14 @@ function groundTrack(latD,lonD,incD,south,tMax,P=5400){
   }
   return pts;
 }
-// Distanz-basiert: Rakete beschleunigt erst langsam (Aufstieg), dann Orbitgeschwindigkeit
+// Bodendistanz zur Zeit t: während des Aufstiegs aus dem Raketen-Profil (065-aufstiegsprofile.js),
+// danach Orbitgeschwindigkeit entlang der Bahn (Rückstand gegenüber der Kreisbahn baut sich langsam ab)
 function distAt(t,est){
-  if(t<540) return 1800*Math.pow(t/540,2);
-  const c=est.cum, ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
-  const lag=ct(540)-1800; return ct(t)-lag*Math.exp(-(t-540)/1500);
+  const P=est.prof, tE=P?profEnd(P):540, dE=P?P.pts[P.pts.length-1][3]:1800;
+  if(t<tE) return P?profAt(P,t).d:1800*Math.pow(t/540,2);
+  const c=est.cum; if(!c) return dE;
+  const ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
+  const lag=ct(tE)-dE; return ct(t)-lag*Math.exp(-(t-tE)/1500);
 }
 // Bahn an der Datumsgrenze in Teilstücke schneiden (für viele Orbits nötig)
 function segs(pts){ const out=[]; let cur=[];
@@ -159,7 +164,8 @@ function pointAt(tr,cum,dist){
 function drawRoute(l,est){
   routeLayer.clearLayers(); rocketMarker=null; curPos=null;
   const tr=est.track.map(p=>[p[0],p[1]]);
-  let kA=est.cum.findIndex(c=>c>=1800); if(kA<0) kA=tr.length-1;
+  const dA=est.prof?est.prof.pts[est.prof.pts.length-1][3]:1800;   // Ende des Aufstiegs (Brennschluss Oberstufe)
+  let kA=est.cum.findIndex(c=>c>=dA); if(kA<0) kA=tr.length-1;
   est.kA=kA;
   // Abschnitte: Aufstieg + jeder Orbit (eigene Farbe). Kommend = blass, geflogen = kräftig.
   const perOrbit=Math.round(est.P/20), cols=["#4ea1ff","#7b6cff","#c86bff","#ff6bb5","#ff8f5a","#ffd25a","#7be07b"];
@@ -194,5 +200,5 @@ function placeRocket(t){
   if(follow){ if(G.on){ G.target=null; G.rot[0]=-curPos[1]; G.rot[1]=-curPos[0]; } else map.panTo(curPos,{animate:false}); }
   const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
   if(tl) tl.textContent="T+ "+mmss(t);
-  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
+  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:curTrack.prof&&t>0&&t<profEnd(curTrack.prof)?(q=>`geschätzt ${Math.round(q.h)} km Höhe · ${(Math.round(q.v/100)*100).toLocaleString("de-CH")} km/h · `)(profAt(curTrack.prof,t)):""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
 }
