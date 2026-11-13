@@ -237,7 +237,7 @@ var I18N_EN = {
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
   // ---------- Info, Datenschutz ----------
-  "Grösse ändern":"Resize","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
+  "Grösse ändern":"Resize","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
   "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
   "Push-Nachrichten wieder eingeschaltet":"Push notifications turned back on","Abmelden fehlgeschlagen":"Unsubscribing failed","Alle Daten gelöscht":"All data deleted",

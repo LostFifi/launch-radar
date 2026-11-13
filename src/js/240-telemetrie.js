@@ -100,8 +100,12 @@ function teleParse(k,text){
   let sp=null, al=null;
   const ms=t.match(/SPEED[^0-9\n]*([0-9][0-9 ]{0,7}[0-9]|[0-9])/), ma=t.match(/ALT[A-Z]*[^0-9\n]*([0-9][0-9 ]{0,5}[0-9]|[0-9])/);
   if(ms) sp=+ms[1].replace(/ /g,""); if(ma) al=+ma[1].replace(/ /g,"");
-  if(sp==null||al==null){ const n=(t.replace(/(\d) (\d{3})\b/g,"$1$2").match(/\d{1,6}/g)||[]).map(Number); if(n.length>=2){ if(sp==null) sp=n[0]; if(al==null) al=n[1]; } }
+  // Ohne Beschriftung nur Zahlen MIT Einheit (… KM/H = Tempo, … KM = Höhe) – keine beliebigen Zahlen (z.B. Countdown-Uhr)
+  if(sp==null){ const m=t.match(/(\d[\d ]{0,7}\d|\d)\s*KM\s*\/?\s*H/); if(m) sp=+m[1].replace(/ /g,""); }
+  if(al==null){ const m=t.match(/(\d[\d ]{0,5}\d|\d)\s*KM(?!\s*\/?\s*H)/); if(m) al=+m[1].replace(/ /g,""); }
   const now=Date.now(), L=S.last;
+  // Vor dem Start (T−) nichts übernehmen: Rakete bleibt am Boden, Anzeige „wartet auf den Start“
+  if(selected && TELE.t0==null && now < new Date(selected.net).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
   let okv = sp!=null && al!=null && sp<=lim.v && al<=lim.h;
   if(okv && L){ const dt=(now-L.t)/1000; if(Math.abs(sp-L.v)>3000*dt+800 || Math.abs(al-L.h)>20*dt+8) okv=false; }
   if(!okv){ S.bad++; return; }
@@ -125,7 +129,8 @@ function teleDist(){ if(!TELE.on||TELE.d==null||!TELE.S.s2.last) return null; re
 function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;
-    b.textContent=off?"aus":fresh?"● gemessen":"keine Werte"; b.style.background=off?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off?"#aab":fresh?"#7be07b":"#f5b041";
+    const pre=!off && selected && TELE.t0==null && Date.now()<new Date(selected.net).getTime()-5000;
+    b.textContent=off?"aus":pre?"wartet auf den Start":fresh?"● gemessen":"keine Werte"; b.style.background=off||pre?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off||pre?"#aab":fresh?"#7be07b":"#f5b041";
     document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
     document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }
   document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString(LOC)+" km":"–";
