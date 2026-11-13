@@ -1,0 +1,4 @@
+node_modules/
+data/img_cache/
+__pycache__/
+.DS_Store

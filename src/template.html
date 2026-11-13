@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launch Radar – Raketenstarts live</title>
+<style>/*LEAFLET_CSS*/</style>
+<script>/*LEAFLET_JS*/</script>
+<script>/*D3_JS*/</script>
+<script>/*SAT_JS*/</script>
+<style>
+  :root{--bg:#0b0f17;--panel:#121826;--line:#232c3f;--text:#e6ebf5;--mute:#8a96ad;--acc:#4ea1ff;--go:#2ecc71;--tbd:#f5b041;--live:#ff3b3b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  #map{position:absolute;inset:0}
+  header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    padding:10px 12px;background:linear-gradient(#0b0f17ee,#0b0f1700)}
+  .logo{font-weight:800;letter-spacing:.5px;font-size:16px}
+  .logo span{color:var(--acc)}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 10px;cursor:pointer;color:var(--text);font-size:13px}
+  .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  #next{margin-left:auto;font-variant-numeric:tabular-nums}
+  #panel{position:absolute;z-index:1001;background:var(--panel);border:1px solid var(--line);overflow:auto;display:none;
+    box-shadow:0 10px 40px #000a}
+  @media (min-width:800px){#panel{top:60px;right:12px;bottom:12px;width:430px;border-radius:14px}}
+  @media (max-width:799px){#panel{left:0;right:0;bottom:0;max-height:72vh;border-radius:16px 16px 0 0}}
+  #panel .hd{position:sticky;top:0;background:var(--panel);padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start;z-index:2}
+  #panel .hd h2{margin:0;font-size:16px;flex:1}
+  #panel .x{background:none;border:0;color:var(--mute);font-size:22px;cursor:pointer;line-height:1}
+  .sec{padding:12px 14px;border-bottom:1px solid var(--line)}
+  .sec h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--mute)}
+  .grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+  .grid b{color:var(--mute);font-weight:500}
+  .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700}
+  .video{position:relative;padding-top:56.25%;background:#000;border-radius:10px;overflow:hidden}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .btn{display:inline-block;margin-top:8px;background:var(--acc);color:#fff;text-decoration:none;padding:7px 12px;border-radius:8px;font-weight:600;font-size:13px}
+  .btn.sec2{background:#273149}
+  .cd{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+  .tl{list-style:none;margin:0;padding:0}
+  .tl li{display:flex;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line)}
+  .tl li span:first-child{min-width:78px;color:var(--acc);font-variant-numeric:tabular-nums}
+  .hero{position:relative;background:#000;aspect-ratio:16/9;overflow:hidden}
+  .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero .cr{position:absolute;right:6px;bottom:4px;font-size:10px;color:#fffc;text-shadow:0 1px 3px #000}
+  .hero .patch{position:absolute;left:10px;bottom:10px;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 6px #000)}
+  .item{display:flex;gap:10px;align-items:center}
+  .item .th{width:64px;height:48px;border-radius:6px;object-fit:cover;background:#1a2133;flex:none}
+  .item{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .item:hover{background:#18203a}
+  .item small{color:var(--mute)}
+  .mute{color:var(--mute)}
+  .note{font-size:12px;color:var(--mute);margin-top:6px}
+  input[type=range]{width:100%}
+  .pin{width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 10px #0008;position:relative}
+  .pin .n{position:absolute;top:-10px;right:-12px;background:#fff;color:#000;font-size:10px;font-weight:800;border-radius:8px;padding:0 4px}
+  .pin.live::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--live);animation:p 1.4s infinite}
+  @keyframes p{from{transform:scale(.6);opacity:1}to{transform:scale(1.6);opacity:0}}
+  .rk{font-size:22px;filter:drop-shadow(0 0 6px #4ea1ff)}
+  .lnd{font-size:18px}
+  .leaflet-container{background:#0b0f17}
+  #globe{position:absolute;inset:0;z-index:900;display:none;touch-action:none;cursor:grab}
+  .globe-on .leaflet-control-container{display:none}
+  #layers{position:absolute;z-index:1003;top:100px;left:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:none;min-width:250px;box-shadow:0 10px 40px #000a}
+  #layers label{display:flex;gap:10px;align-items:center;padding:6px 0;cursor:pointer}
+  #layers input{width:18px;height:18px;accent-color:var(--acc)}
+  #layers h4{margin:6px 0 2px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mute)}
+  #layers .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  #live{position:absolute;z-index:999;top:104px;left:12px;background:#2a0f14;border:1px solid var(--live);color:#fff;border-radius:10px;padding:6px 12px;display:none;cursor:pointer;font-size:13px;max-width:calc(100vw - 24px);text-align:left}
+  @media (min-width:800px){#panel.wide{width:min(1150px,calc(100vw - 24px))}}
+  @media (max-width:799px){#panel.wide{max-height:88vh}}
+  .tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);position:sticky;top:49px;background:var(--panel);z-index:2}
+  .tabs .chip.on{background:var(--acc);border-color:var(--acc)}
+  #timebar{position:absolute;z-index:998;left:50%;transform:translateX(-50%);bottom:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:none;gap:4px;align-items:center;font-size:13px;box-shadow:0 6px 24px #0008;white-space:nowrap}
+  #timebar .chip{padding:4px 9px}
+  @media (max-width:520px){#timebar .tbx{display:none} #timebar{font-size:12px;bottom:10px} #timebar .chip{padding:4px 7px}}
+  #timebar b{font-variant-numeric:tabular-nums;margin:0 6px}
+  .bars{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:6px 10px;align-items:center;font-size:13px}
+  .bars .tr{height:14px;background:#1a2133;border-radius:0 4px 4px 0;overflow:hidden}
+  .bars .f{height:100%;background:var(--acc);border-radius:0 4px 4px 0}
+  .bars .v{font-variant-numeric:tabular-nums;color:var(--mute);min-width:28px;text-align:right}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .tile{background:#18203a;border-radius:10px;padding:10px}
+  .tile .big{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+  .tile small{color:var(--mute)}
+  .months{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:6px}
+  .months div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--mute)}
+  .months i{display:block;width:100%;background:var(--acc);border-radius:4px 4px 0 0;min-height:1px}
+  .months span{margin-top:3px}
+  .dbctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .dbctl input[type=search]{flex:1;min-width:150px;background:#0b0f17;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px}
+  .tw{overflow:auto}
+  table.db{border-collapse:collapse;font-size:12.5px;width:100%;white-space:nowrap}
+  table.db th{position:sticky;top:0;background:#18203a;text-align:left;padding:7px 8px;cursor:pointer;color:var(--mute);font-weight:600;user-select:none}
+  table.db th.s{color:var(--text)}
+  table.db td{padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  table.db td.num,table.db th.num{text-align:right}
+  table.db tr:hover td{background:#16203a}
+  table.db tr.sel td{background:#1d2b4d}
+  table.cmp{border-collapse:collapse;width:100%;font-size:13px}
+  table.cmp th,table.cmp td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+  table.cmp th{color:var(--mute);font-weight:500;width:130px}
+  table.cmp .mb{height:5px;background:var(--acc);border-radius:0 3px 3px 0;margin-top:4px}
+  table.cmp img{width:100%;max-width:220px;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#18203a}
+  .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700}
+  @media (max-width:560px){ header .lbl{display:none} header{gap:6px} header .chip{padding:6px 9px} }
+  .logo{display:flex;align-items:center;gap:7px}
+  .logo svg{width:20px;height:20px;color:var(--acc)}
+  .logo span{margin-left:-7px}
+  .chip.ic{display:inline-flex;align-items:center;gap:6px}
+  .rkw{width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:transform .2s linear}
+  .rkw svg{width:26px;height:26px;filter:drop-shadow(0 0 6px #4ea1ffcc)}
+  .lm{width:11px;height:11px;transform:rotate(45deg);background:#0b0f17;border:2.2px solid var(--c);box-shadow:0 0 8px var(--c)}
+  .lg{display:inline-block;width:8px;height:8px;transform:rotate(45deg);border:2px solid var(--c);margin:0 5px 0 2px}
+  .deplbl{position:absolute;transform:translate(-50%,-150%);white-space:nowrap;font-size:11px;font-weight:700;color:#ff8fe6;text-shadow:0 1px 3px #000,0 0 6px #000}
+  .spd{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+  .spd .chip{padding:4px 8px;font-size:12px}
+  #panel .grab{display:none}
+  @media (max-width:799px){
+    #panel .grab{display:block;position:sticky;top:0;z-index:3;background:var(--panel);padding:8px 0 2px;cursor:pointer;touch-action:none}
+    #panel .grab i{display:block;width:44px;height:5px;border-radius:3px;background:#3a4560;margin:0 auto}
+    #panel .hd{top:15px}
+  }
+  #panel .minbtn{background:none;border:0;color:var(--mute);cursor:pointer;padding:2px 4px;line-height:0}
+  #panel .minbtn svg{transition:transform .2s}
+  #panel.min .minbtn svg{transform:rotate(180deg)}
+  #panel.min{overflow:hidden}
+  @media (max-width:799px){ #panel.min{max-height:none} }
+  @media (min-width:800px){ #panel.min{bottom:auto} }
+  #panel.min > :not(.hd):not(.grab):not(.mini){display:none}
+  #panel .mini{display:none;align-items:center;gap:10px;padding:8px 14px 12px}
+  #panel.min .mini.on{display:flex}
+  #panel .mini b{font-variant-numeric:tabular-nums}
+  #panel .mini .mute{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #panel .mini .chip{display:inline-flex;align-items:center;padding:6px 10px}
+  #panel.min .hd h2{font-size:14px}
+  #panel .simtop{padding:10px 14px}
+  #panel .simtop input[type=range]{margin:6px 0 8px}
+  .sttop{display:flex;gap:12px;align-items:flex-start}
+  .stimg{width:92px;height:92px;border-radius:10px;object-fit:cover;flex:none;background:#18203a}
+  .stimg.ph{display:flex;align-items:center;justify-content:center;color:#4a5878}
+  .stimg.ph svg{width:36px;height:36px}
+  .sthr{border:0;border-top:1px solid var(--line);margin:12px 0}
+  #tele{position:absolute;z-index:1004;left:12px;bottom:70px;width:344px;max-width:calc(100vw - 24px);max-height:calc(100vh - 160px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:none;box-shadow:0 10px 40px #000a}
+  #tele .thd{display:flex;align-items:center;gap:8px;margin-bottom:8px} #tele .thd b{flex:1}
+  #tele .x{background:none;border:0;color:var(--mute);font-size:22px;cursor:pointer;line-height:1}
+  #tele .tbig{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+  #tele .tbig div{background:#18203a;border-radius:8px;padding:6px 8px} #tele .tbig small{display:block;color:var(--mute);font-size:11px}
+  #tele .tbig b{font-size:16px;font-variant-numeric:tabular-nums}
+  #tele canvas{width:100%;display:block;border-radius:8px;background:#000;margin-bottom:6px} #tele #tSpark{background:#0f1525;height:54px}
+  #tele #tPrev{cursor:crosshair;touch-action:none}
+  #tele .tbtns{display:flex;gap:6px;flex-wrap:wrap} #tele .tsteps{margin:0 0 8px;padding-left:18px;font-size:13px} #tele .tsteps li{margin-bottom:4px}
+  #pip{position:absolute;z-index:1005;right:460px;bottom:70px;width:340px;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none;box-shadow:0 10px 40px #000c}
+  #pip.big{width:min(640px,calc(100vw - 24px))}
+  @media (max-width:799px){#pip{right:12px;left:auto;top:120px;bottom:auto;width:calc(100vw - 24px);max-width:420px}}
+  #pip .pbar{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--panel);cursor:move;touch-action:none}
+  #pip .pbar b{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #pip .pbar .chip{padding:3px 8px;font-size:12px}
+  #pip .pb{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
+  #pip .pv{position:relative;padding-top:56.25%} #pip iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  #satcv{position:absolute;inset:0;z-index:450;pointer-events:none}
+  #msg{position:absolute;z-index:1002;left:50%;bottom:20px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);padding:8px 14px;border-radius:10px;display:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<header>
+  <div class="logo" data-ic="rocket">Launch<span>Radar</span></div>
+  <button class="chip on" data-f="all">Alle</button>
+  <button class="chip" data-f="spacex">SpaceX</button>
+  <button class="chip" data-f="starship">Starship</button>
+  <button class="chip ic" id="listBtn" data-ic="list"><span class="lbl">Liste</span></button>
+  <button class="chip ic" id="globeBtn" data-ic="globe"><span class="lbl">Globus</span></button>
+  <button class="chip ic" id="layerBtn" data-ic="layers"><span class="lbl">Ebenen</span></button>
+  <button class="chip ic" id="statBtn" data-ic="stats"><span class="lbl">Statistik</span></button>
+  <button class="chip ic" id="dbBtn" data-ic="rocket"><span class="lbl">Raketen</span></button>
+  <div class="chip" id="next">Lade Starts…</div>
+</header>
+<canvas id="globe"></canvas>
+<div id="layers"></div>
+<div id="live"></div>
+<div id="panel"></div>
+<div id="timebar"></div>
+<div id="tele"></div>
+<div id="pip"></div>
+<div id="msg"></div>
+
+<script>
+// ===================== Eingebettete Daten =====================
+const WORLD = /*WORLD*/;
+const SNAPSHOT = /*SNAP*/;
+const SNAP_TS = "/*SNAPTS*/";
+const TLE_SNAP = /*TLE*/;
+const IMG_SNAP = /*IMG*/;
+const PAST_SNAP = /*PAST*/;
+const ROCKETS = /*ROCKETS*/;
+const STATS = /*STATS*/;
+
+// ===================== Icons (SVG statt Emojis) =====================
+const RK_PATH="M12 1.5c2.6 2.3 4.1 5.8 4.1 9.8v4.2l2.4 2.9v2.1l-4.6-1.6h-3.8l-4.6 1.6v-2.1l2.4-2.9v-4.2c0-4 1.5-7.5 4.1-9.8z";
+const ICON={
+  rocket:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="'+RK_PATH+'"/><circle cx="12" cy="9.5" r="1.7"/></svg>',
+  list:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="4.2" ry="9.5"/><path d="M2.5 12h19"/></svg>',
+  map:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2.5 6 2.5 6-2.5v14.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 3.5v14.5M15 6v14.5"/></svg>',
+  layers:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9.5 5-9.5 5-9.5-5z"/><path d="M2.5 12.5l9.5 5 9.5-5"/><path d="M2.5 16.5l9.5 5 9.5-5"/></svg>',
+  stats:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  sat:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="vertical-align:-2px"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M2 8.5l5 1v5l-5 1zM22 8.5l-5 1v5l5 1zM12 15v4"/></svg>',
+  reuse:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#7be07b" stroke-width="2.2" stroke-linecap="round" style="vertical-align:-1px"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>'
+};
+document.querySelectorAll("[data-ic]").forEach(el=>el.insertAdjacentHTML("afterbegin",ICON[el.dataset.ic]));
+// Lande-Markierungen: Farbe je Art
+const LAND={booster:{c:"#2ecc71",t:"Booster-Landung"},ship:{c:"#4ec9e0",t:"Drohnenschiff"},catch:{c:"#ffd25a",t:"Catch / Rückkehr"},splash:{c:"#c86bff",t:"Wasserung"},reentry:{c:"#ff6b3d",t:"Wiedereintritt"},impact:{c:"#8a96ad",t:"Absturzgebiet"}};
+function landHtml(k){ return `<div class="lm" style="--c:${LAND[k].c}"></div>`; }
+function bearing(a,b){ const r=Math.PI/180, la1=a[0]*r, la2=b[0]*r, dl=(b[1]-a[1])*r;
+  return Math.atan2(Math.sin(dl)*Math.cos(la2), Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl))/r; }
+const RK2D=new Path2D(RK_PATH);
+function drawRocket(c,x,y,ang){ c.save(); c.translate(x,y); c.rotate(ang); c.scale(1.15,1.15); c.translate(-12,-12);
+  c.shadowColor="#4ea1ff"; c.shadowBlur=10; c.fillStyle="#fff"; c.fill(RK2D); c.shadowBlur=0; c.lineWidth=1.3; c.strokeStyle="#4ea1ff"; c.stroke(RK2D); c.restore(); }
+function drawLandG(c,x,y,k){ c.save(); c.translate(x,y); c.rotate(Math.PI/4); c.fillStyle="#0b0f17"; c.strokeStyle=LAND[k].c; c.lineWidth=2.2; c.fillRect(-5,-5,10,10); c.strokeRect(-5,-5,10,10); c.restore(); }
+// ===================== Konfiguration =====================
+const API = "https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=40&mode=detailed&hide_recent_previous=false";
+const API_DEV = API.replace("ll.thespacedevs","lldev.thespacedevs"); // Fallback (keine Rate-Limits, evtl. älter)
+const CACHE_MIN = 15;  // Free-API erlaubt ~15 Abrufe/Stunde → Cache
+const OMEGA_E = 7.2921159e-5, R_E = 6371;
+
+// Bekannte Landezonen (Fallback, falls API keine Koordinaten liefert)
+const LZ = {
+  "LZ-1":[28.4858,-80.5444], "LZ-2":[28.4876,-80.5441], "LZ-40":[28.5618,-80.5772],
+  "LZ-4":[34.6328,-120.6156], "SLC-6":[34.5813,-120.6266],
+  "STARBASE":[25.9967,-97.1543], "OLP-A":[25.9967,-97.1543], "OLP-B":[25.9963,-97.1559]
+};
+
+// ===================== Karte =====================
+const map = L.map("map",{zoomControl:false,worldCopyJump:true,minZoom:2}).setView([25,-40],3);
+L.control.zoom({position:"bottomleft"}).addTo(map);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",{
+  attribution:'Karte &copy; Esri | Daten: The Space Devs (Launch Library 2)',maxZoom:12}).addTo(map);
+// Eingebaute Weltkarte (funktioniert auch offline / in Vorschauen)
+// Für die 2D-Karte: Polygone über die Datumsgrenze (Fiji, Russland) entwirren – sonst entstehen Querstreifen
+const WORLD2D=JSON.parse(JSON.stringify(WORLD));
+(function(){ const fx=ring=>{ const lo=ring.map(p=>p[0]); if(Math.max(...lo)-Math.min(...lo)<=180||Math.min(...ring.map(p=>p[1]))<-60) return ring; return ring.map(p=>[p[0]<0?p[0]+360:p[0],p[1]]); };
+  WORLD2D.features.forEach(f=>{ const g=f.geometry; g.coordinates = g.type==="Polygon" ? g.coordinates.map(fx) : g.coordinates.map(pl=>pl.map(fx)); }); })();
+for(const sh of [-360,0,360]) L.geoJSON(WORLD2D,{coordsToLatLng:c=>L.latLng(c[1],c[0]+sh),style:{color:"#3a4560",weight:.7,fillColor:"#1a2133",fillOpacity:1},interactive:false}).addTo(map);
+const padLayer = L.layerGroup().addTo(map);
+const routeLayer = L.layerGroup().addTo(map);
+
+let curK = 0, curP = null, follow = false, playSpeed = 60, curHdg = 0, launches = [], filter = "all", selected = null, simTimer = null, rocketMarker = null, curTrack = null, curPos = null, padGroups = [];
+
+// ===================== Daten laden =====================
+async function load(){
+  let cached=null;
+  try{ cached = JSON.parse(localStorage.getItem("lr_cache")||"null"); }catch(e){}
+  if(cached && Date.now()-cached.ts < CACHE_MIN*60e3){ launches = cached.data; return render(); }
+  for(const url of [API, API_DEV]){
+    try{
+      const r = await fetch(url);
+      if(!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      launches = j.results||[];
+      try{ localStorage.setItem("lr_cache",JSON.stringify({ts:Date.now(),data:launches})); }catch(e){}
+      if(url===API_DEV) toast("Hinweis: Fallback-Daten (dev-Server) – evtl. nicht ganz aktuell");
+      return render();
+    }catch(e){ console.warn("Fehler",url,e); }
+  }
+  if(cached){ launches=cached.data; toast("Offline – zeige zwischengespeicherte Daten"); return render(); }
+  launches = SNAPSHOT; render();
+  toast("Live-Daten blockiert – zeige Schnappschuss vom "+SNAP_TS+". Im Browser (Chrome) öffnen für Live-Daten.");
+}
+
+function visible(){
+  return launches.filter(l=>{
+    const p=(l.launch_service_provider?.name||"").toLowerCase();
+    const r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
+    if(filter==="spacex") return p.includes("spacex");
+    if(filter==="starship") return r.includes("starship");
+    return true;
+  });
+}
+
+// ===================== Darstellung =====================
+function statusColor(l){
+  const a=(l.status?.abbrev||"").toLowerCase();
+  if(l.webcast_live||a==="in flight") return "var(--live)";
+  if(a==="go") return "var(--go)";
+  if(a==="success") return "var(--go)";
+  if(/fail/.test(a)) return "var(--live)";
+  return "var(--tbd)";
+}
+function render(){
+  padLayer.clearLayers();
+  if(LAYERS && !LAYERS.pads){ padGroups=[]; return updateNext(); }
+  const byPad = {}; padGroups = [];
+  visible().forEach(l=>{ if(!l.pad) return; (byPad[l.pad.id] ||= []).push(l); });
+  Object.values(byPad).forEach(list=>{
+    padGroups.push(list);
+    list.sort((a,b)=>new Date(a.net)-new Date(b.net));
+    const l=list[0], live=list.some(x=>x.webcast_live);
+    const icon=L.divIcon({className:"",iconSize:[18,18],
+      html:`<div class="pin ${live?"live":""}" style="background:${statusColor(l)}">${list.length>1?`<span class="n">${list.length}</span>`:""}</div>`});
+    L.marker([+l.pad.latitude,+l.pad.longitude],{icon}).addTo(padLayer)
+      .bindTooltip(`${l.name}<br><small>${fmtDate(l.net)}</small>`)
+      .on("click",()=> list.length>1 ? showList(list, l.pad.name) : select(l));
+  });
+  updateNext();
+}
+
+function updateNext(){
+  const v=visible().filter(l=>new Date(l.net)>Date.now()-3600e3).sort((a,b)=>new Date(a.net)-new Date(b.net));
+  const n=v[0]; const el=document.getElementById("next");
+  if(!n){el.textContent="Keine Starts";return;}
+  el.innerHTML=`Nächster: <b>${esc(n.name.split("|")[1]||n.name)}</b> · ${countdown(n.net)}`;
+  el.onclick=()=>select(n);
+}
+
+function showList(list,title,tab){
+  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null;
+  const P=document.getElementById("panel"); P.classList.remove("wide");
+  P.innerHTML=`<div class="hd"><h2>${esc(title||"Kommende Starts")}</h2><button class="x" onclick="closeP()">×</button></div>`+
+    (tab?`<div class="tabs"><button class="chip ${tab==="up"?"on":""}" onclick="showStartList('up')">Kommende</button><button class="chip ${tab==="past"?"on":""}" onclick="showStartList('past')">Vergangene</button></div>`:"")+
+    list.map((l,i)=>`<div class="item" data-i="${i}">${imgTag(l,true)}<div><b>${esc(l.name)}</b><br>
+      <small>${fmtDate(l.net)} · ${esc(l.pad?.location?.name||"")}</small><br>
+      <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.abbrev||"")}</span>
+      ${l.webcast_live?'<span class="badge" style="background:var(--live)">● LIVE</span>':""}
+      ${landIcons(l)} ${REM[l.id]?ICON.bell:""}</div></div>`).join("");
+  P.querySelectorAll(".item").forEach(d=>d.onclick=()=>select(list[+d.dataset.i]));
+  P.style.display="block"; P.scrollTop=0;
+}
+function closeP(){ follow=false; clearSat(); document.getElementById("panel").classList.remove("min"); document.getElementById("panel").classList.remove("wide"); document.getElementById("panel").style.display="none"; stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; }
+
+// ===================== Detailfenster =====================
+function select(l){
+  clearSat(); selected=l; stopSim();
+  const P=document.getElementById("panel"); P.classList.remove("wide");
+  const cfg=l.rocket?.configuration||{};
+  const m=l.mission||{};
+  const est=estimateProfile(l);
+  const stages=(l.rocket?.launcher_stage||[]);
+  const vids=(l.vid_urls||[]).slice().sort((a,b)=>(a.priority||99)-(b.priority||99));
+  const yt=vids.map(v=>ytId(v.url)).find(Boolean);
+
+  let html=`<div class="hd"><h2>${esc(l.name)}<br>
+     <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.name||"")}</span>
+     ${l.webcast_live?' <span class="badge" style="background:var(--live)">● LIVE</span>':""}</h2>
+     <button class="x" onclick="closeP()">×</button></div>`;
+
+  html+="<!--SIM-->";
+  // Bild + Missions-Patch
+  const im=l.image&&typeof l.image==="object"?l.image:null, patch=(l.mission_patches||[])[0];
+  if(im) html+=`<div class="hero">${imgTag(l,false)}
+     ${patch?`<img class="patch" src="${esc(patch.image_url)}" alt="" onerror="this.remove()">`:""}
+     ${im.credit?`<span class="cr">Bild: ${esc(im.credit)}</span>`:""}</div>`;
+
+  // Livestream
+  html+=`<div class="sec"><h3>Livestream</h3>`;
+  const local = location.protocol!=="http:" && location.protocol!=="https:";
+  if(yt) html+=`<button class="btn" onclick="openPip('${yt}','${esc((l.name.split("|")[1]||l.name).trim()).replace(/'/g,"")}')" style="margin-top:0">▶ Im Mini-Fenster abspielen</button>${local?`<div class="note">Hinweis: YouTube spielt nur ab, wenn die Seite online ist (nicht als lokale Datei).</div>`:""}`;
+  else if(false) html+="";
+  else html+=`<div class="mute">${vids.length?"Stream nicht einbettbar (z.B. auf X) – öffne ihn direkt:":"Noch kein Stream veröffentlicht (meist ca. 1 h vor Start)."}</div>`;
+  vids.slice(0,3).forEach(v=> html+=` <a class="btn ${yt?"sec2":""}" href="${esc(v.url)}" target="_blank" rel="noopener">▶ ${esc(v.publisher||v.source||"Stream")}</a>`);
+  html+=`</div>`;
+
+  // Countdown
+  html+=`<div class="sec"><h3>Start (NET)</h3><div class="cd" id="cd">${countdown(l.net)}</div>
+     <div class="mute">${fmtDate(l.net)} ${l.probability!=null&&l.probability>=0?`· Wetter-Go: ${l.probability}%`:""}</div>
+     ${new Date(l.net)>Date.now()?`<button class="btn ${REM[l.id]?"":"sec2"}" id="remBtn" onclick="toggleRem('${l.id}')">${REM[l.id]?ICON.bell+" Erinnerung aktiv – entfernen":ICON.bell+" 10 Min vorher erinnern"}</button>`:""}</div>`;
+
+  // Missionsprofil
+  html+=`<div class="sec"><h3>Missionsprofil</h3><div class="grid">
+     <b>Rakete</b><span>${esc(cfg.full_name||cfg.name||"–")} <a href="#" style="color:var(--acc)" onclick="openRocketByName('${esc(cfg.name||"")}');return false">Daten ↗</a></span>
+     <b>Betreiber</b><span>${esc(l.launch_service_provider?.name||"–")}</span>
+     <b>Mission</b><span>${esc(m.name||"–")}</span>
+     <b>Typ</b><span>${esc(m.type||"–")}</span>
+     <b>Zielbahn</b><span>${esc(m.orbit?.name||"–")} ${m.orbit?.abbrev?`(${esc(m.orbit.abbrev)})`:""}</span>
+     <b>Startplatz</b><span>${esc(l.pad?.name||"")}, ${esc(l.pad?.location?.name||"")}</span>
+     <b>Bahnneigung</b><span>≈ ${est.inc.toFixed(1)}° <span class="mute">(geschätzt)</span></span>
+   </div>${m.description?`<p>${esc(m.description)}</p>`:""}</div>`;
+
+  // Booster & Landung
+  html+=`<div class="sec"><h3>Booster (1. Stufe)</h3>`;
+  if(stages.length){
+    html+=stages.map(s=>boosterBlock(l,s)).join('<hr class="sthr">');
+  } else html+=`<div class="mute">Noch keine Booster-Infos veröffentlicht.</div>`;
+  html+=`</div>${spacecraftSection(l)}<div class="sec" style="padding-top:0;border:0">`;
+  if(est.landings.length) html+=`<div class="note">Auf der Karte: ${est.landings.map(x=>`<span class="lg" style="--c:${LAND[x.kind].c}"></span>${esc(x.label)}`).join(" · ")}</div>`;
+  html+=`</div>`;
+
+  // Objekte im Orbit (nach dem Start)
+  if(new Date(l.net)<Date.now()-3600e3){
+    html+=`<div class="sec"><h3>Objekte im Orbit</h3>${l.launch_designator?`<div class="mute">COSPAR-Kennung: ${esc(l.launch_designator)}</div>
+      <button class="btn" onclick="showLaunchObjects(selected)">${ICON.sat} Satelliten & Stufen dieses Starts zeigen</button>`:
+      `<div class="mute">Noch keine COSPAR-Kennung vergeben – Bahndaten folgen meist 1–3 Tage nach dem Start.</div>`}<div id="objRes"></div></div>`;
+  }
+  // Timeline
+  if(l.timeline?.length){
+    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl">`+
+      l.timeline.map(t=>`<li><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
+  }
+
+  // Live-Updates
+  const st=(l.status?.abbrev||"");
+  const failed=/fail/i.test(st);
+  if(failed) html+=`<div class="sec" style="background:#2a0f14"><h3>Achtung: ${esc(l.status?.name)}</h3><div>${esc(l.failreason||"Fehlstart gemeldet.")} Die wirkliche Position ist unbekannt – die Route unten ist nur der Plan.</div></div>`;
+  if(l.updates?.length){
+    html+=`<div class="sec"><h3>Live-Updates</h3><ul class="tl">`+
+      l.updates.slice(0,6).map(u=>`<li><span>${new Date(u.created_on).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span><span>${esc(u.comment)}</span></li>`).join("")+`</ul></div>`;
+  }
+  // Route-Details (Erklärungen) weiter unten
+  html+=`<div class="sec"><h3>Route & Bahn</h3>
+    <div>Blass = noch kommend, kräftig = schon geflogen. Jeder Orbit hat eine eigene Farbe${est.suborbital?"; die Bahn endet mit der Wasserung":""}.</div>
+    ${est.retFit?`<div class="note">Rückkehr: Deorbit-Burn T+${mmss(est.retFit.Td)}, Catch in Starbase T+${mmss(est.retFit.Tl)} (laut Timeline). Die Bahn ist so berechnet, dass sie dort endet (Neigung ≈ ${est.inc.toFixed(1)}°, Umlaufzeit ${(est.P/60).toFixed(1)} min).</div>`:""}
+    ${DEPINFO(l)}
+    ${est.stage?`<div class="note" style="color:var(--text)"><span class="lg" style="--c:${est.stage.mode==="deorbit"?"#ff6b3d":"#8a96ad"}"></span><b>Oberstufe:</b> ${esc(est.stage.label)}${est.stage.mode==="deorbit"?` · Deorbit-Burn T+${mmss(est.stage.Td)}, Wiedereintritt ca. T+${mmss(est.stage.Tre)} (${est.stage.src})`:""}.</div>`:""}
+    <div class="note">Hinweis: Die Route ist eine Schätzung aus Startplatz + Bahnneigung. Raketen senden keine öffentlichen Positionsdaten wie Flugzeuge (ADS-B). Während eines echten Starts folgt das Raketen-Symbol automatisch der Zeit seit dem Start.</div>
+    ${l.flightclub_url?`<a class="btn sec2" href="${esc(l.flightclub_url)}" target="_blank" rel="noopener">Präzise Bahn bei FlightClub.io</a>`:""}
+  </div>`;
+  // Simulation ganz oben (direkt unter dem Titel)
+  const pp=payloadPlan(l);
+  const simHtml=`<div class="sec simtop"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b id="tlab">T+ 00:00</b> <span class="mute" id="plab"></span></div>
+    <input type="range" id="sim" min="0" max="${est.tMax}" value="0" step="1">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+      <button class="btn" id="play" style="margin:0">▶ Flug simulieren</button>
+      <span class="spd" style="margin:0">${[10,60,600].map(s=>`<button class="chip ${s===60?"on":""}" data-ps="${s}">${s}×</button>`).join("")}<button class="chip" id="follow">Kamera folgt</button><button class="chip" id="teleBtn" title="Echte Werte aus dem Livestream lesen">Echte Telemetrie</button></span>
+      ${pp?`<button class="btn sec2" id="jumpDep" style="margin:0">Zum Aussetzen (${pp.n>1?pp.n+"× ":""}${esc(pp.label)})</button>`:""}
+    </div></div>`;
+  html=html.replace("<!--SIM-->",simHtml);
+  P.innerHTML=html; P.style.display="block"; P.scrollTop=0;
+  drawRoute(l,est);
+  if(G.on) G.target=[-(+l.pad.longitude), -(+l.pad.latitude)];
+
+  const s=document.getElementById("sim"); playSpeed=60;
+  P.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{ playSpeed=+b.dataset.ps; P.querySelectorAll("[data-ps]").forEach(x=>x.classList.toggle("on",x===b)); });
+  follow=false; const fb=document.getElementById("follow"); fb.onclick=()=>{ follow=!follow; fb.classList.toggle("on",follow); if(follow&&curPos&&!G.on) map.setView(curPos,Math.max(map.getZoom(),6)); };
+  const jb=document.getElementById("jumpDep"); if(jb) jb.onclick=()=>{ const p=payloadPlan(l); if(!p) return; stopSim(); s.value=Math.max(0,p.t0-60); placeRocket(+s.value); playSpeed=p.t1>p.t0?60:10;
+    follow=true; fb.classList.add("on"); if(G.on) G.scale=Math.max(G.scale,1400); else map.setView(curPos,7,{animate:false});
+    P.querySelectorAll("[data-ps]").forEach(x=>x.classList.toggle("on",+x.dataset.ps===playSpeed)); document.getElementById("play").click(); };
+  s.oninput=()=>{stopSim(false); placeRocket(+s.value);};
+  document.getElementById("play").onclick=()=>{
+    if(simTimer){stopSim();return;}
+    document.getElementById("play").textContent="⏸ Pause";
+    simTimer=setInterval(()=>{ let v=+s.value+playSpeed*0.05; if(v>est.tMax) v=0; s.value=v; placeRocket(v); },50);
+  };
+  // echter Flug läuft?
+  const tSince=(Date.now()-new Date(l.net))/1000;
+  if(tSince>0 && tSince<est.tMax && !failed){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
+  else placeRocket(0);
+}
+
+function liveFollow(l,est){
+  simTimer=setInterval(()=>{
+    const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax) return stopSim();
+    const s=document.getElementById("sim"); if(s) s.value=t; placeRocket(t);
+  },1000);
+}
+function stopSim(resetBtn=true){
+  if(simTimer){clearInterval(simTimer); simTimer=null;}
+  const b=document.getElementById("play"); if(b&&resetBtn!==false) b.textContent="▶ Flug simulieren";
+}
+
+// ===================== Bahn-Schätzung =====================
+function estimateProfile(l){
+  const lat=+l.pad.latitude, lon=+l.pad.longitude;
+  const name=(l.name||"").toLowerCase(), orb=(l.mission?.orbit?.abbrev||"").toUpperCase();
+  const rocket=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
+  const vandenberg = lon<-119 && lon>-122 && lat>34 && lat<35.5;
+  let inc, south=false, suborbital=false, tMax=90*60;
+
+  const sub = orb.startsWith("SUB");
+  if(rocket.includes("starship")){ inc=26.5; suborbital=sub; tMax=sub?70*60:90*60; }
+  else if(sub){ inc=Math.abs(lat)+0.05; tMax=600; }
+  else if(/shenzhou|tianzhou|tiangong|mengzhou/.test(name)) inc=41.5;
+  else if(/\biss\b|crew|crs|cygnus|dragon|soyuz ms|progress|axiom|\bax-|htv|dream chaser|starliner/.test(name)) inc=51.64;
+  else if(name.includes("starlink")||/starlink group/i.test(l.mission?.description||"")){
+    const g=+((name+" "+(l.mission?.description||"").toLowerCase()).match(/group (\d+)/)||[])[1];
+    inc = vandenberg ? ({11:53,13:97.6,15:70,17:97}[g]||70) : 43; }
+  else if(orb==="SSO") inc=97.6;
+  else if(vandenberg && ["LEO","PO",""].includes(orb)) inc = orb==="PO"?90:70;   // Vandenberg: typisch 70° (Richtung Süd-Südost über den Pazifik)
+  else if(orb==="PO") inc=90;
+  else if(orb==="MEO") inc=55;
+  else if(orb==="HEO") inc=63.4;
+  else if(["GTO","GEO","GSO","SUB-GEO","TLI","LO","HCO","SO","L1","L2"].includes(orb)) inc=Math.abs(lat);
+  else inc=Math.max(Math.abs(lat)+2,45);
+
+  if(vandenberg) south=true;
+  if(inc>80 && lat>30 && !vandenberg) south=true;      // z.B. China SSO → Richtung Süden
+  if(inc<Math.abs(lat)) inc=Math.abs(lat)+0.05;         // physikalisch nicht erreichbar → nach Osten
+
+  const desc=l.mission?.description||"";
+  let orbits=1, P=5400;
+  if(rocket.includes("starship") && !sub){
+    const mo=desc.match(/(\d+)\s+orbits?/i); orbits = mo ? +mo[1] : 1;
+    const mh=desc.match(/(\d{3,4})\s*km/i); if(mh){ const a=R_E+ +mh[1]; P=2*Math.PI*Math.sqrt(a**3/398600.4418); }
+    tMax = orbits*P;
+  }
+  // Was passiert mit der Oberstufe nach dem Aussetzen?
+  let stage=null;
+  if(!rocket.includes("starship") && !sub){
+    const pp=payloadPlan(l), spx=/spacex/i.test(l.launch_service_provider?.name||"");
+    const low=["LEO","SSO","PO","VLEO",""].includes(orb) || /iss|crew|crs|dragon/.test(name);
+    const esc_=["TLI","LO","HCO","SO","L1","L2","MARS","HELIOCENTRIC"].some(x=>orb.startsWith(x));
+    if(esc_) stage={mode:"escape",label:"Oberstufe verlässt mit der Nutzlast die Erdumlaufbahn"};
+    else if(spx && low){
+      const tdl=(()=>{ const e=(l.timeline||[]).find(t=>/deorbit burn start/i.test(t.type?.abbrev||"")); return e?relSec(e.relative_time):null; })();
+      const Td=tdl ?? ((pp?pp.t1:3700)+35*60), Tre=Td+15*60;
+      stage={mode:"deorbit",Td,Tre,src:tdl!=null?"laut Timeline":"geschätzt",label:"Oberstufe: Deorbit-Burn, dann Wiedereintritt und Verglühen über dem Ozean"};
+      tMax=Math.max(tMax,Tre+15*60);
+    } else stage={mode:"orbit",label:["GTO","GEO","GSO","MEO"].includes(orb)?"Oberstufe bleibt in einer hohen Umlaufbahn (Weltraumschrott)":"Oberstufe bleibt vermutlich im Orbit und tritt erst nach Wochen bis Jahren wieder ein"};
+  }
+  orbits=Math.max(orbits,Math.ceil(tMax/P-0.02));
+  let track, retFit=null;
+  const tlx=rx=>{ const v=(l.timeline||[]).filter(t=>rx.test(t.type?.abbrev||"")).map(t=>relSec(t.relative_time)).filter(x=>x!=null); return v.length?Math.max(...v):null; };
+  const returns = rocket.includes("starship") && !sub && /return|catch|starbase/i.test(desc);
+  if(returns){
+    // Landezeit aus der Timeline (Catch/Landung), sonst nach den angegebenen Orbits
+    const Tl = tlx(/starship catch|starship landing/i) || (orbits*P+40*60);
+    const Td = Math.min(tlx(/deorbit burn start/i) || (Tl-57*60), Tl-20*60);
+    // Periode + Neigung suchen, bei denen die Bahn zur Landezeit über Starbase liegt
+    const tgt=LZ.STARBASE; let best={c:1e9};
+    for(let ii=0; ii<=28; ii++){ const inc2=Math.max(Math.abs(lat)+0.05, 26.2+ii*0.25);
+      for(let jj=0; jj<=600; jj++){ const P2=P*(0.97+jj*0.0001);
+        const q=trackPoint(lat,lon,inc2,false,P2,Tl), c=hav([q[0],q[1]],tgt);
+        if(c<best.c) best={c,inc:inc2,P:P2}; } }
+    inc=best.inc; P=best.P; tMax=Tl; orbits=Math.ceil(Tl/P);
+    track=groundTrack(lat,lon,inc,false,tMax,P);
+    // Abstieg: ab dem Deorbit-Burn sanft zum Landeplatz führen
+    const kd=track.findIndex(p=>p[2]>=Td), last=track[track.length-1];
+    if(kd>0){ let tl=tgt[1]; while(tl-last[1]>180) tl-=360; while(tl-last[1]<-180) tl+=360;
+      for(let k=kd;k<track.length;k++){ const f=(track[k][2]-Td)/(Tl-Td), w=f*f*(3-2*f);
+        track[k][0]=track[k][0]*(1-w)+tgt[0]*w; track[k][1]=track[k][1]*(1-w)+tl*w; } }
+    retFit={km:best.c,Td,Tl};
+  } else track=groundTrack(lat,lon,inc,south,tMax,P);
+  let cut=track.length;
+  if(suborbital){ // Starship: Wasserung im Indischen Ozean
+    for(let k=0;k<track.length;k++){ const L0=norm(track[k][1]); if(track[k][2]>40*60 && L0>100 && L0<125){cut=k+1;break;} }
+  }
+  const tr=track.slice(0,cut);
+  const cum=[0]; for(let k=1;k<tr.length;k++) cum.push(cum[k-1]+hav(tr[k-1],tr[k]));
+
+  // Landungen
+  const landings=[];
+  (l.rocket?.launcher_stage||[]).forEach(s=>{
+    const ld=s.landing; if(!ld) return;
+    if(ld.attempt===false){ landings.push({pos:pointAt(tr,cum,550),label:"Booster: Einweg – stürzt ins Meer (Position geschätzt)",kind:"impact"}); return; }
+    const loc=ld.landing_location||ld.location||{}, ty=(ld.type?.abbrev||ld.type?.name||"").toUpperCase();
+    let pos=null;
+    const la=+(loc.latitude??loc.location?.latitude), lo=+(loc.longitude??loc.location?.longitude);
+    if(la&&lo && !(ty==="ASDS")) pos=[la,lo];
+    const ab=(loc.abbrev||"").toUpperCase();
+    if(!pos && LZ[ab]) pos=LZ[ab];
+    if(!pos && /starbase|tower|olp|catch/i.test((loc.name||"")+ty)) pos=LZ.STARBASE;
+    if(!pos && /gulf/i.test(loc.name||"")) pos=[26.0,-96.8];
+    if(!pos && (ty==="ASDS"||/ocisly|asog|jrti|drone/i.test(loc.name||""))) pos=pointAt(tr,cum, ld.downrange_distance>0?ld.downrange_distance:(orb==="GTO"?650:600));
+    if(!pos && ty==="ATL") pos=pointAt(tr,cum,450);
+    if(!pos && ty==="RTLS") pos=[lat+0.03,lon+0.03];
+    if(pos) landings.push({pos,label:`${ty==="ASDS"?"Drohnenschiff":"Booster-Landung"}: ${loc.name||ty}${ty==="ASDS"?" (Position geschätzt)":""}`,kind:ty==="ASDS"?"ship":"booster"});
+  });
+  if(!landings.length && !rocket.includes("starship") && !sub){
+    const nm2=(l.rocket?.configuration?.name||"").toLowerCase(), fam=ROCKETS.find(x=>x.n.toLowerCase()===nm2);
+    if(!(fam&&fam.reu)) landings.push({pos:pointAt(tr,cum,450),label:"Absturzgebiet 1. Stufe (geschätzt)",kind:"impact"});
+  }
+  if(stage&&stage.mode==="deorbit"){ stage.pos=pointAt(tr,cum,distAt(stage.Tre,{cum})); landings.push({pos:stage.pos,label:`Oberstufe: Wiedereintritt bei T+${mmss(stage.Tre)} (${stage.src})`,kind:"reentry"}); }
+  if(rocket.includes("starship")){
+    if(!landings.length) landings.push({pos:LZ.STARBASE,label:"Booster: Catch am Turm / Golf (geplant)",kind:"catch"});
+    if(returns) landings.push({pos:LZ.STARBASE,label:`Ship: Rückkehr & Catch in Starbase bei T+${mmss(retFit.Tl)}`,kind:"catch"});
+    if(suborbital) landings.push({pos:[tr[tr.length-1][0],tr[tr.length-1][1]],label:"Ship: Wasserung Indischer Ozean (geschätzt)",kind:"splash"});
+  }
+  // Schiffe, Absturzgebiete und Wiedereintritte liegen über Wasser: bei Bedarf entlang der Bahn verschieben
+  landings.forEach(x=>{ if(!["ship","impact","reentry","splash"].includes(x.kind) || !onLand(x.pos)) return;
+    const d0=nearestCum(tr,cum,x.pos);
+    for(let k=1;k<=(x.kind==="reentry"?160:40);k++){ for(const sg of x.kind==="reentry"?[1]:[1,-1]){ const q=pointAt(tr,cum,Math.max(0,d0+sg*k*25)); if(!onLand(q)){ x.pos=q; x.moved=true; return; } } } });
+  if(stage&&stage.pos){ const r=landings.find(x=>x.kind==="reentry"); if(r) stage.pos=r.pos; }
+  landings.forEach(x=>x.pos=[x.pos[0],norm(x.pos[1])]);
+  return {inc,south,suborbital,orbits,P,retFit,stage,tMax: (suborbital||sub) ? tr[tr.length-1][2] : tMax, track:tr, cum, landings};
+}
+
+function trackPoint(latD,lonD,incD,south,P,t){
+  const d2r=Math.PI/180, phi=latD*d2r, i=incD*d2r; let s=Math.sin(phi)/Math.sin(i); s=Math.max(-1,Math.min(1,s));
+  const u0= south ? Math.PI-Math.asin(s) : Math.asin(s), lam=u=>Math.atan2(Math.cos(i)*Math.sin(u),Math.cos(u)), Om=lonD*d2r-lam(u0);
+  const u=u0+2*Math.PI*t/P; return [Math.asin(Math.sin(i)*Math.sin(u))/d2r, norm((Om+lam(u)-OMEGA_E*t)/d2r)]; }
+function onLand(p){ try{ return d3.geoContains(WORLD,[norm(p[1]),p[0]]); }catch(e){ return false; } }
+function nearestCum(tr,cum,p){ let bi=0,bd=1e9; tr.forEach((q,i)=>{ const d=hav([q[0],q[1]],p); if(d<bd){bd=d;bi=i;} }); return cum[bi]; }
+// Bodenspur einer Kreisbahn (LEO ~ 90 min), inkl. Erdrotation
+function groundTrack(latD,lonD,incD,south,tMax,P=5400){
+  const d2r=Math.PI/180, phi=latD*d2r, i=incD*d2r;
+  let s=Math.sin(phi)/Math.sin(i); s=Math.max(-1,Math.min(1,s));
+  const u0= south ? Math.PI-Math.asin(s) : Math.asin(s);
+  const lam=u=>Math.atan2(Math.cos(i)*Math.sin(u),Math.cos(u));
+  const Om=lonD*d2r-lam(u0);
+  const pts=[]; let prev=null, off=0;
+  for(let t=0;t<=tMax;t+=20){
+    const u=u0+2*Math.PI*t/P;
+    const la=Math.asin(Math.sin(i)*Math.sin(u))/d2r;
+    let lo=(Om+lam(u)-OMEGA_E*t)/d2r;
+    lo=norm(lo);
+    if(prev!==null){ const dl=lo+off-prev; if(dl>180) off-=360; else if(dl<-180) off+=360; }
+    prev=lo+off; pts.push([la,lo+off,t]);
+  }
+  return pts;
+}
+// Distanz-basiert: Rakete beschleunigt erst langsam (Aufstieg), dann Orbitgeschwindigkeit
+function distAt(t,est){
+  if(t<540) return 1800*Math.pow(t/540,2);
+  const c=est.cum, ct=x=>{const i=x/20,k=Math.min(Math.floor(i),c.length-1),f=i-k; return k+1<c.length? c[k]+f*(c[k+1]-c[k]) : c[c.length-1];};
+  const lag=ct(540)-1800; return ct(t)-lag*Math.exp(-(t-540)/1500);
+}
+// Bahn an der Datumsgrenze in Teilstücke schneiden (für viele Orbits nötig)
+function segs(pts){ const out=[]; let cur=[];
+  pts.forEach(p=>{ const q=[p[0],norm(p[1])]; if(cur.length && Math.abs(q[1]-cur[cur.length-1][1])>180){ out.push(cur); cur=[]; } cur.push(q); });
+  if(cur.length) out.push(cur); return out; }
+function pointAt(tr,cum,dist){
+  for(let k=1;k<tr.length;k++) if(cum[k]>=dist){
+    const f=(dist-cum[k-1])/((cum[k]-cum[k-1])||1);
+    return [tr[k-1][0]+f*(tr[k][0]-tr[k-1][0]), tr[k-1][1]+f*(tr[k][1]-tr[k-1][1])];
+  }
+  const e=tr[tr.length-1]; return [e[0],e[1]];
+}
+
+function drawRoute(l,est){
+  routeLayer.clearLayers(); rocketMarker=null; curPos=null;
+  const tr=est.track.map(p=>[p[0],p[1]]);
+  let kA=est.cum.findIndex(c=>c>=1800); if(kA<0) kA=tr.length-1;
+  est.kA=kA;
+  // Abschnitte: Aufstieg + jeder Orbit (eigene Farbe). Kommend = blass, geflogen = kräftig.
+  const perOrbit=Math.round(est.P/20), cols=["#4ea1ff","#7b6cff","#c86bff","#ff6bb5","#ff8f5a","#ffd25a","#7be07b"];
+  est.parts=[{a:0,e:kA+1,col:"#4ea1ff",w:3.5,lab:"Aufstieg"}];
+  for(let o=0;o<est.orbits;o++){ const a=Math.max(kA,o*perOrbit), e=Math.min(tr.length,(o+1)*perOrbit+1); if(e-a<2) continue;
+    est.parts.push({a,e,col:cols[o%cols.length],w:2.2,lab:est.orbits>1?`Orbit ${o+1} / ${est.orbits}`:"Bahn"}); }
+  const SH=[-360,0,360], shift=(ls,sh)=>ls.map(seg=>seg.map(q=>[q[0],q[1]+sh]));
+  est.parts.forEach(pt=>{ const base=segs(tr.slice(pt.a,pt.e));
+    pt.fut=SH.map(sh=>L.polyline(shift(base,sh),{color:pt.col,weight:pt.w*0.7,opacity:.38,smoothFactor:1.5}).bindTooltip(pt.lab+" (noch nicht geflogen)",{sticky:true}).addTo(routeLayer));
+    pt.done=SH.map(sh=>L.polyline([],{color:pt.col,weight:pt.w+0.6,opacity:1,smoothFactor:1.5}).bindTooltip(pt.lab+" (geflogen)",{sticky:true}).addTo(routeLayer));
+    pt.k=-1; });
+  est.landings.forEach(x=> L.marker(x.pos,{icon:L.divIcon({className:"",html:landHtml(x.kind),iconSize:[16,16]})})
+    .bindTooltip(x.label).addTo(routeLayer));
+  setupDeploy(l);
+  rocketMarker=L.marker([+l.pad.latitude,+l.pad.longitude],{icon:L.divIcon({className:"",html:`<div class="rkw"><svg viewBox="0 0 24 24"><path d="${RK_PATH}" fill="#fff" stroke="#4ea1ff" stroke-width="1.3" stroke-linejoin="round"/></svg></div>`,iconSize:[28,28]}),zIndexOffset:1000}).addTo(routeLayer);
+  curTrack=est;
+  if(!G.on) map.fitBounds(L.latLngBounds(tr.slice(0, est.suborbital?tr.length:Math.min(tr.length,kA*3+1)).map(p=>[p[0],norm(p[1])])).pad(0.3),{paddingBottomRight: innerWidth>=800?[440,0]:[0,innerHeight*0.5]});
+}
+function placeRocket(t){
+  if(!curTrack||!rocketMarker) return;
+  const td=teleDist(), d=td!=null?td:distAt(t,curTrack), p=pointAt(curTrack.track,curTrack.cum,d);
+  curPos=[p[0],norm(p[1])]; rocketMarker.setLatLng(curPos);
+  const gone=curTrack.stage?.mode==="deorbit" && t>curTrack.stage.Tre; rocketMarker.setOpacity(gone?0:1); if(gone) curPos=null;
+  const p2=pointAt(curTrack.track,curTrack.cum,d+40); curHdg=bearing(p,p2);
+  const rw=rocketMarker.getElement()?.querySelector(".rkw"); if(rw) rw.style.transform=`rotate(${curHdg}deg)`;
+  const dc=updateDeploy(t,d);
+  // geflogenen Teil kräftig nachzeichnen
+  let k=curTrack.cum.findIndex(c=>c>=d); if(k<0) k=curTrack.track.length-1; curK=k; curP=p;
+  (curTrack.parts||[]).forEach(pt=>{ const kk=Math.min(pt.e,k+1); if(kk===pt.k) return; pt.k=kk;
+    const ls=kk>pt.a? segs([...curTrack.track.slice(pt.a,kk).map(q=>[q[0],q[1]]),...(k<pt.e?[[p[0],p[1]]]:[])]) : [];
+    pt.done.forEach((pl,j)=>pl.setLatLngs(ls.map(seg=>seg.map(q=>[q[0],q[1]+[-360,0,360][j]])))); });
+  if(follow){ if(G.on){ G.target=null; G.rot[0]=-curPos[1]; G.rot[1]=-curPos[0]; } else map.panTo(curPos,{animate:false}); }
+  const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
+  if(tl) tl.textContent="T+ "+mmss(t);
+  if(pl) pl.textContent=`· ${curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Tre?"Oberstufe verglüht · ":curTrack.stage?.mode==="deorbit"&&t>curTrack.stage.Td?"Oberstufe im Wiedereintritt · ":""}${td!=null&&TELE.h!=null?`GEMESSEN ${TELE.h} km Höhe · ${TELE.v.toLocaleString("de-CH")} km/h · `:""}${DEP&&dc?`${dc}/${DEP.n} ${DEP.label} ausgesetzt · `:""}${curTrack.orbits>1&&t>540?`Orbit ${Math.min(curTrack.orbits,Math.floor(t/curTrack.P)+1)}/${curTrack.orbits} · `:""}${Math.round(d)} km Bodendistanz · ${p[0].toFixed(1)}°, ${norm(p[1]).toFixed(1)}°`;
+}
+
+
+// ===================== Ausgesetzte Nutzlasten (Satelliten hinter der Rakete) =====================
+var DEP=null;            // {n,label,times[],src,markers[],lbl}
+var depPos=[];           // aktuelle Positionen für den Globus
+function relSec(iso){ if(!iso) return null; const m=/(-)?P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?/.exec(iso); if(!m) return null;
+  const s=(+m[2]||0)*86400+(+m[3]||0)*3600+(+m[4]||0)*60+(+m[5]||0); return m[1]?-s:s; }
+function payloadPlan(l){
+  if(/fail/i.test(l.status?.abbrev||"")) return null;
+  const desc=l.mission?.description||"", name=l.name||"", tl=l.timeline||[];
+  const orb=(l.mission?.orbit?.abbrev||"").toUpperCase(); if(orb.startsWith("SUB")) return null;
+  // Anzahl aus der Missionsbeschreibung (Konstellations-Gesamtzahlen ignorieren)
+  let n=null; const re=/(\d+)\s+(?:[\w\-\.]+\s+){0,4}satellites/ig; let m;
+  while((m=re.exec(desc))){ const k=+m[1], before=desc.slice(Math.max(0,m.index-70),m.index).toLowerCase();
+    if(k>=1 && k<=60 && !/constellation|total|consist|of up to/.test(before)){ n=k; break; } }
+  const starlink=/starlink/i.test(name);
+  if(n==null) n = starlink ? 24 : 1;
+  const label = starlink ? "Starlink" : /dragon|crew|crs/i.test(name) ? "Dragon" : (l.mission?.name||"Nutzlast");
+  // Zeitpunkte aus der Timeline
+  const f=rx=>{ const e=tl.find(t=>rx.test(t.type?.abbrev||t.type?.description||"")); return e?relSec(e.relative_time):null; };
+  let t0=f(/payload deployment sequence start|deploy.*start/i), t1=f(/payload deployment sequence end|deploy.*end/i), src="laut offizieller Timeline";
+  if(t0==null){ const s=f(/payload separation|payload deploy|starlink deploy|spacecraft separation|dragon separation|satellite deploy/i); if(s!=null){ t0=s; t1=s; } }
+  if(t0==null){ t0 = starlink ? 3700 : 3000; t1=t0; src="geschätzt"; }
+  if(t1==null||t1<t0) t1=t0;
+  const times=Array.from({length:n},(_,i)=>n>1? t0+(t1-t0)*i/(n-1) : t0);
+  return {n,label,times,t0,t1,src};
+}
+function DEPINFO(l){ const p=payloadPlan(l); if(!p) return "";
+  return `<div class="note" style="margin-top:10px;color:var(--text)"><span class="lg" style="--c:#ff4fd8"></span><b>Nutzlast:</b> ${p.n>1?p.n+"× ":""}${esc(p.label)} · Aussetzen ${p.t1>p.t0?`T+${mmss(p.t0)} bis T+${mmss(p.t1)}`:`bei T+${mmss(p.t0)}`} <span class="mute">(${p.src})</span>
+    <div class="mute" style="margin-top:4px">Die Satelliten erscheinen einzeln hinter der Rakete. Ihr Abstand ist vergrössert dargestellt, damit man sie auf der Karte unterscheiden kann.</div></div>`; }
+function setupDeploy(l){
+  DEP=payloadPlan(l); depPos=[]; if(!DEP) return;
+  DEP.markers=DEP.times.map((td,i)=>L.circleMarker([0,0],{radius:3.2,stroke:false,fillColor:"#ff4fd8",fillOpacity:1,opacity:0,interactive:true})
+    .bindTooltip(`${esc(DEP.label)} ${DEP.n>1?(i+1)+"/"+DEP.n:""} · ausgesetzt T+${mmss(td)}`).addTo(routeLayer));
+  DEP.lbl=L.marker([0,0],{interactive:false,opacity:0,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="deplbl"></div>'})}).addTo(routeLayer);
+}
+// Abstand hinter der Rakete: wächst nach dem Aussetzen (vergrössert dargestellt, damit sichtbar)
+function depGap(i,dt){ return 6 + dt*0.05; }
+function updateDeploy(t,d){
+  depPos=[]; if(!DEP||!curTrack) return 0; let cnt=0;
+  DEP.times.forEach((td,i)=>{ const mk=DEP.markers[i];
+    if(t<td){ mk.setStyle({opacity:0,fillOpacity:0}); return; }
+    cnt++; const p=pointAt(curTrack.track,curTrack.cum,Math.max(0,d-depGap(i,t-td))), q=[p[0],norm(p[1])];
+    mk.setLatLng(q); mk.setStyle({opacity:1,fillOpacity:1}); depPos.push(q); });
+  if(cnt){ const last=depPos[depPos.length-1]; DEP.lbl.setLatLng(last); DEP.lbl.setOpacity(1);
+    const el=DEP.lbl.getElement()?.querySelector(".deplbl"); if(el) el.textContent=`${cnt}${DEP.n>1?"/"+DEP.n:""} ${DEP.label}`; }
+  else DEP.lbl.setOpacity(0);
+  return cnt;
+}
+
+
+
+// ===================== Einheitliche Stufen-Karte (Booster & Ship) =====================
+function stageImg(im,fallbackUrl){
+  if(im&&typeof im==="object"&&(im.image_url||im.thumbnail_url)){ const th=im.thumbnail_url||"";
+    return `<img src="${esc(im.thumbnail_url||im.image_url)}" data-th="${esc(th)}" onerror="stageImgFail(this)" class="stimg" alt="">`; }
+  if(fallbackUrl) return `<img src="${esc(fallbackUrl)}" onerror="stageImgFail(this)" class="stimg" alt="">`;
+  return `<div class="stimg ph">${ICON.rocket}</div>`; }
+function stageImgFail(el){ const s=IMG_SNAP[el.dataset.th]; el.onerror=null;
+  if(s && el.src!==s){ el.src=s; el.onerror=()=>el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; } else el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; }
+function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
+function stageCard(o){
+  const g=rows=>rows.filter(r=>r&&r[1]!=null&&r[1]!=="").map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("");
+  const D='<span class="mute">–</span>', v=x=>(x==null||x==="")?D:x;
+  // Steckbrief: immer die gleichen Kacheln und Zeilen in gleicher Reihenfolge (fehlt ein Wert: –)
+  const S=o.st;
+  const tiles=[[S.flights,"bisherige Flüge"],[S.landings,"Landungen ok / versucht"],[S.turn,"schnellste Wende"]];
+  const grid=[["Status",S.status],["Erstflug",S.first],["Letzter Flug",S.last],["Zeit im All",S.space],["Höhe",S.height],["Durchmesser",S.dia],["Baureihe",S.fam],["Erstflug Baureihe",S.famFirst]];
+  return `<div class="stcard"><div class="sttop">${o.img}<div class="grid" style="flex:1">${g(o.rows)}</div></div>
+    ${o.desc?`<p class="mute">${esc(o.desc)}</p>`:""}
+    <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--acc)">${esc(o.sum)}</summary>
+      <div class="tiles" style="margin-top:8px">${tiles.map(([x,s])=>`<div class="tile"><div class="big" ${String(x??"").length>5?'style="font-size:18px"':""}>${v(x)}</div><small>${s}</small></div>`).join("")}</div>
+      <div class="grid" style="margin-top:8px">${grid.map(([k,x])=>`<b>${k}</b><span>${v(x)}</span>`).join("")}</div>${o.more?`<p class="mute">${esc(o.more)}</p>`:""}</details></div>`; }
+// Höhe der 1. Stufe: bekannte Werte, bei Starship = Gesamthöhe minus Ship
+const STAGE1_H={"falcon 9":41.2,"falcon heavy":41.2,"new glenn":57.5};
+function boosterHeight(l,fam){
+  const nm=(l.rocket?.configuration?.name||"").toLowerCase();
+  const sc=(l.rocket?.spacecraft_stage||[])[0]?.spacecraft?.spacecraft_config;
+  if(/starship/.test(nm) && fam?.len && sc?.height) return fmtN(fam.len-sc.height,"m",1)+' <span class="mute">(Gesamthöhe − Ship)</span>';
+  for(const k in STAGE1_H) if(nm.startsWith(k)) return fmtN(STAGE1_H[k],"m",1);
+  return null; }
+const fmtN=(v,u,d=0)=>v==null?null:(+v).toLocaleString("de-CH",{maximumFractionDigits:d})+" "+u;
+function boosterBlock(l,s){
+  const la=s.launcher||{}, ld=s.landing||{}, loc=ld.landing_location||ld.location||{}, cfg=l.rocket?.configuration||{};
+  const isSS=/starship/i.test(cfg.name||""), st=typeof la.status==="object"?la.status?.name:la.status;
+  const nm=(cfg.name||"").toLowerCase(), fam=ROCKETS.find(x=>x.n.toLowerCase()===nm)||ROCKETS.find(x=>nm.includes(x.n.toLowerCase()));
+  const first=la.flights===0?"dieser Flug":(la.first_launch_date?fmtDay(la.first_launch_date):null);
+  return stageCard({
+    img:stageImg(la.image||l.image, fam?.img),
+    rows:[["Name",`<b>${esc(la.serial_number||"unbekannt")}</b>${s.reused?" "+ICON.reuse:""}`],
+          ["Typ",`${esc(isSS?"Super Heavy":(cfg.name||"–"))} <span class="mute">· 1. Stufe</span>`],
+          ["Landung",`${ld.attempt===false?"keine (Einweg)":esc(ld.type?.name||"–")}${loc.name?` · ${esc(loc.name)}${loc.abbrev?` (${esc(loc.abbrev)})`:""}`:""}`],
+          ...landResult(ld)],
+    desc:ld.description, sum:`Booster-Steckbrief ${la.serial_number||""}`, more:la.details,
+    st:{flights:la.flights??null, landings:la.attempted_landings!=null?`${la.successful_landings??0}/${la.attempted_landings}`:null,
+        turn:la.fastest_turnaround?fmtDur(la.fastest_turnaround):null,
+        status:esc(st||"")+(la.flight_proven?" · flight-proven":""), first, last:la.last_launch_date?fmtDay(la.last_launch_date):(la.flights===0?"–":null),
+        space:null, height:boosterHeight(l,fam), dia:fam?fmtN(fam.dia,"m",1):null,
+        fam:fam?`${esc(fam.n)}: ${fam.tot} Flüge · ${fam.sl}/${fam.al} Landungen`:null, famFirst:fam?.first?fmtDay(fam.first):null} });
+}
+function shipBlock(l,x){
+  const sc=x.spacecraft||{}, cf=sc.spacecraft_config||{}, ld=x.landing||{}, loc=ld.landing_location||{}, isSS=/starship/i.test(l.rocket?.configuration?.name||"");
+  const st=typeof sc.status==="object"?sc.status?.name:sc.status;
+  return stageCard({
+    img:stageImg(sc.image||l.image),
+    rows:[["Name",`<b>${esc(sc.name||"–")}</b>${sc.serial_number&&sc.serial_number!==sc.name?` <span class="mute">(${esc(sc.serial_number)})</span>`:""}`],
+          ["Typ",`${esc(cf.name||"–")} <span class="mute">· ${isSS?"2. Stufe":esc(cf.type||"Raumschiff")}</span>`],
+          ["Landung",`${ld.attempt===false?"keine (Einweg)":esc(ld.type?.name||(loc.name?"geplant":"–"))}${loc.name?` · ${esc(loc.name)}${loc.abbrev?` (${esc(loc.abbrev)})`:""}`:""}`],
+          ...landResult(ld)],
+    desc:ld.description, sum:`${isSS?"Ship":"Raumschiff"}-Steckbrief ${sc.serial_number||sc.name||""}`, more:sc.description,
+    st:{flights:sc.flights_count??null, landings:sc.flights_count===0?"0/0":null,
+        turn:sc.fastest_turnaround?fmtDur(sc.fastest_turnaround):null,
+        status:esc(st||"")+(sc.in_space?" · gerade im All":""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
+        space:sc.time_in_space&&sc.time_in_space!=="P0D"?fmtDur(sc.time_in_space):"0", height:fmtN(cf.height,"m",1), dia:fmtN(cf.diameter,"m",1),
+        fam:cf.total_launch_count!=null?`${esc(cf.name||"")}: ${cf.total_launch_count} Flüge · ${cf.successful_landings??0}/${cf.attempted_landings??0} Landungen`:null,
+        famFirst:cf.maiden_flight?fmtDay(cf.maiden_flight):null} });
+}
+function spacecraftSection(l){
+  const list=l.rocket?.spacecraft_stage||[]; if(!list.length) return "";
+  const isSS=/starship/i.test(l.rocket?.configuration?.name||"");
+  return `<div class="sec"><h3>${isSS?"Ship (2. Stufe)":"Raumschiff"}</h3>`+list.map(x=>shipBlock(l,x)).join('<hr class="sthr">')+`</div>`; }
+
+// ===================== Helfer =====================
+function norm(lo){ return ((lo+540)%360)-180; }
+function hav(a,b){ const r=Math.PI/180, dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r;
+  const h=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2; return 2*R_E*Math.asin(Math.sqrt(h)); }
+function ytId(u){ if(!u) return null; const m=u.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([\w-]{11})/); return m?m[1]:null; }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtDate(d){ return new Date(d).toLocaleString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+function mmss(t){ t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); return (h?h+":":"")+String(Math.floor(t%3600/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
+function countdown(net){
+  let s=Math.floor((new Date(net)-Date.now())/1000), sign="T−";
+  if(s<0){sign="T+"; s=-s;}
+  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  return `${sign} ${d?d+"d ":""}${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`;
+}
+function fmtRel(iso){ // z.B. "PT2M30S", "-PT45M"
+  if(!iso) return ""; const neg=iso.startsWith("-");
+  const m=iso.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?/); if(!m) return iso;
+  const s=(+m[1]||0)*86400+(+m[2]||0)*3600+(+m[3]||0)*60+Math.round(+m[4]||0);
+  const h=Math.floor(s/3600), mi=Math.floor(s%3600/60), se=s%60;
+  return (neg?"T− ":"T+ ")+(h?h+":":"")+String(mi).padStart(2,"0")+":"+String(se).padStart(2,"0");
+}
+// Bild: online Originalbild, sonst eingebettetes Vorschaubild, sonst ausblenden
+function imgTag(l,small){ const im=l.image&&typeof l.image==="object"?l.image:null; if(!im) return small?'<div class="th"></div>':"";
+  const th=im.thumbnail_url||"", src=small?(th||im.image_url):(im.image_url||th);
+  return `<img class="${small?"th":""}" loading="lazy" alt="" src="${esc(src)}" data-th="${esc(th)}" onerror="imgFail(this)">`; }
+function imgFail(el){ const s=IMG_SNAP[el.dataset.th]; el.onerror=null;
+  if(s && el.src!==s) el.src=s; else if(el.classList.contains("th")) el.style.visibility="hidden"; else el.closest(".hero")?.remove(); }
+function toast(t){ const m=document.getElementById("msg"); m.textContent=t; m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }
+
+// ===================== UI =====================
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-f]").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  filter=b.dataset.f; closeP(); render();
+});
+document.getElementById("listBtn").onclick=()=>showStartList("up");
+setInterval(()=>{ updateNext(); if(selected){const c=document.getElementById("cd"); if(c) c.textContent=countdown(selected.net);} },1000);
+
+// ===================== 3D-Globus =====================
+const G={on:false, rot:[60,-20,0], scale:0, target:null, auto:true, ptr:new Map(), drag:null, pinch:null, hits:[]};
+const gc=document.getElementById("globe"), gx=gc.getContext("2d"), grat=d3.geoGraticule10();
+const HEX={go:"#2ecc71",tbd:"#f5b041",live:"#ff3b3b",ok:"#9b59b6"};
+function statusHex(l){ const a=(l.status?.abbrev||"").toLowerCase();
+  if(l.webcast_live||a==="in flight") return HEX.live; if(a==="go") return HEX.go; if(a==="success") return HEX.go; if(/fail/.test(a)) return HEX.live; return HEX.tbd; }
+function gResize(){ const r=devicePixelRatio||1; gc.width=innerWidth*r; gc.height=innerHeight*r; gc.style.width=innerWidth+"px"; gc.style.height=innerHeight+"px"; gx.setTransform(r,0,0,r,0,0);
+  if(!G.scale) G.scale=Math.min(innerWidth,innerHeight)*0.40; }
+function panelOpen(){ const p=document.getElementById("panel"); return p.style.display==="block" && !p.classList.contains("min"); }
+function gView(){ const w=innerWidth,h=innerHeight, po=panelOpen();
+  if(w>=800) return {cx:po?(w-450)/2:w/2, cy:h/2+25, sc:G.scale};
+  return po ? {cx:w/2, cy:h*0.17+45, sc:Math.min(G.scale,h*0.12)} : {cx:w/2, cy:h/2+25, sc:G.scale}; }
+function gDraw(){
+  const w=innerWidth,h=innerHeight, v=gView();
+  gx.fillStyle="#0b0f17"; gx.fillRect(0,0,w,h);
+  // Sterne
+  gx.fillStyle="rgba(255,255,255,.5)"; for(let i=0;i<120;i++){ const x=(i*7919)%w, y=(i*104729)%h; gx.fillRect(x,y,(i%3)?1:1.5,(i%3)?1:1.5); }
+  const proj=d3.geoOrthographic().scale(v.sc).translate([v.cx,v.cy]).rotate(G.rot).clipAngle(90).precision(.6);
+  const path=d3.geoPath(proj,gx);
+  const g=gx.createRadialGradient(v.cx,v.cy,v.sc*.95,v.cx,v.cy,v.sc*1.18); g.addColorStop(0,"rgba(78,161,255,.35)"); g.addColorStop(1,"rgba(78,161,255,0)");
+  gx.fillStyle=g; gx.beginPath(); gx.arc(v.cx,v.cy,v.sc*1.18,0,7); gx.fill();
+  gx.beginPath(); path({type:"Sphere"}); gx.fillStyle="#0f1a2e"; gx.fill();
+  gx.beginPath(); path(grat); gx.strokeStyle="rgba(255,255,255,.07)"; gx.lineWidth=.6; gx.stroke();
+  gx.beginPath(); path(WORLD); gx.fillStyle="#22304a"; gx.fill(); gx.strokeStyle="#3d4d6e"; gx.lineWidth=.5; gx.stroke();
+  nightGlobe(gx,path,proj);
+  const ctr=[-G.rot[0],-G.rot[1]], vis=ll=>d3.geoDistance([ll[1],ll[0]],ctr)<Math.PI/2-0.01, pt=ll=>proj([ll[1],ll[0]]);
+  if(curTrack){
+    const c=curTrack.track.map(p=>[p[1],p[0]]);
+    (curTrack.parts||[]).forEach(pt=>{
+      gx.globalAlpha=.38; gx.lineWidth=pt.w*0.7; gx.strokeStyle=pt.col; gx.beginPath(); path({type:"LineString",coordinates:c.slice(pt.a,pt.e)}); gx.stroke();
+      const kk=Math.min(pt.e,curK+1); if(kk>pt.a+0){ const seg=c.slice(pt.a,kk); if(curK<pt.e && curP) seg.push([curP[1],curP[0]]);
+        if(seg.length>1){ gx.globalAlpha=1; gx.lineWidth=pt.w+0.6; gx.beginPath(); path({type:"LineString",coordinates:seg}); gx.stroke(); } } });
+    gx.globalAlpha=1;
+    gx.textAlign="center"; gx.textBaseline="middle";
+    curTrack.landings.forEach(x=>{ if(vis(x.pos)){ const q=pt(x.pos); drawLandG(gx,q[0],q[1],x.kind); } });
+  }
+  G.hits=[];
+  satDrawGlobe(gx,proj,path,vis,pt);
+  padGroups.forEach(list=>{ const l=list[0], ll=[+l.pad.latitude,+l.pad.longitude]; if(!vis(ll)) return; const q=pt(ll);
+    gx.beginPath(); gx.arc(q[0],q[1],7,0,7); gx.fillStyle=statusHex(l); gx.fill(); gx.lineWidth=2.5; gx.strokeStyle="#fff"; gx.stroke();
+    if(list.length>1){ gx.font="bold 10px sans-serif"; gx.fillStyle="#fff"; gx.fillText(list.length,q[0]+11,q[1]-9); }
+    G.hits.push({x:q[0],y:q[1],list}); });
+  if(curTrack && depPos.length){ gx.fillStyle="#ff4fd8"; gx.strokeStyle="#0b0f17"; gx.lineWidth=1;
+    depPos.forEach(p=>{ if(!vis(p)) return; const q=pt(p); gx.beginPath(); gx.arc(q[0],q[1],3.2,0,7); gx.fill(); }); }
+  if(curPos && vis(curPos)){ const q=pt(curPos), r=Math.PI/180, a=[curPos[0]+Math.cos(curHdg*r)*0.5, curPos[1]+Math.sin(curHdg*r)*0.5/Math.max(.2,Math.cos(curPos[0]*r))], q2=pt(a);
+    drawRocket(gx,q[0],q[1],Math.atan2(q2[1]-q[1],q2[0]-q[0])+Math.PI/2); }
+}
+function gLoop(){
+  if(G.on){
+    if(G.target){ let dl=((G.target[0]-G.rot[0]+540)%360)-180, dp=G.target[1]-G.rot[1];
+      G.rot[0]+=dl*.08; G.rot[1]+=dp*.08; if(Math.abs(dl)<.2&&Math.abs(dp)<.2) G.target=null; }
+    else if(G.auto && !selected && !G.drag) G.rot[0]+=0.08;
+    gDraw();
+  }
+  requestAnimationFrame(gLoop);
+}
+gc.addEventListener("pointerdown",e=>{ gc.setPointerCapture(e.pointerId); G.ptr.set(e.pointerId,[e.clientX,e.clientY]); G.target=null; G.auto=false;
+  if(G.ptr.size===1) G.drag={x:e.clientX,y:e.clientY,r:[...G.rot],moved:false};
+  if(G.ptr.size===2){ const [a,b]=[...G.ptr.values()]; G.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:G.scale}; G.drag=null; } });
+gc.addEventListener("pointermove",e=>{ if(!G.ptr.has(e.pointerId)) return; G.ptr.set(e.pointerId,[e.clientX,e.clientY]);
+  if(G.pinch && G.ptr.size===2){ const [a,b]=[...G.ptr.values()]; G.scale=Math.max(80,Math.min(4000,G.pinch.s*Math.hypot(a[0]-b[0],a[1]-b[1])/G.pinch.d)); return; }
+  if(G.drag){ const dx=e.clientX-G.drag.x, dy=e.clientY-G.drag.y; if(Math.hypot(dx,dy)>4) G.drag.moved=true;
+    const k=70/gView().sc; G.rot[0]=G.drag.r[0]+dx*k; G.rot[1]=Math.max(-89,Math.min(89,G.drag.r[1]-dy*k)); } });
+function gUp(e){ const d=G.drag; G.ptr.delete(e.pointerId); if(G.ptr.size<2) G.pinch=null;
+  if(d && !d.moved){ let best=null,bd=20;
+    G.hits.forEach(h=>{ if(h.list){ const dd=Math.hypot(h.x-e.clientX,h.y-e.clientY); if(dd<14){bd=-1;best=h;} } }); if(bd>=0) G.hits.forEach(h=>{ const dd=Math.hypot(h.x-e.clientX,h.y-e.clientY); if(dd<bd){bd=dd;best=h;} });
+    if(best && best.sat) selectSat(best.sat,best.g);
+    else if(best) best.list.length>1 ? showList(best.list,best.list[0].pad.name) : select(best.list[0]); }
+  G.drag=null; }
+gc.addEventListener("pointerup",gUp); gc.addEventListener("pointercancel",gUp);
+gc.addEventListener("wheel",e=>{ e.preventDefault(); G.scale=Math.max(80,Math.min(4000,G.scale*Math.exp(-e.deltaY*.0015))); },{passive:false});
+addEventListener("resize",gResize);
+document.getElementById("globeBtn").onclick=()=>{
+  G.on=!G.on; gc.style.display=G.on?"block":"none"; document.body.classList.toggle("globe-on",G.on);
+  document.getElementById("globeBtn").classList.toggle("on",G.on);
+  document.getElementById("globeBtn").innerHTML=G.on?ICON.map+'<span class="lbl">Karte</span>':ICON.globe+'<span class="lbl">Globus</span>';
+  if(G.on){ gResize(); G.auto=true; if(selected&&!follow) G.target=[-(+selected.pad.longitude),-(+selected.pad.latitude)]; }
+  else { map.invalidateSize(); drawSatMap(); if(selected){ drawRoute(selected,curTrack); const s=document.getElementById("sim"); if(s) placeRocket(+s.value); } }
+};
+gLoop();
+
+
+// ===================== Simulierte Zeit (Zeitraffer) =====================
+var SIM={speed:1,base:Date.now(),anchor:Date.now()};
+function simNow(){ return new Date(SIM.base+(Date.now()-SIM.anchor)*SIM.speed); }
+// ===================== Ebenen (alles ausschaltbar) =====================
+var LAYERS = {pads:true, stations:true, starlink:false, gnss:false, weather:false, live:true, night:true, time:true, fresh:false};
+try{ Object.assign(LAYERS, JSON.parse(localStorage.getItem("lr_layers")||"{}")); }catch(e){}
+const SAT_SRC={
+  stations:{label:"Raumstationen (ISS, Tiangong)",color:"#ffffff",size:4,celestrak:"stations"},
+  starlink:{label:"Starlink",color:"#8fc8ff",size:1.3,celestrak:"starlink"},
+  gnss:{label:"Navigation (GPS, Galileo, …)",color:"#7be07b",size:2.6,celestrak:"gnss"},
+  weather:{label:"Wettersatelliten",color:"#ffd25a",size:2.6,celestrak:"weather"}};
+const SATS={}; let selSat=null;
+const satLayer=L.layerGroup().addTo(map);
+const satcv=document.createElement("canvas"); satcv.id="satcv"; map.getContainer().appendChild(satcv);
+const sx=satcv.getContext("2d");
+
+function buildLayerMenu(){
+  const el=document.getElementById("layers");
+  const row=(k,lab,dot)=>`<label><input type="checkbox" data-k="${k}" ${LAYERS[k]?"checked":""}>${dot?`<span class="dot" style="background:${dot}"></span>`:""}<span>${lab}</span></label>`;
+  el.innerHTML=`<h4>Starts</h4>${row("pads","Startplätze & Routen","#2ecc71")}${row("live","Live-Status bei laufenden Starts","#ff3b3b")}
+    <h4>Erde & Zeit</h4>${row("night","Tag/Nacht-Grenze","#4a5878")}${row("time","Zeitraffer-Leiste","#4ea1ff")}
+    <h4>Satelliten</h4>`+Object.entries(SAT_SRC).map(([k,s])=>row(k,s.label+(SATS[k]?` <span class="mute">(${SATS[k].length})</span>`:""),s.color)).join("")
+    +row("fresh","Neueste Starts hervorheben","#ff4fd8");
+  el.querySelectorAll("input").forEach(i=>i.onchange=async()=>{
+    LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
+    if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
+    if(i.dataset.k==="live") livePoll(true);
+    if(i.dataset.k==="night") updateNight(true);
+    if(i.dataset.k==="time"){ if(!i.checked) simReset(); updTimeUI(); }
+    if(i.dataset.k==="fresh"){ if(i.checked){ await loadSats("starlink"); setFresh(); } else if(HL&&HL.fresh){ HL=null; } drawSatMap(); }
+    if(SAT_SRC[i.dataset.k]){ if(i.checked){ await loadSats(i.dataset.k); buildLayerMenu(); } else if(selSat&&selSat.g===i.dataset.k) closeP(); propAll(true); }
+  });
+}
+document.getElementById("layerBtn").onclick=e=>{ e.stopPropagation(); const el=document.getElementById("layers");
+  el.style.display=el.style.display==="block"?"none":"block"; if(el.style.display==="block") buildLayerMenu(); };
+document.addEventListener("click",e=>{ const el=document.getElementById("layers"); if(!el.contains(e.target)&&e.target.id!=="layerBtn") el.style.display="none"; });
+
+// ---------- Satelliten laden (CelesTrak, Cache 2h, sonst eingebetteter Schnappschuss) ----------
+function parseTLE(t){ const L=t.split(/\r?\n/).map(s=>s.trimEnd()).filter(Boolean), out=[], seen=new Set();
+  for(let i=0;i+2<L.length+1;){
+    if(L[i+1]?.startsWith("1 ") && L[i+2]?.startsWith("2 ")){
+      const key=L[i+2].slice(8); if(!seen.has(key)){ seen.add(key); try{ out.push({name:L[i].trim(),rec:satellite.twoline2satrec(L[i+1],L[i+2]),intl:L[i+1].slice(9,17).trim()}); }catch(e){} }
+      i+=3; } else i++; }
+  return out; }
+async function loadSats(g){
+  if(SATS[g]) return; let txt=null, src="live";
+  try{ const c=JSON.parse(localStorage.getItem("lr_tle_"+g)||"null"); if(c && Date.now()-c.ts<2*3600e3) txt=c.t; }catch(e){}
+  if(!txt){ try{ const r=await fetch(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${SAT_SRC[g].celestrak}&FORMAT=tle`);
+      if(!r.ok) throw 0; txt=await r.text(); if(!txt.includes("\n1 ")) throw 0;
+      try{ localStorage.setItem("lr_tle_"+g,JSON.stringify({ts:Date.now(),t:txt})); }catch(e){} }catch(e){ txt=null; } }
+  if(!txt && TLE_SNAP[g]){ txt=TLE_SNAP[g]; src="snap"; }
+  if(!txt){ toast(SAT_SRC[g].label+": nur online verfügbar (im Browser öffnen)"); SATS[g]=[]; return; }
+  if(src==="snap") toast(SAT_SRC[g].label+": Bahndaten vom "+SNAP_TS+" (Positionen trotzdem live berechnet)");
+  SATS[g]=parseTLE(txt); propGroup(g,new Date());
+}
+const D=180/Math.PI;
+function propOne(s,date,gm){ const pv=satellite.propagate(s.rec,date); if(!pv||!pv.position){s.ok=false;return;}
+  const g=satellite.eciToGeodetic(pv.position,gm); s.lat=g.latitude*D; s.lon=g.longitude*D; s.h=g.height;
+  const v=pv.velocity; s.v=Math.hypot(v.x,v.y,v.z); s.ok=true; }
+function propGroup(g,date){ const gm=satellite.gstime(date); (SATS[g]||[]).forEach(s=>propOne(s,date,gm)); }
+let propTick=0;
+let lastProp=0;
+function propAll(force){ const real=Date.now(); if(!force && SIM.speed===1 && real-lastProp<950) return; lastProp=real;
+  const now=simNow(); propTick++;
+  for(const g in SAT_SRC){ if(!LAYERS[g]||!SATS[g]) continue; if(g==="stations"||force||SIM.speed>1||propTick%3===0) propGroup(g,now); }
+  if(HL){ const gm=satellite.gstime(now); HL.sats.forEach(s=>propOne(s,now,gm)); }
+  updateNight(); updTimeUI();
+  if(selSat){ propOne(selSat.s,now,satellite.gstime(now)); updateSatPanel(); }
+  if(SIM.speed>1 && selSat && real-(selSat.tt||0)>3000){ selSat.track=satTrack(selSat.s); selSat.tt=real; }
+  drawSatMap(); }
+setInterval(()=>propAll(false),250);
+
+// ---------- Zeichnen auf der 2D-Karte ----------
+function drawSatMap(){
+  const sz=map.getSize(), r=devicePixelRatio||1;
+  if(satcv.width!==sz.x*r||satcv.height!==sz.y*r){ satcv.width=sz.x*r; satcv.height=sz.y*r; satcv.style.width=sz.x+"px"; satcv.style.height=sz.y+"px"; }
+  sx.setTransform(r,0,0,r,0,0); sx.clearRect(0,0,sz.x,sz.y);
+  if(G.on) return;
+  for(const g of ["starlink","gnss","weather","stations"]){
+    if(!LAYERS[g]||!SATS[g]) continue; const S=SAT_SRC[g]; sx.fillStyle=S.color;
+    for(const s of SATS[g]){ if(!s.ok) continue;
+      for(const sh of [-360,0,360]){ const p=map.latLngToContainerPoint([s.lat,s.lon+sh]);
+        if(p.x<-10||p.y<-10||p.x>sz.x+10||p.y>sz.y+10) continue;
+        if(g==="stations"){ satIcon(sx,p.x,p.y,s); } else sx.fillRect(p.x-S.size/2,p.y-S.size/2,S.size,S.size); } } }
+  hlDraw2D(sz);
+  if(selSat&&selSat.s.ok){ const s=selSat.s; for(const sh of [-360,0,360]){ const p=map.latLngToContainerPoint([s.lat,s.lon+sh]);
+      sx.beginPath(); sx.arc(p.x,p.y,9,0,7); sx.strokeStyle="#ff3b3b"; sx.lineWidth=2; sx.stroke(); } }
+}
+function satIcon(c,x,y,s){ const big=/ISS \(ZARYA\)|TIANHE|CSS/.test(s.name);
+  if(!big){ c.beginPath(); c.arc(x,y,2.6,0,7); c.fillStyle="#fff"; c.fill(); c.fillStyle=SAT_SRC.stations.color; return; }
+  c.save(); c.shadowColor="#9ad0ff"; c.shadowBlur=8;
+  c.fillStyle="#7fb6ff"; c.fillRect(x-12,y-3,8,6); c.fillRect(x+4,y-3,8,6);        // Solarpanels
+  c.fillStyle="#fff"; c.fillRect(x-4,y-0.8,8,1.6); c.fillRect(x-2.5,y-2.5,5,5);      // Körper
+  c.restore(); c.textAlign="center"; c.textBaseline="middle";
+  if(big){ c.font="bold 11px sans-serif"; c.fillStyle="#fff"; c.fillText(/ISS/.test(s.name)?"ISS":"Tiangong",x,y+16); c.fillStyle=SAT_SRC.stations.color; } }
+map.on("move zoom resize viewreset",drawSatMap);
+map.on("click",e=>{ const hit=nearestSat(map.latLngToContainerPoint(e.latlng)); if(hit) selectSat(hit.s,hit.g); });
+function nearestSat(pt){ let best=null,bd=1e9;
+  for(const g in SAT_SRC){ if(!LAYERS[g]||!SATS[g]) continue; const lim=g==="stations"?22:10;
+    for(const s of SATS[g]){ if(!s.ok) continue; for(const sh of [-360,0,360]){ const p=map.latLngToContainerPoint([s.lat,s.lon+sh]);
+      const d=Math.hypot(p.x-pt.x,p.y-pt.y); if(d<lim && d<bd){bd=d;best={s,g};} } } }
+  return best; }
+
+// ---------- Globus ----------
+function satDrawGlobe(c,proj,path,vis,pt){
+  hlDrawGlobe(c,vis,pt);
+  for(const g of ["starlink","gnss","weather","stations"]){
+    if(!LAYERS[g]||!SATS[g]) continue; const S=SAT_SRC[g]; c.fillStyle=S.color;
+    for(const s of SATS[g]){ if(!s.ok||!vis([s.lat,s.lon])) continue; const q=pt([s.lat,s.lon]);
+      if(g==="stations"){ satIcon(c,q[0],q[1],s); } else c.fillRect(q[0]-S.size/2,q[1]-S.size/2,S.size,S.size);
+      if(g==="stations"||g==="gnss"||G.hits.length<400) G.hits.push({x:q[0],y:q[1],sat:s,g}); } }
+  if(selSat){ c.setLineDash([4,5]); c.beginPath(); path({type:"LineString",coordinates:selSat.track.map(p=>[p[1],p[0]])});
+    c.strokeStyle="#ff6b6b"; c.lineWidth=1.8; c.stroke(); c.setLineDash([]);
+    if(selSat.s.ok&&vis([selSat.s.lat,selSat.s.lon])){ const q=pt([selSat.s.lat,selSat.s.lon]); c.beginPath(); c.arc(q[0],q[1],9,0,7); c.strokeStyle="#ff3b3b"; c.lineWidth=2; c.stroke(); } }
+}
+
+// ---------- Satellit auswählen ----------
+function satTrack(s){ const P=2*Math.PI/s.rec.no, pts=[]; let prev=null,off=0; const t0=simNow().getTime();
+  for(let m=0;m<=P;m+=0.5){ const d=new Date(t0+m*60e3), pv=satellite.propagate(s.rec,d); if(!pv||!pv.position) continue;
+    const g=satellite.eciToGeodetic(pv.position,satellite.gstime(d)); let lo=g.longitude*D;
+    if(prev!==null){ const dl=lo+off-prev; if(dl>180) off-=360; else if(dl<-180) off+=360; } prev=lo+off; pts.push([g.latitude*D,lo+off]); }
+  return pts; }
+function clearSat(){ selSat=null; satLayer.clearLayers(); }
+function selectSat(s,g){
+  stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null; follow=false;
+  selSat={s,g,track:satTrack(s)}; satLayer.clearLayers();
+  L.polyline(segs(selSat.track),{color:"#ff6b6b",weight:2,dashArray:"4 6"}).bindTooltip("Bahn der nächsten ~"+Math.round(2*Math.PI/s.rec.no)+" Min",{sticky:true}).addTo(satLayer);
+  const P=document.getElementById("panel"), rec=s.rec; P.classList.remove("wide");
+  const epochDays=(rec.jdsatepoch+(rec.jdsatepochF||0)-2440587.5)*86400e3, ageH=(Date.now()-epochDays)/3600e3;
+  const SG=SAT_SRC[g]||{label:"Hervorgehoben",color:"#ff4fd8"};
+  P.innerHTML=`<div class="hd"><h2>${esc(s.name)}<br><span class="badge" style="background:${SG.color};color:#000">${esc(SG.label)}</span></h2><button class="x" onclick="closeP()">×</button></div>
+   <div class="sec"><h3>Live-Position (berechnet)</h3><div class="grid">
+     <b>Höhe</b><span id="sH">–</span><b>Geschwindigkeit</b><span id="sV">–</span><b>Position</b><span id="sP">–</span>
+   </div></div>
+   <div class="sec"><h3>Bahn</h3><div class="grid">
+     <b>NORAD-ID</b><span>${esc(rec.satnum)}</span>
+     <b>Inklination</b><span>${(rec.inclo*D).toFixed(1)}°</span>
+     <b>Umlaufzeit</b><span>${(2*Math.PI/rec.no).toFixed(1)} Min</span>
+     <b>Umläufe/Tag</b><span>${(1440/(2*Math.PI/rec.no)).toFixed(2)}</span>
+     <b>Bahndaten-Alter</b><span>${ageH<48?ageH.toFixed(0)+" h":(ageH/24).toFixed(1)+" Tage"}</span>
+   </div><div class="note">Position wird jede Sekunde aus den Bahnelementen (TLE, CelesTrak) mit dem SGP4-Modell berechnet – genau auf wenige km.</div>
+   ${/ISS/.test(s.name)?`<a class="btn sec2" href="https://spotthestation.nasa.gov/" target="_blank" rel="noopener">Wann ist die ISS über mir sichtbar?</a>`:""}</div>`;
+  P.style.display="block"; P.scrollTop=0; updateSatPanel(); drawSatMap();
+  if(G.on) G.target=[-s.lon,-s.lat]; else map.panTo([s.lat,s.lon]);
+}
+function updateSatPanel(){ if(!selSat) return; const s=selSat.s, H=document.getElementById("sH"); if(!H||!s.ok) return;
+  H.textContent=s.h.toFixed(0)+" km"; document.getElementById("sV").textContent=(s.v*3600).toLocaleString("de-CH",{maximumFractionDigits:0})+" km/h ("+s.v.toFixed(2)+" km/s)";
+  document.getElementById("sP").textContent=s.lat.toFixed(2)+"°, "+s.lon.toFixed(2)+"°"; }
+
+// ===================== Live-Status bei laufenden Starts =====================
+let lastPoll=0, liveId=null;
+function liveCandidate(){ const now=Date.now();
+  return launches.filter(l=>{ const t=new Date(l.net)-now, a=(l.status?.abbrev||"");
+    return l.webcast_live || a==="In Flight" || (t<45*60e3 && t>-3*3600e3 && !/success|fail/i.test(a)); })
+    .sort((a,b)=>new Date(a.net)-new Date(b.net))[0]; }
+async function livePoll(force){
+  const B=document.getElementById("live");
+  if(!LAYERS.live){ B.style.display="none"; return; }
+  const l=liveCandidate(); if(!l){ B.style.display="none"; liveId=null; return; }
+  liveId=l.id; liveBanner();
+  if(!force && Date.now()-lastPoll<5*60e3) return;   // Free-API: max. ~12 Abfragen/Stunde
+  lastPoll=Date.now();
+  try{ const r=await fetch(`https://ll.thespacedevs.com/2.3.0/launches/${l.id}/?mode=detailed`); if(!r.ok) throw r.status;
+    applyLive(await r.json()); }catch(e){ console.warn("Live-Abfrage fehlgeschlagen",e); }
+}
+function applyLive(n){
+  const i=launches.findIndex(x=>x.id===n.id); if(i<0) return; const o=launches[i]; launches[i]=n;
+  if(o.status?.abbrev!==n.status?.abbrev){ toast(`${n.name.split("|")[1]||n.name}: Status → ${n.status?.name}`);
+    if(/success|fail/i.test(n.status?.abbrev||"")) setTimeout(()=>refreshCounts(true),60e3); }
+  else if((n.updates?.length||0)>(o.updates?.length||0)) toast(`Update: ${n.updates[0].comment}`);
+  if(!o.webcast_live && n.webcast_live) toast("Livestream ist gestartet");
+  try{ localStorage.setItem("lr_cache",JSON.stringify({ts:Date.now(),data:launches})); }catch(e){}
+  render();
+  if(selected && selected.id===n.id){ const s=document.getElementById("sim"), v=s?+s.value:0, top=document.getElementById("panel").scrollTop;
+    select(n); const s2=document.getElementById("sim"); if(s2&&!simTimer){ s2.value=v; placeRocket(v); } document.getElementById("panel").scrollTop=top; }
+  liveBanner();
+}
+function liveBanner(){
+  const B=document.getElementById("live"), l=launches.find(x=>x.id===liveId); if(!l||!LAYERS.live){ B.style.display="none"; return; }
+  const ago=lastPoll?Math.round((Date.now()-lastPoll)/60e3):null;
+  B.innerHTML=`<span style="color:var(--live)">●</span> <b>LIVE-Modus</b> · ${esc(l.name.split("|")[1]||l.name)} · ${esc(l.status?.name||"")} · ${countdown(l.net)}${ago!==null?` · Abfrage vor ${ago} min`:""}`;
+  B.style.display="block"; B.onclick=()=>select(l);
+}
+setInterval(()=>{ livePoll(false); },20e3);
+setInterval(()=>{ if(liveId) liveBanner(); },1000);
+
+(async()=>{ for(const g in SAT_SRC) if(LAYERS[g]) await loadSats(g); propAll(true); })();
+setTimeout(()=>livePoll(true),3000);
+
+// ===================== Tag/Nacht-Grenze =====================
+var nightLayer=null, lastNight=0;
+function sunPos(d){ const n=d.getTime()/86400000+2440587.5-2451545.0, r=Math.PI/180;
+  const L0=(280.46+0.9856474*n)%360, g=(357.528+0.9856003*n)*r, lam=(L0+1.915*Math.sin(g)+0.02*Math.sin(2*g))*r, eps=(23.439-4e-7*n)*r;
+  const dec=Math.asin(Math.sin(eps)*Math.sin(lam)), ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam));
+  const gmst=(280.46061837+360.98564736629*n)%360; return {lat:dec/r, lon:norm(ra/r-gmst)}; }
+function nightPoly(sun){ const dec=Math.abs(sun.lat)<0.2?(sun.lat<0?-0.2:0.2):sun.lat, pts=[];
+  for(let lo=-180;lo<=180;lo+=2) pts.push([Math.atan(-Math.cos((lo-sun.lon)/D)/Math.tan(dec/D))*D,lo]);
+  const pole=dec>0?-85:85; return [...pts,[pole,180],[pole,-180]]; }
+function updateNight(force){
+  const now=Date.now(); if(!force && SIM.speed===1 && now-lastNight<30e3) return; lastNight=now;
+  if(!map.getPane("night")){ map.createPane("night"); map.getPane("night").style.zIndex=350; map.getPane("night").style.pointerEvents="none"; }
+  if(nightLayer){ map.removeLayer(nightLayer); nightLayer=null; }
+  if(!LAYERS.night) return;
+  const sun=sunPos(simNow()), poly=nightPoly(sun);
+  nightLayer=L.layerGroup([-360,0,360].flatMap(sh=>[
+    L.polygon(poly.map(p=>[p[0],p[1]+sh]),{pane:"night",stroke:false,fillColor:"#000",fillOpacity:.5,interactive:false})])).addTo(map);
+}
+function nightGlobe(c,path,proj){
+  if(!LAYERS.night) return; const sun=sunPos(simNow()), anti=[sun.lon+180,-sun.lat];
+  c.beginPath(); path(d3.geoCircle().center([sun.lon,sun.lat]).radius(84)()); c.fillStyle="rgba(140,180,255,.10)"; c.fill();
+  c.beginPath(); path(d3.geoCircle().center(anti).radius(96)()); c.fillStyle="rgba(0,0,12,.25)"; c.fill();
+  c.beginPath(); path(d3.geoCircle().center(anti).radius(90)()); c.fillStyle="rgba(0,0,12,.5)"; c.fill();
+
+}
+
+// ===================== Zeitraffer-Leiste =====================
+function setSpeed(s){ SIM.base=simNow().getTime(); SIM.anchor=Date.now(); SIM.speed=s; propAll(true); }
+function simReset(){ SIM.base=Date.now(); SIM.anchor=Date.now(); SIM.speed=1; propAll(true); }
+function simShift(min){ SIM.base=simNow().getTime()+min*60e3; SIM.anchor=Date.now(); propAll(true); }
+function buildTimebar(){ const T=document.getElementById("timebar");
+  T.innerHTML=`<span title="Simulierte Zeit für Satelliten & Tag/Nacht" style="display:inline-flex;color:var(--mute)">${ICON.clock}</span><b id="tbT"></b>`+
+    [1,60,600,3600].map(s=>`<button class="chip" data-sp="${s}" onclick="setSpeed(${s})">${s}×</button>`).join("")+
+    `<button class="chip tbx" onclick="simShift(-60)">−1h</button><button class="chip tbx" onclick="simShift(60)">+1h</button>
+     <button class="chip" id="tbNow" onclick="simReset()">Jetzt</button>`; }
+function updTimeUI(){ const T=document.getElementById("timebar"); if(!T||!T.firstChild) return;
+  if(!LAYERS.time){ T.style.display="none"; return; } T.style.display="flex";
+  const t=simNow(); document.getElementById("tbT").textContent=t.toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  T.querySelectorAll("[data-sp]").forEach(b=>b.classList.toggle("on",+b.dataset.sp===SIM.speed));
+  document.getElementById("tbNow").style.display=(SIM.speed!==1||Math.abs(t-Date.now())>5000)?"":"none"; }
+
+// ===================== Erinnerungen =====================
+var REM={}; try{ REM=JSON.parse(localStorage.getItem("lr_rem")||"{}"); }catch(e){}
+function saveRem(){ try{ localStorage.setItem("lr_rem",JSON.stringify(REM)); }catch(e){} }
+function toggleRem(id){
+  const l=[...launches,...(PAST||[])].find(x=>x.id===id); if(!l) return;
+  if(REM[id]) delete REM[id];
+  else { REM[id]={name:l.name,net:l.net,fired:false};
+    try{ if(window.Notification && Notification.permission==="default") Notification.requestPermission(); }catch(e){}
+    beep(true); toast("Erinnerung gesetzt – 10 Min vor dem Start (die Seite muss offen bleiben)"); }
+  saveRem(); const b=document.getElementById("remBtn");
+  if(b){ b.className="btn "+(REM[id]?"":"sec2"); b.innerHTML=REM[id]?ICON.bell+" Erinnerung aktiv – entfernen":ICON.bell+" 10 Min vorher erinnern"; } }
+function checkRem(){ for(const id in REM){ const r=REM[id], l=launches.find(x=>x.id===id); if(l && l.net!==r.net){ r.net=l.net; r.fired=false; }
+    const t=new Date(r.net)-Date.now();
+    if(!r.fired && t<=10*60e3 && t>-30*60e3){ r.fired=true; const msg=`${(r.name.split("|")[1]||r.name).trim()} startet in ${Math.max(0,Math.round(t/60e3))} Min!`;
+      toast(msg); beep(); try{ if(window.Notification && Notification.permission==="granted") new Notification("LaunchRadar",{body:msg}); }catch(e){} }
+    if(t<-6*3600e3) delete REM[id]; }
+  saveRem(); }
+setInterval(checkRem,15e3);
+var actx=null;
+function beep(silent){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(silent) return;
+  [0,.35,.7].forEach(t0=>{ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=880;
+    g.gain.setValueAtTime(.15,actx.currentTime+t0); g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t0+.3);
+    o.connect(g).connect(actx.destination); o.start(actx.currentTime+t0); o.stop(actx.currentTime+t0+.3); }); }catch(e){} }
+
+// ===================== Vergangene Starts + Booster =====================
+var PAST=null;
+async function loadPast(){ if(PAST) return PAST; let c=null;
+  try{ c=JSON.parse(localStorage.getItem("lr_past")||"null"); }catch(e){}
+  if(c && Date.now()-c.ts<3600e3){ PAST=c.data; return PAST; }
+  try{ const r=await fetch("https://ll.thespacedevs.com/2.3.0/launches/previous/?mode=detailed&limit=30"); if(!r.ok) throw 0;
+    PAST=(await r.json()).results; try{ localStorage.setItem("lr_past",JSON.stringify({ts:Date.now(),data:PAST})); }catch(e){} }
+  catch(e){ PAST=PAST_SNAP; }
+  return PAST; }
+function applyFilter(list){ return list.filter(l=>{ const p=(l.launch_service_provider?.name||"").toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
+  return filter==="spacex"?p.includes("spacex"):filter==="starship"?r.includes("starship"):true; }); }
+async function showStartList(tab){
+  if(tab==="past"){ const p=await loadPast(); showList(applyFilter(p).sort((a,b)=>new Date(b.net)-new Date(a.net)),"Vergangene Starts","past"); }
+  else showList(visible().slice().sort((a,b)=>new Date(a.net)-new Date(b.net)),"Kommende Starts","up"); }
+function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
+function fmtDur(iso){ const m=/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso||""); if(!m) return iso; return [m[1]&&m[1]+" Tage",m[2]&&m[2]+" Std",!m[1]&&m[3]&&m[3]+" Min"].filter(Boolean).join(" "); }
+function fmtDay(d){ return new Date(d).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"}); }
+function boosterCard(s){ const la=s.launcher; if(!la||la.flights==null) return "";
+  const st=typeof la.status==="object"?la.status?.name:la.status;
+  return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--acc)">Booster-Steckbrief ${esc(la.serial_number||"")}</summary>
+   <div class="tiles" style="margin-top:8px">
+     <div class="tile"><div class="big">${la.flights}</div><small>Flüge</small></div>
+     <div class="tile"><div class="big">${la.successful_landings??0}/${la.attempted_landings??0}</div><small>Landungen ok / versucht</small></div>
+     ${la.fastest_turnaround?`<div class="tile"><div class="big" style="font-size:18px">${fmtDur(la.fastest_turnaround)}</div><small>schnellste Wende</small></div>`:""}
+   </div><div class="grid" style="margin-top:8px">
+     <b>Erstflug</b><span>${la.first_launch_date?fmtDay(la.first_launch_date):"–"}</span>
+     <b>Letzter Flug</b><span>${la.last_launch_date?fmtDay(la.last_launch_date):"–"}</span>
+     <b>Status</b><span>${esc(st||"–")}${la.flight_proven?" · flight-proven":""}</span>
+   </div>${la.details?`<p class="mute">${esc(la.details)}</p>`:""}</details>`; }
+
+// ===================== Objekte eines Starts / neueste Starts =====================
+var HL=null;
+function allLoaded(){ return Object.values(SATS).flat(); }
+async function showLaunchObjects(l){
+  const m=/^(\d{4})-(\d{3})/.exec(l?.launch_designator||""), R=document.getElementById("objRes"); if(!m||!R) return;
+  const key=m[1].slice(2)+m[2]; R.innerHTML='<div class="mute">Suche …</div>';
+  if(/starlink/i.test(l.name)) await loadSats("starlink");
+  let found=allLoaded().filter(s=>s.intl&&s.intl.startsWith(key));
+  if(!found.length){ try{ const r=await fetch(`https://celestrak.org/NORAD/elements/gp.php?INTDES=${m[0]}&FORMAT=tle`);
+      if(r.ok){ const t=await r.text(); if(t.includes("\n1 ")) found=parseTLE(t); } }catch(e){} }
+  if(!found.length){ R.innerHTML='<div class="mute" style="margin-top:6px">Keine Bahndaten gefunden – noch nicht katalogisiert, oder offline (CelesTrak nicht erreichbar).</div>'; return; }
+  HL={label:(l.name.split("|")[1]||l.name).trim(),sats:found,fresh:false};
+  const now=simNow(), gm=satellite.gstime(now); found.forEach(s=>propOne(s,now,gm));
+  R.innerHTML=`<div style="margin-top:8px">${found.length} Objekte gefunden, <b style="color:#ff4fd8">pink</b> markiert · <a href="#" style="color:var(--acc)" onclick="HL=null;drawSatMap();document.getElementById('objRes').innerHTML='';return false">ausblenden</a></div>
+    <div class="mute" style="max-height:120px;overflow:auto;margin-top:4px">${found.slice(0,80).map((s,i)=>`<a href="#" style="color:var(--acc)" onclick="selectSat(HL.sats[${i}],'hl');return false">${esc(s.name)}</a>`).join(" · ")}</div>`;
+  drawSatMap(); const s=found.find(x=>x.ok); if(s){ if(G.on) G.target=[-s.lon,-s.lat]; else map.panTo([s.lat,s.lon]); } }
+function setFresh(){ const all=allLoaded().filter(s=>s.intl), cy=String(simNow().getFullYear()).slice(2);
+  const keys=[...new Set(all.map(s=>s.intl.slice(0,5)).filter(k=>k.startsWith(cy)))].sort().slice(-3);
+  if(!keys.length){ toast("Keine neuen Objekte gefunden"); return; }
+  HL={label:"Neueste Starts",sats:all.filter(s=>keys.includes(s.intl.slice(0,5))),fresh:true};
+  const now=simNow(), gm=satellite.gstime(now); HL.sats.forEach(s=>propOne(s,now,gm));
+  toast(`Pink: ${HL.sats.length} Objekte der 3 neuesten Starts (${keys.map(k=>"20"+k.slice(0,2)+"-"+k.slice(2)).join(", ")}) – frische Starlink-Züge!`); }
+function hlDraw2D(sz){ if(!HL||G.on) return; sx.fillStyle="#ff4fd8";
+  for(const s of HL.sats){ if(!s.ok) continue; for(const sh of [-360,0,360]){ const p=map.latLngToContainerPoint([s.lat,s.lon+sh]);
+    if(p.x<-10||p.y<-10||p.x>sz.x+10||p.y>sz.y+10) continue; sx.beginPath(); sx.arc(p.x,p.y,3.2,0,7); sx.fill(); } } }
+function hlDrawGlobe(c,vis,pt){ if(!HL) return; c.fillStyle="#ff4fd8";
+  for(const s of HL.sats){ if(!s.ok||!vis([s.lat,s.lon])) continue; const q=pt([s.lat,s.lon]); c.beginPath(); c.arc(q[0],q[1],3.2,0,7); c.fill(); G.hits.push({x:q[0],y:q[1],sat:s,g:"hl"}); } }
+function nearestSat(pt){ let best=null,bd=1e9;
+  const test=(s,g,lim)=>{ if(!s.ok) return; for(const sh of [-360,0,360]){ const p=map.latLngToContainerPoint([s.lat,s.lon+sh]); const d=Math.hypot(p.x-pt.x,p.y-pt.y); if(d<lim&&d<bd){bd=d;best={s,g};} } };
+  if(HL) HL.sats.forEach(s=>test(s,"hl",12));
+  for(const g in SAT_SRC){ if(!LAYERS[g]||!SATS[g]) continue; SATS[g].forEach(s=>test(s,g,g==="stations"?22:10)); }
+  return best; }
+
+// ===================== Statistik =====================
+function bars(arr){ const mx=Math.max(...arr.map(x=>x[1]));
+  return `<div class="bars">`+arr.map(([k,v])=>`<span>${esc(k)}</span><div class="tr" title="${esc(k)}: ${v} Starts"><div class="f" style="width:${(v/mx*100).toFixed(1)}%;${k==="Andere"?"background:#4a5878":""}"></div></div><span class="v">${v}</span>`).join("")+`</div>`; }
+function openStats(){
+  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null;
+  const S=STATS, P=document.getElementById("panel"); P.classList.remove("wide");
+  const ok=S.status.Success||0, part=S.status["Partial Failure"]||0, fail=S.status.Failure||0;
+  const sxp=(S.prov.find(x=>/spacex/i.test(x[0]))||[0,0])[1];
+  const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"], mmax=Math.max(...S.month), cm=11-(S.month.slice().reverse().findIndex(v=>v>0));
+  const upY=launches.filter(l=>new Date(l.net).getFullYear()===S.year && new Date(l.net)>Date.now()).length;
+  P.innerHTML=`<div class="hd"><h2>Raumfahrt-Statistik ${S.year}</h2><button class="x" onclick="closeP()">×</button></div>
+   <div class="sec"><div class="tiles">
+     <div class="tile"><div class="big">${S.total}</div><small>Orbitale Starts bisher</small></div>
+     <div class="tile"><div class="big">${(ok/(ok+fail+part)*100).toFixed(1)}%</div><small>Erfolgsquote</small></div>
+     <div class="tile"><div class="big">${fail+part}</div><small>Fehlstarts${part?` (davon ${part} teilweise)`:""}</small></div>
+     <div class="tile"><div class="big">${Math.round(sxp/S.total*100)}%</div><small>Anteil SpaceX (${sxp})</small></div>
+   </div>${upY?`<div class="note">Dazu ${upY} weitere Starts bis Ende ${S.year} geplant (aus der aktuellen Liste).</div>`:""}</div>
+   <div class="sec"><h3>Starts pro Monat</h3><div class="months">${S.month.map((v,i)=>`<div title="${MN[i]}: ${i>cm?"–":v+" Starts"}">${i<=cm?`<span style="color:var(--text)">${v}</span>`:""}<i style="height:${i<=cm?(v/mmax*80).toFixed(0):0}%;${i===cm?"opacity:.55":""}"></i><span>${MN[i]}</span></div>`).join("")}</div>
+     <div class="note">Laufender Monat (blasser) noch nicht vollständig.</div></div>
+   <div class="sec"><h3>Nach Betreiber</h3>${bars(S.prov)}</div>
+   <div class="sec"><h3>Nach Land (Startplatz)</h3>${bars(S.cty)}</div>
+   <div class="sec"><h3>Nach Rakete</h3>${bars(S.rock)}</div>
+   <div class="sec note">Quelle: The Space Devs (Launch Library 2) · ${esc(standText())}. Gezählt werden orbitale Startversuche ab 1.1.${S.year}.</div>`;
+  P.style.display="block"; P.scrollTop=0; }
+
+// ===================== Raketen-Datenbank =====================
+var DB={q:"",f:"all",flown:true,reu:false,sort:"tot",dir:-1,sel:[]};
+const DBCOLS=[["n","Rakete"],["man","Hersteller"],["act","Status"],["leo","LEO (t)",1],["gto","GTO (t)",1],["thr","Schub (kN)",1],["len","Höhe (m)",1],["mass","Masse (t)",1],["tot","Flüge",1],["rate","Erfolg",1],["sl","Landungen",1],["first","Erstflug"],["cost","Preis (Mio $)",1]];
+function rVal(r,k){ switch(k){ case "rate": return r.tot? r.suc/r.tot : null; case "leo": case "gto": case "sso": return r[k]!=null? r[k]/1000 : null;
+  case "cost": return r.cost? r.cost/1e6 : null; case "act": return r.act?1:0; case "man": return r.mab||r.man||null; case "sl": return r.al? r.sl : null; default: return r[k]; } }
+function fmtCell(r,k){ const v=rVal(r,k); if(v==null||v==="") return '<span class="mute">–</span>';
+  switch(k){
+    case "n": return `<b>${esc(r.n)}</b>${r.reu?' <span title="wiederverwendbar">'+ICON.reuse+'</span>':""}`;
+    case "man": return esc(v)+(r.cty?` <span class="mute">${esc(r.cty)}</span>`:"");
+    case "act": return r.act?'<span class="pill" style="background:#1f4d33;color:#7be07b">aktiv</span>':'<span class="pill" style="background:#33384a;color:#aab">inaktiv</span>';
+    case "leo": case "gto": return v.toLocaleString("de-CH",{maximumFractionDigits:1});
+    case "thr": case "mass": return Math.round(v).toLocaleString("de-CH");
+    case "len": return v.toFixed(1);
+    case "rate": return (v*100).toFixed(0)+" %";
+    case "sl": return `${r.sl}/${r.al}`;
+    case "first": return String(v).slice(0,4);
+    case "cost": return v.toLocaleString("de-CH",{maximumFractionDigits:0});
+    default: return esc(v); } }
+function dbRows(){ const q=DB.q.toLowerCase().trim();
+  const rows=ROCKETS.filter(r=>(DB.f==="all"||(DB.f==="act")===r.act)&&(!DB.flown||r.tot>0)&&(!DB.reu||r.reu)&&(!q||(r.n+" "+r.fam+" "+r.man+" "+r.mab).toLowerCase().includes(q)));
+  rows.sort((a,b)=>{ const x=rVal(a,DB.sort), y=rVal(b,DB.sort); if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1; return (x>y?1:x<y?-1:0)*DB.dir; });
+  return rows; }
+function openDB(){
+  clearSat(); stopSim(); routeLayer.clearLayers(); selected=null; curTrack=null; curPos=null;
+  const P=document.getElementById("panel"); P.classList.add("wide");
+  const chip=(v,l)=>`<button class="chip ${DB.f===v?"on":""}" onclick="DB.f='${v}';openDB()">${l}</button>`;
+  P.innerHTML=`<div class="hd"><h2>Raketen-Datenbank <span class="mute" style="font-weight:400;font-size:13px">${ROCKETS.length} Raketen & Varianten · ${esc(standText("db"))}</span></h2><button class="x" onclick="closeP()">×</button></div>
+   <div class="dbctl"><input type="search" id="dbQ" placeholder="Suchen: Falcon, Ariane, Long March, SpaceX …" value="${esc(DB.q)}">
+     ${chip("all","Alle")}${chip("act","Aktiv")}${chip("ina","Inaktiv")}
+     <label class="chip"><input type="checkbox" ${DB.flown?"checked":""} onchange="DB.flown=this.checked;renderDBTable()"> nur geflogene</label>
+     <label class="chip"><input type="checkbox" ${DB.reu?"checked":""} onchange="DB.reu=this.checked;renderDBTable()"> wiederverwendbar</label>
+     <button class="btn" id="cmpBtn" style="margin:0" onclick="openCompare()">Vergleichen (${DB.sel.length})</button></div>
+   <div class="note" style="padding:6px 14px">Bis zu 4 Raketen antippen (☑), dann „Vergleichen“. Spaltenkopf antippen = sortieren. <span id="dbN"></span></div>
+   <div class="tw"><table class="db" id="dbT"></table></div>`;
+  P.style.display="block"; P.scrollTop=0;
+  document.getElementById("dbQ").oninput=e=>{ DB.q=e.target.value; renderDBTable(); };
+  renderDBTable(); }
+function renderDBTable(){ const T=document.getElementById("dbT"); if(!T) return; const rows=dbRows();
+  document.getElementById("dbN").textContent=`· ${rows.length} Treffer`;
+  T.innerHTML=`<thead><tr><th></th>${DBCOLS.map(([k,l,num])=>`<th class="${num?"num":""} ${DB.sort===k?"s":""}" data-k="${k}">${l}${DB.sort===k?(DB.dir<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead>
+   <tbody>${rows.slice(0,400).map(r=>`<tr data-id="${r.id}" class="${DB.sel.includes(r.id)?"sel":""}"><td>${DB.sel.includes(r.id)?"☑":"☐"}</td>${DBCOLS.map(([k,,num])=>`<td class="${num?"num":""}">${fmtCell(r,k)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  T.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(DB.sort===k) DB.dir*=-1; else { DB.sort=k; DB.dir=(k==="n"||k==="man"||k==="first")?1:-1; } renderDBTable(); });
+  T.querySelectorAll("tbody tr").forEach(tr=>tr.onclick=()=>{ const id=+tr.dataset.id, i=DB.sel.indexOf(id);
+    if(i>=0) DB.sel.splice(i,1); else { if(DB.sel.length>=4){ toast("Maximal 4 Raketen gleichzeitig vergleichen"); return; } DB.sel.push(id); }
+    document.getElementById("cmpBtn").textContent=`Vergleichen (${DB.sel.length})`; renderDBTable(); }); }
+function openCompare(ids){
+  ids=ids||DB.sel; if(!ids.length){ toast("Zuerst Raketen in der Tabelle antippen"); return; }
+  const rs=ids.map(id=>ROCKETS.find(r=>r.id===id)).filter(Boolean), P=document.getElementById("panel"); P.classList.add("wide");
+  const row=(lab,k,fmt,bar)=>{ const vals=rs.map(r=>rVal(r,k)), mx=Math.max(...vals.filter(v=>typeof v==="number"),0);
+    return `<tr><th>${lab}</th>${rs.map((r,i)=>{ const v=vals[i]; const txt=fmt?fmt(r,v):fmtCell(r,k);
+      return `<td>${txt}${bar&&typeof v==="number"&&mx>0?`<div class="mb" style="width:${(v/mx*100).toFixed(0)}%"></div>`:""}</td>`; }).join("")}</tr>`; };
+  const n=(v,d=0)=>v==null?'<span class="mute">–</span>':v.toLocaleString("de-CH",{maximumFractionDigits:d});
+  P.innerHTML=`<div class="hd"><h2>Vergleich</h2><button class="x" onclick="closeP()">×</button></div>
+   <div class="dbctl"><button class="chip" onclick="openDB()">← zurück zur Tabelle</button></div>
+   <div class="tw" style="padding:0 6px 10px"><table class="cmp">
+    <tr><th></th>${rs.map(r=>`<td><b style="font-size:15px">${esc(r.n)}</b>${r.v?`<div class="mute">${esc(r.v)}</div>`:""}</td>`).join("")}</tr>
+    <tr><th></th>${rs.map(r=>`<td>${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.remove()">`:""}</td>`).join("")}</tr>
+    ${row("Hersteller","man")}
+    <tr><th>Familie</th>${rs.map(r=>`<td>${esc(r.fam||"–")}</td>`).join("")}</tr>
+    ${row("Status","act")}
+    <tr><th>Wiederverwendbar</th>${rs.map(r=>`<td>${r.reu?ICON.reuse+" ja":"nein"}</td>`).join("")}</tr>
+    ${row("Nutzlast LEO","leo",(r,v)=>v==null?n(v):n(v,1)+" t",1)}
+    ${row("Nutzlast GTO","gto",(r,v)=>v==null?n(v):n(v,1)+" t",1)}
+    ${row("Nutzlast SSO","sso",(r,v)=>v==null?n(v):n(v,1)+" t",1)}
+    ${row("Startschub","thr",(r,v)=>v==null?n(v):n(v)+" kN",1)}
+    ${row("Höhe","len",(r,v)=>v==null?n(v):n(v,1)+" m",1)}
+    ${row("Durchmesser","dia",(r,v)=>v==null?n(v):n(v,1)+" m",1)}
+    ${row("Startmasse","mass",(r,v)=>v==null?n(v):n(v)+" t",1)}
+    ${row("Preis pro Start","cost",(r,v)=>v==null?n(v):n(v)+" Mio $",1)}
+    ${row("Flüge","tot",(r,v)=>n(v)+(r.pend?` <span class="mute">(+${r.pend} geplant)</span>`:""),1)}
+    ${row("Erfolgreich","suc",(r,v)=>n(v),1)}
+    ${row("Fehlschläge","fail",(r,v)=>n(v),1)}
+    ${row("Erfolgsquote","rate",(r,v)=>v==null?n(v):(v*100).toFixed(1)+" %",1)}
+    ${row("Landungen","sl",(r,v)=>r.al?`${r.sl} von ${r.al}`:'<span class="mute">–</span>',1)}
+    ${row("Landungen in Serie","csl",(r,v)=>n(v),1)}
+    ${row("Erstflug","first",(r,v)=>v?fmtDay(v):n(null))}
+    <tr><th>Beschreibung</th>${rs.map(r=>`<td style="font-size:12px;color:var(--mute)">${esc(r.d||"")}${r.wiki?`<br><a href="${esc(r.wiki)}" target="_blank" rel="noopener" style="color:var(--acc)">Wikipedia ↗</a>`:""}</td>`).join("")}</tr>
+   </table></div><div class="note" style="padding:0 14px 14px">Balken = Wert im Verhältnis zum grössten der verglichenen Raketen. Quelle: The Space Devs, Stand ${esc(SNAP_TS)}.</div>`;
+  P.style.display="block"; P.scrollTop=0; }
+function openRocketByName(name){ const nm=(name||"").toLowerCase(); const r=ROCKETS.find(x=>x.n.toLowerCase()===nm)||ROCKETS.find(x=>nm.includes(x.n.toLowerCase()));
+  if(r) openCompare([r.id]); else toast("Rakete nicht in der Datenbank gefunden"); }
+
+
+// ===================== Info-Fenster einklappen (v.a. Handy) =====================
+const ICO_MIN='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const ICO_PLAY='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg>';
+const ICO_PAUSE='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>';
+const PNL=document.getElementById("panel");
+function setMin(on){ PNL.classList.toggle("min",on); if(!on) PNL.scrollTop=0; syncMini();
+  if(G.on) return; setTimeout(()=>map.invalidateSize(),50); }
+function decoratePanel(){
+  if(PNL.querySelector(".grab")) return;               // schon dekoriert
+  const hd=PNL.querySelector(".hd"); if(!hd) return;
+  PNL.insertAdjacentHTML("afterbegin",'<div class="grab" title="Ein-/ausklappen"><i></i></div>');
+  const x=hd.querySelector(".x"); if(x) x.insertAdjacentHTML("beforebegin",`<button class="minbtn" title="Ein-/ausklappen">${ICO_MIN}</button>`);
+  hd.insertAdjacentHTML("afterend",`<div class="mini"><button class="chip" id="mPlay">${ICO_PLAY}</button><b id="mT"></b><span class="mute" id="mInfo"></span></div>`);
+  PNL.querySelector(".grab").onclick=()=>setMin(!PNL.classList.contains("min"));
+  PNL.querySelector(".minbtn").onclick=e=>{ e.stopPropagation(); setMin(!PNL.classList.contains("min")); };
+  hd.querySelector("h2").onclick=()=>{ if(PNL.classList.contains("min")) setMin(false); };
+  document.getElementById("mPlay").onclick=()=>{ const b=document.getElementById("play"); if(b) b.click(); syncMini(); };
+  // Wischen: nach unten = einklappen, nach oben = ausklappen
+  let y0=null; const zone=[PNL.querySelector(".grab"),hd];
+  zone.forEach(z=>{ z.addEventListener("touchstart",e=>{ y0=e.touches[0].clientY; },{passive:true});
+    z.addEventListener("touchend",e=>{ if(y0==null) return; const dy=e.changedTouches[0].clientY-y0; y0=null;
+      if(dy>35) setMin(true); else if(dy<-35) setMin(false); }); });
+  syncMini();
+}
+function syncMini(){ const m=PNL.querySelector(".mini"); if(!m) return;
+  const has=!!(selected && curTrack && document.getElementById("sim")); m.classList.toggle("on",has); if(!has) return;
+  const tl=document.getElementById("tlab"), pl=document.getElementById("plab");
+  document.getElementById("mT").textContent=tl?tl.textContent:"";
+  document.getElementById("mInfo").textContent=pl?pl.textContent.replace(/^·\s*/,""):"";
+  document.getElementById("mPlay").innerHTML=simTimer?ICO_PAUSE:ICO_PLAY; }
+new MutationObserver(()=>decoratePanel()).observe(PNL,{childList:true});
+// Beim Simulieren auf dem Handy automatisch einklappen, damit die Karte frei ist
+PNL.addEventListener("click",e=>{ const t=e.target.closest("#play,#jumpDep"); if(t && innerWidth<800) setTimeout(()=>{ if(simTimer) setMin(true); },60); },true);
+setInterval(()=>{ if(PNL.classList.contains("min")) syncMini(); },250);
+
+
+// ===================== Echte Telemetrie aus dem Livestream (Texterkennung) =====================
+var TELE={on:false,d:null,v:null,h:null,last:null,hist:[],region:null,worker:null,busy:false,timer:null,stream:null,video:null,ok:0,bad:0,vh:0};
+const TPRESET={s2:[0.64,0.78,0.35,0.21],s1:[0.01,0.78,0.35,0.21]};
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+function openTele(){
+  const B=document.getElementById("tele"); B.style.display="block";
+  if(TELE.on) return teleUI();
+  B.innerHTML=`<div class="thd"><b>Echte Telemetrie</b><button class="x" onclick="teleStop()">×</button></div>
+   <ol class="tsteps"><li>Öffne den Livestream (YouTube oder X) in einem <b>anderen Tab</b> und lass ihn laufen.</li>
+     <li>Tippe unten auf „Stream-Tab teilen“ und wähle diesen Tab aus.</li>
+     <li>Ziehe in der Vorschau einen Rahmen um die Anzeige mit Geschwindigkeit und Höhe.</li></ol>
+   <button class="btn" onclick="teleStart()">Stream-Tab teilen</button>
+   ${PIP.yt?`<button class="btn sec2" onclick="teleAuto()">Mini-Fenster verwenden (1 Klick)</button>`:""}
+   <div class="note"><b>Einfacher:</b> Stream im Mini-Fenster abspielen und dort „Telemetrie“ drücken – dann nur noch „Diesen Tab teilen“ bestätigen.</div>
+   <div class="note">Funktioniert in Chrome oder Edge am Computer (Bildschirm teilen gibt es auf dem Handy nicht). Die Werte werden lokal per Texterkennung gelesen, nichts wird hochgeladen.</div>`;
+}
+async function teleStart(){
+  if(!navigator.mediaDevices?.getDisplayMedia){ toast("Bildschirm teilen geht hier nicht – Datei in Chrome oder Edge am Computer öffnen"); return; }
+  try{ TELE.stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false}); }catch(e){ toast("Teilen abgebrochen"); return; }
+  const v=document.createElement("video"); v.muted=true; v.playsInline=true; v.srcObject=TELE.stream; await v.play().catch(()=>{}); TELE.video=v;
+  TELE.stream.getVideoTracks()[0].onended=teleStop;
+  TELE.on=true; TELE.d=null; TELE.last=null; TELE.hist=[]; TELE.ok=0; TELE.bad=0; TELE.region=TELE.region||TPRESET.s2;
+  buildTeleBox(); document.getElementById("tStat").textContent="Texterkennung wird geladen …";
+  try{
+    if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
+    TELE.worker=await Tesseract.createWorker("eng");
+    await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTU/ ",tessedit_pageseg_mode:"6"});
+  }catch(e){ toast("Texterkennung konnte nicht geladen werden (Internet nötig)"); return teleStop(); }
+  TELE.timer=setInterval(teleTick,1000); teleTick();
+}
+function buildTeleBox(){
+  const B=document.getElementById("tele");
+  B.innerHTML=`<div class="thd"><b>Echte Telemetrie</b> <span class="pill" id="tBadge" style="background:#33384a;color:#aab">wartet</span><button class="x" onclick="teleStop()">×</button></div>
+   <div class="tbig"><div><small>Geschwindigkeit</small><b id="tV">–</b></div><div><small>Höhe</small><b id="tH">–</b></div><div><small>Bodendistanz</small><b id="tD">–</b></div></div>
+   <canvas id="tSpark" width="320" height="54"></canvas>
+   <canvas id="tPrev" width="320" height="180" title="Rahmen ziehen"></canvas>
+   <div class="tbtns"><button class="chip" data-tp="s1">Stufe 1 (links unten)</button><button class="chip" data-tp="s2">Stufe 2 (rechts unten)</button></div>
+   <div class="note" id="tStat"></div>`;
+  B.querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{ TELE.region=TPRESET[b.dataset.tp]; TELE.last=null; drawTelePrev(); });
+  const cv=document.getElementById("tPrev"); let st=null;
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))]; };
+  cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); st=pos(e); };
+  cv.onpointermove=e=>{ if(!st) return; const q=pos(e); TELE.region=[Math.min(st[0],q[0]),Math.min(st[1],q[1]),Math.max(.03,Math.abs(q[0]-st[0])),Math.max(.03,Math.abs(q[1]-st[1]))]; drawTelePrev(); };
+  cv.onpointerup=()=>{ st=null; TELE.last=null; };
+}
+function drawTelePrev(){
+  const cv=document.getElementById("tPrev"), v=TELE.video; if(!cv||!v||!v.videoWidth) return;
+  cv.height=Math.round(cv.width*v.videoHeight/v.videoWidth);
+  const c=cv.getContext("2d"); c.drawImage(v,0,0,cv.width,cv.height);
+  const [x,y,w,hh]=TELE.region; c.fillStyle="rgba(0,0,0,.45)";
+  c.fillRect(0,0,cv.width,y*cv.height); c.fillRect(0,(y+hh)*cv.height,cv.width,cv.height); c.fillRect(0,y*cv.height,x*cv.width,hh*cv.height); c.fillRect((x+w)*cv.width,y*cv.height,cv.width,hh*cv.height);
+  c.strokeStyle="#4ea1ff"; c.lineWidth=2; c.strokeRect(x*cv.width,y*cv.height,w*cv.width,hh*cv.height); }
+async function teleTick(){
+  if(!TELE.on||TELE.busy||!TELE.worker||!TELE.video?.videoWidth) return; TELE.busy=true;
+  try{
+    if(TELE.auto){ const ar=autoRegion(); if(!ar){ TELE.busy=false; return; } TELE.region=ar; }
+    const v=TELE.video, W=v.videoWidth, H=v.videoHeight, [rx,ry,rw,rh]=TELE.region;
+    const sc=Math.max(1,900/(rw*W)), c=document.createElement("canvas"); c.width=Math.round(rw*W*sc); c.height=Math.round(rh*H*sc);
+    const x=c.getContext("2d"); x.drawImage(v,rx*W,ry*H,rw*W,rh*H,0,0,c.width,c.height);
+    const im=x.getImageData(0,0,c.width,c.height), p=im.data;          // helle Schrift -> schwarz auf weiss
+    for(let i=0;i<p.length;i+=4){ const g=.3*p[i]+.59*p[i+1]+.11*p[i+2], o=g>140?0:255; p[i]=p[i+1]=p[i+2]=o; }
+    x.putImageData(im,0,0); drawTelePrev();
+    const r=await TELE.worker.recognize(c); teleParse(r.data.text);
+  }catch(e){ console.warn(e); }
+  TELE.busy=false;
+}
+function teleParse(text){
+  const t=text.toUpperCase().replace(/[^0-9A-Z\n ]/g," ");
+  let sp=null, al=null;
+  const ms=t.match(/SPEED[^0-9\n]*([0-9][0-9 ]{0,7}[0-9]|[0-9])/), ma=t.match(/ALT[A-Z]*[^0-9\n]*([0-9][0-9 ]{0,5}[0-9]|[0-9])/);
+  if(ms) sp=+ms[1].replace(/ /g,""); if(ma) al=+ma[1].replace(/ /g,"");
+  if(sp==null||al==null){ const n=(t.replace(/(\d) (\d{3})\b/g,"$1$2").match(/\d{1,6}/g)||[]).map(Number); if(n.length>=2){ if(sp==null) sp=n[0]; if(al==null) al=n[1]; } }
+  const now=Date.now(), L=TELE.last;
+  let okv = sp!=null && al!=null && sp<=32000 && al<=3000;
+  if(okv && L){ const dt=(now-L.t)/1000; if(Math.abs(sp-L.v)>3000*dt+800 || Math.abs(al-L.h)>20*dt+8) okv=false; }
+  if(!okv){ TELE.bad++; return teleUI(text); }
+  if(L){ const dt=(now-L.t)/1000, vk=(sp+L.v)/2/3600, dh=(al-L.h)/dt; TELE.vh=Math.sqrt(Math.max(0,vk*vk-dh*dh)); TELE.d=(TELE.d||0)+TELE.vh*dt; }
+  else if(TELE.d==null){ const ts=selected?(now-new Date(selected.net))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
+  TELE.last={t:now,v:sp,h:al}; TELE.v=sp; TELE.h=al; TELE.ok++;
+  TELE.hist.push([now,al,sp]); if(TELE.hist.length>900) TELE.hist.shift();
+  teleUI(text);
+  if(curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(selected.net))/1000); if(s) s.value=ts; placeRocket(ts); }
+}
+function teleDist(){ if(!TELE.on||TELE.d==null||!TELE.last) return null; return TELE.d+TELE.vh*Math.min(3,(Date.now()-TELE.last.t)/1000); }
+function teleUI(raw){
+  const B=document.getElementById("tele"); if(!B||!document.getElementById("tV")) return;
+  const fresh=TELE.last && Date.now()-TELE.last.t<4000, badge=document.getElementById("tBadge");
+  badge.textContent=fresh?"● gemessen":"keine Werte"; badge.style.background=fresh?"#1f4d33":"#4d3a1f"; badge.style.color=fresh?"#7be07b":"#f5b041";
+  document.getElementById("tV").textContent=TELE.v!=null?TELE.v.toLocaleString("de-CH")+" km/h":"–";
+  document.getElementById("tH").textContent=TELE.h!=null?TELE.h.toLocaleString("de-CH")+" km":"–";
+  document.getElementById("tD").textContent=TELE.d!=null?Math.round(TELE.d).toLocaleString("de-CH")+" km":"–";
+  document.getElementById("tStat").textContent=`Gelesen: ${TELE.ok} · verworfen: ${TELE.bad}${raw?` · zuletzt erkannt: „${raw.replace(/\s+/g," ").trim().slice(0,40)}“`:""}`;
+  const sp=document.getElementById("tSpark"), c=sp.getContext("2d"); c.clearRect(0,0,sp.width,sp.height);
+  const hs=TELE.hist.slice(-300); if(hs.length>1){ const mx=Math.max(...hs.map(q=>q[1]),1), t0=hs[0][0], t1=hs[hs.length-1][0]||t0+1;
+    c.beginPath(); hs.forEach((q,i)=>{ const X=(q[0]-t0)/Math.max(1,t1-t0)*(sp.width-4)+2, Y=sp.height-4-(q[1]/mx)*(sp.height-14); i?c.lineTo(X,Y):c.moveTo(X,Y); });
+    c.strokeStyle="#4ea1ff"; c.lineWidth=2; c.stroke(); c.fillStyle="#8a96ad"; c.font="10px sans-serif"; c.fillText("Höhe-Verlauf (max "+mx+" km)",4,11); }
+}
+function teleStop(){
+  if(TELE.timer) clearInterval(TELE.timer); TELE.timer=null;
+  try{ TELE.stream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ TELE.worker?.terminate(); }catch(e){} TELE.worker=null;
+  TELE.on=false; TELE.auto=false; TELE.d=null; TELE.last=null; document.getElementById("tele").style.display="none";
+  const s=document.getElementById("sim"); if(s&&curTrack) placeRocket(+s.value);
+}
+document.addEventListener("click",e=>{ if(e.target.closest("#teleBtn")) openTele(); });
+
+
+// ===================== Statistik & Raketen-Datenbank nach jedem Start nachführen =====================
+const CN_DE={"United States of America":"USA","People's Republic of China":"China","Russian Federation":"Russland","New Zealand":"Neuseeland","India":"Indien","Japan":"Japan","France":"Frankreich","Kazakhstan":"Kasachstan","Iran, Islamic Republic of":"Iran","Korea, Republic of":"Südkorea","Korea, Democratic People's Republic of":"Nordkorea","Israel":"Israel","Australia":"Australien","Norway":"Norwegen","Sweden":"Schweden","United Kingdom of Great Britain and Northern Ireland":"Grossbritannien","French Guiana":"Frankreich (Kourou)"};
+var STATS0=JSON.parse(JSON.stringify(STATS)), ROCKETS0=JSON.parse(JSON.stringify(ROCKETS)), RCUT=/*RCUT*/;
+var FULL={stats:null,db:null};
+var INC={ts:null,n:0,busy:false};
+function topN(obj,n){ const it=Object.entries(obj).sort((a,b)=>b[1]-a[1]), head=it.slice(0,n), rest=it.slice(n).reduce((s,x)=>s+x[1],0); return rest?[...head,["Andere",rest]]:head; }
+function applyIncrement(list){
+  // immer vom Schnappschuss ausgehen, damit nichts doppelt gezählt wird
+  const S=JSON.parse(JSON.stringify(STATS0)), R=JSON.parse(JSON.stringify(ROCKETS0)), cut=new Date(S.cut), cutR=new Date(RCUT);
+  let n=0;
+  list.forEach(l=>{ const a=l.status?.abbrev||"", t=new Date(l.net);
+    if(!/^(Success|Failure|Partial Failure)$/.test(a)) return;
+    if(t>cut || t>cutR) n++;
+    if(t>cut && t.getFullYear()===S.year){
+      S.total++; S.status[a]=(S.status[a]||0)+1; S.month[t.getMonth()]++;
+      const pv=l.launch_service_provider?.name||"?", cn=l.pad?.country?.name||l.pad?.location?.country?.name||"?", rk=l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"?";
+      S.provAll[pv]=(S.provAll[pv]||0)+1; const c2=CN_DE[cn]||cn; S.ctyAll[c2]=(S.ctyAll[c2]||0)+1; S.rockAll[rk]=(S.rockAll[rk]||0)+1; }
+    const r=t>cutR ? (R.find(x=>x.id===l.rocket?.configuration?.id) || R.find(x=>x.n===l.rocket?.configuration?.name)) : null;
+    if(r){ r.tot++; if(a==="Success") r.suc++; else r.fail++; if(r.pend>0) r.pend--;
+      (l.rocket?.launcher_stage||[]).forEach(s=>{ const ld=s.landing; if(ld&&ld.attempt){ r.al++; if(ld.success) r.sl++; } }); }
+  });
+  S.prov=topN(S.provAll,8); S.cty=topN(S.ctyAll,7); S.rock=topN(S.rockAll,10);
+  Object.assign(STATS,S); ROCKETS.length=0; R.forEach(x=>ROCKETS.push(x));
+  INC.n=n; }
+async function refreshCounts(force){
+  if(INC.busy) return; INC.busy=true;
+  try{
+    let c=null; try{ c=JSON.parse(localStorage.getItem("lr_inc")||"null"); }catch(e){}
+    if(!force && c && Date.now()-c.ts<3*3600e3){ applyIncrement(c.data); INC.ts=c.ts; }
+    else{
+      const since=new Date(Math.min(new Date(STATS0.cut),new Date(RCUT))-3600e3).toISOString();
+      const r=await fetch(`https://ll.thespacedevs.com/2.3.0/launches/previous/?mode=detailed&limit=100&ordering=net&net__gte=${since}`);
+      if(!r.ok) throw r.status;
+      const data=(await r.json()).results.map(l=>({id:l.id,net:l.net,status:{abbrev:l.status?.abbrev},launch_service_provider:{name:l.launch_service_provider?.name},
+        pad:{country:{name:l.pad?.country?.name||l.pad?.location?.country?.name}},
+        rocket:{configuration:{id:l.rocket?.configuration?.id,name:l.rocket?.configuration?.name,full_name:l.rocket?.configuration?.full_name},
+          launcher_stage:(l.rocket?.launcher_stage||[]).map(s=>({landing:{attempt:s.landing?.attempt,success:s.landing?.success}}))}}));
+      applyIncrement(data); INC.ts=Date.now();
+      try{ localStorage.setItem("lr_inc",JSON.stringify({ts:INC.ts,data})); }catch(e){}
+    }
+  }catch(e){ if(!INC.ts){ STATS.prov=topN(STATS.provAll,8); STATS.cty=topN(STATS.ctyAll,7); STATS.rock=topN(STATS.rockAll,10); } }
+  INC.busy=false; refreshOpenViews();
+}
+function standText(kind){
+  const f=d=>new Date(d).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  const full=kind==="db"?FULL.db:FULL.stats;
+  if(full && INC.ts) return `vollständig geprüft ${f(full)} · nachgeführt ${f(INC.ts)}${INC.n?` (+${INC.n} Starts)`:""}`;
+  return INC.ts ? `aktualisiert ${new Date(INC.ts).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${INC.n?` · ${INC.n} neue Starts seit Schnappschuss eingerechnet`:""}` : `Schnappschuss vom ${STATS0.asof} (offline)`; }
+function refreshOpenViews(){ const P=document.getElementById("panel"); if(P.style.display!=="block") return; const h2=P.querySelector(".hd h2")?.textContent||"";
+  if(/Raumfahrt-Statistik/.test(h2)) openStats(); else if(/Raketen-Datenbank/.test(h2)) renderDBTable(); }
+
+
+// ===================== Vollständige Prüfung: Statistik täglich, Raketen-Datenbank wöchentlich =====================
+const LL="https://ll.thespacedevs.com/2.3.0";
+async function getAll(url,maxPages){ let out=[], next=url, k=0;
+  while(next && k<maxPages){ const r=await fetch(next); if(!r.ok) throw r.status; const j=await r.json(); out=out.concat(j.results||[]); next=j.next; k++;
+    if(next) await new Promise(res=>setTimeout(res,1500)); }
+  return out; }
+function cacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
+function cacheSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+function statsFrom(list,year){
+  const S={year,asof:new Date().toLocaleDateString("de-CH"),cut:list.reduce((m,x)=>x.net>m?x.net:m,year+"-01-01T00:00:00Z"),
+    provAll:{},ctyAll:{},rockAll:{},total:0,status:{},month:Array(12).fill(0)};
+  list.forEach(l=>{ const a=l.status?.abbrev||"?"; S.total++; S.status[a]=(S.status[a]||0)+1; S.month[new Date(l.net).getMonth()]++;
+    const pv=l.launch_service_provider?.name||"?", cn=l.pad?.country?.name||l.pad?.location?.country?.name||"?", rk=l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"?";
+    S.provAll[pv]=(S.provAll[pv]||0)+1; const c2=CN_DE[cn]||cn; S.ctyAll[c2]=(S.ctyAll[c2]||0)+1; S.rockAll[rk]=(S.rockAll[rk]||0)+1; });
+  S.prov=topN(S.provAll,8); S.cty=topN(S.ctyAll,7); S.rock=topN(S.rockAll,10); return S; }
+function rocketFrom(c){ const man=c.manufacturer||{}, cty=Array.isArray(man.country)?man.country[0]:man.country, d=(c.description||"").trim();
+  return {id:c.id,n:c.name,v:c.variant||"",fam:(c.families||[]).map(x=>x.name).join(", "),man:man.name||"",mab:man.abbrev||"",cty:cty?.alpha_2_code||"",
+    act:!!c.active,reu:!!c.reusable,leo:c.leo_capacity,gto:c.gto_capacity,sso:c.sso_capacity,thr:c.to_thrust,len:c.length,dia:c.diameter,mass:c.launch_mass,cost:c.launch_cost,
+    tot:c.total_launch_count||0,suc:c.successful_launches||0,fail:c.failed_launches||0,pend:c.pending_launches||0,al:c.attempted_landings||0,sl:c.successful_landings||0,
+    csl:c.consecutive_successful_landings,first:c.maiden_flight,img:c.image?.thumbnail_url||null,wiki:c.wiki_url,d:d.slice(0,420)+(d.length>420?"…":"")}; }
+async function fullStats(force){
+  const c=cacheGet("lr_full_stats");
+  if(c && !force && Date.now()-c.ts<24*3600e3){ STATS0=c.S; FULL.stats=c.ts; return; }
+  const y=new Date().getFullYear();
+  const list=await getAll(`${LL}/launches/previous/?mode=normal&limit=100&ordering=net&net__gte=${y}-01-01T00:00:00Z`,6);
+  if(!list.length) return;
+  const S=statsFrom(list.filter(l=>!/^(TBD|TBC|Go|Hold)$/.test(l.status?.abbrev||"")),y);
+  STATS0=S; FULL.stats=Date.now(); cacheSet("lr_full_stats",{ts:FULL.stats,S});
+}
+async function fullDB(force){
+  const c=cacheGet("lr_full_db");
+  if(c && !force && Date.now()-c.ts<7*24*3600e3){ ROCKETS0=c.R; RCUT=new Date(c.ts).toISOString(); FULL.db=c.ts; return; }
+  const list=await getAll(`${LL}/launcher_configurations/?mode=detailed&limit=100`,8);
+  if(list.length<100) return;                                     // unvollständig → alten Stand behalten
+  const R=list.filter(x=>!x.is_placeholder).map(rocketFrom);
+  ROCKETS0=R; FULL.db=Date.now(); RCUT=new Date(FULL.db).toISOString();
+  if(!cacheSet("lr_full_db",{ts:FULL.db,R})){ const R2=R.map(x=>({...x,d:x.d.slice(0,160)})); cacheSet("lr_full_db",{ts:FULL.db,R:R2}); }
+}
+async function fullCheck(){
+  // gespeicherte Vollstände sofort nutzen
+  const cs=cacheGet("lr_full_stats"), cd=cacheGet("lr_full_db");
+  if(cs){ STATS0=cs.S; FULL.stats=cs.ts; } if(cd){ ROCKETS0=cd.R; RCUT=new Date(cd.ts).toISOString(); FULL.db=cd.ts; }
+  await refreshCounts(false);
+  // fällige Vollprüfungen zeitversetzt (Abfragelimit der Gratis-API schonen)
+  setTimeout(async()=>{ try{ const due=!cs||Date.now()-cs.ts>=24*3600e3; if(due){ await fullStats(true); await refreshCounts(true); } }catch(e){ console.warn("Statistik-Prüfung",e); } },90e3);
+  setTimeout(async()=>{ try{ const due=!cd||Date.now()-cd.ts>=7*24*3600e3; if(due){ await fullDB(true); await refreshCounts(true); } }catch(e){ console.warn("DB-Prüfung",e); } },6*60e3);
+}
+
+
+// ===================== Mini-Fenster für den Livestream =====================
+var PIP={yt:null,big:false};
+function openPip(yt,title){
+  const W=document.getElementById("pip"); PIP.yt=yt;
+  W.innerHTML=`<div class="pbar"><b>${esc(title||"Livestream")}</b>
+     <button class="chip" id="pTele" title="Telemetrie automatisch aus diesem Fenster lesen">Telemetrie</button>
+     <button class="pb" id="pSize" title="Grösse">⤢</button><button class="pb" onclick="closePip()" title="Schliessen">×</button></div>
+   <div class="pv"><iframe id="pipFrame" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&mute=1&rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+  W.style.display="block"; W.classList.toggle("big",PIP.big);
+  document.getElementById("pSize").onclick=()=>{ PIP.big=!PIP.big; W.classList.toggle("big",PIP.big); };
+  document.getElementById("pTele").onclick=()=>teleAuto();
+  // verschieben
+  const bar=W.querySelector(".pbar"); let s=null;
+  bar.onpointerdown=e=>{ if(e.target.closest("button")) return; bar.setPointerCapture(e.pointerId); const r=W.getBoundingClientRect(); s=[e.clientX-r.left,e.clientY-r.top]; };
+  bar.onpointermove=e=>{ if(!s) return; W.style.left=Math.max(0,Math.min(innerWidth-80,e.clientX-s[0]))+"px"; W.style.top=Math.max(0,Math.min(innerHeight-40,e.clientY-s[1]))+"px"; W.style.right="auto"; W.style.bottom="auto"; };
+  bar.onpointerup=()=>{ s=null; };
+}
+function closePip(){ const W=document.getElementById("pip"); W.style.display="none"; W.innerHTML=""; PIP.yt=null; if(TELE.auto) teleStop(); }
+// Telemetrie mit einem Klick: diesen Tab teilen, Bereich = Mini-Fenster (unten rechts = Stufe 2)
+async function teleAuto(){
+  if(!navigator.mediaDevices?.getDisplayMedia){ toast("Geht nur in Chrome oder Edge am Computer"); return; }
+  if(TELE.on) teleStop();
+  try{ TELE.stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5,displaySurface:"browser"},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"}); }
+  catch(e){ toast("Teilen abgebrochen"); return; }
+  const v=document.createElement("video"); v.muted=true; v.playsInline=true; v.srcObject=TELE.stream; await v.play().catch(()=>{}); TELE.video=v;
+  TELE.stream.getVideoTracks()[0].onended=teleStop;
+  TELE.on=true; TELE.auto=true; TELE.sub=TPRESET.s2; TELE.d=null; TELE.last=null; TELE.hist=[]; TELE.ok=0; TELE.bad=0;
+  document.getElementById("tele").style.display="block"; buildTeleBox();
+  document.querySelectorAll("#tele [data-tp]").forEach(b=>b.onclick=()=>{ TELE.sub=TPRESET[b.dataset.tp]; TELE.last=null; });
+  document.getElementById("tStat").textContent="Texterkennung wird geladen …";
+  try{ if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
+    TELE.worker=await Tesseract.createWorker("eng"); await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTU/ ",tessedit_pageseg_mode:"6"}); }
+  catch(e){ toast("Texterkennung konnte nicht geladen werden"); return teleStop(); }
+  TELE.timer=setInterval(teleTick,1000); teleTick();
+}
+// Bereich im geteilten Tab aus der Lage des Mini-Fensters berechnen
+function autoRegion(){ const f=document.getElementById("pipFrame"); if(!f) return null; const r=f.getBoundingClientRect(), s=TELE.sub||TPRESET.s2;
+  return [(r.left+s[0]*r.width)/innerWidth,(r.top+s[1]*r.height)/innerHeight,s[2]*r.width/innerWidth,s[3]*r.height/innerHeight]; }
+
+// ===================== Layout & Start =====================
+function layoutTop(){ const hh=document.querySelector("header").offsetHeight;
+  document.getElementById("live").style.top=(hh+4)+"px"; document.getElementById("layers").style.top=(hh+4)+"px";
+  document.getElementById("panel").style.top=innerWidth>=800?(hh+6)+"px":"";
+  const ms=document.getElementById("msg"); if(innerWidth<800){ ms.style.top=(hh+50)+"px"; ms.style.bottom="auto"; } else { ms.style.top=""; ms.style.bottom=""; } }
+addEventListener("resize",layoutTop);
+document.getElementById("statBtn").onclick=openStats;
+document.getElementById("dbBtn").onclick=()=>openDB();
+buildTimebar(); layoutTop(); updateNight(true); updTimeUI();
+fullCheck(); setInterval(()=>refreshCounts(false),3*3600e3); setInterval(fullCheck,6*3600e3);
+setTimeout(async()=>{ if(LAYERS.fresh){ await loadSats("starlink"); setFresh(); } },1500);
+
+setInterval(load, CACHE_MIN*60e3+5000);
+load();
+</script>
+</body>
+</html>
