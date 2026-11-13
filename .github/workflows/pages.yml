@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04      # festgelegt: hat Google Chrome vorinstalliert (für den Smoke-Test)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,8 +47,6 @@ jobs:
           if [ "${{ inputs.full }}" = "true" ]; then FULL=1; fi
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = "7" ]; then FULL=1; fi
           FULL=$FULL bash scripts/fetch_data.sh
-      - name: Browser für den Test
-        run: npx playwright-core install --with-deps chromium
       - run: npm run build
       - name: Smoke-Test (App lädt ohne JavaScript-Fehler)
         run: npm test

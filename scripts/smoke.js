@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
 });
 
 async function launchBrowser() {
-  const tries = process.env.CI ? [{}] : [{ channel: 'msedge' }, { channel: 'chrome' }, {}];
+  const tries = process.env.CI ? [{ channel: 'chrome' }, {}] : [{ channel: 'msedge' }, { channel: 'chrome' }, {}];
   for (const o of tries) { try { return await chromium.launch(o); } catch (e) { /* nächster */ } }
   throw new Error('Kein Browser gefunden (Edge/Chrome installieren oder: npx playwright-core install chromium)');
 }
