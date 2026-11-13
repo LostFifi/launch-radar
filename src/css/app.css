@@ -39,6 +39,9 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;
 .item:hover{background:#18203a}
 .item small{color:var(--mute)}
 .mute{color:var(--mute)}
+.wxhead{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.tiles.wxt{grid-template-columns:repeat(auto-fit,minmax(min(105px,40%),1fr))} .wxt .tile{padding:8px}
+.wxt .big{font-size:20px} .wxt .u{font-size:12px;font-weight:500;color:var(--mute)}
 .pill.shift{background:#4d3a1f;color:#f5b041}
 #live.warn{background:#2a220f;border-color:var(--tbd)}
 .warnbox{background:#2a220f;border:1px solid var(--tbd);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}

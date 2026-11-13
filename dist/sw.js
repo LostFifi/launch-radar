@@ -2,7 +2,7 @@
 // - App startet auch offline (index.html wird zwischengespeichert, online immer frisch geladen)
 // - Benachrichtigungen (auf Android geht das nur über den Service Worker)
 // - Hintergrund-Prüfung der Erinnerungen (Periodic Background Sync: nur Chrome/Edge, installierte App, Zeitpunkt bestimmt der Browser)
-const VERSION = "1429f23ac3";
+const VERSION = "24aabe0b01";
 const SHELL = "lr-shell-" + VERSION, DATA = "lr-data";
 const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png"];
 
