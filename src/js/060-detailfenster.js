@@ -67,7 +67,7 @@ function select(l){
   // Timeline
   if(l.timeline?.length){
     // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
-    const t0=new Date(l.net).getTime();
+    const t0=netOf(l);
     html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl" id="tlList">`+
       l.timeline.slice().sort((a,b)=>(relSec(a.relative_time)??0)-(relSec(b.relative_time)??0))
         .map(t=>`<li data-at="${t0+(relSec(t.relative_time)??0)*1000}"><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
@@ -119,11 +119,12 @@ function select(l){
   };
   // echter Flug läuft?
   // nur mitfliegen, wenn der Start bestätigt ist (oder kurz nach T-0 mit frischen Daten); sonst ist er evtl. verschoben
-  const tSince=(Date.now()-new Date(l.net))/1000, lst=launchState(l);
+  const tSince=(Date.now()-netOf(l))/1000, lst=launchState(l);
   if(tSince>0 && tSince<est.tMax && !failed && lst!=="unconfirmed"){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
   else placeRocket(0);
   if(lst==="unconfirmed" && tSince>0 && tSince<6*3600){
-    document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.</div>`); }
+    document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn" style="margin:0" onclick="confirmLaunch('${l.id}')">Ist gestartet (um T-0)</button><button class="btn sec2" style="margin:0" onclick="confirmLaunch('${l.id}',true)">Gerade eben abgehoben</button></div></div>`); }
   else if(lst==="likely") document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox">Start vermutlich erfolgt, aber noch nicht bestätigt (${esc(dataInfo())}).</div>`);
 }
 
@@ -139,7 +140,7 @@ function timelineTick(){
 setInterval(timelineTick,1000);
 function liveFollow(l,est){
   simTimer=setInterval(()=>{
-    const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();
+    const t=(Date.now()-netOf(l))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();
     const s=document.getElementById("sim"); if(s) s.value=t; placeRocket(t);
   },1000);
 }

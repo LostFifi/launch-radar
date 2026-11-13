@@ -105,31 +105,33 @@ function teleParse(k,text){
   if(al==null){ const m=t.match(/(\d[\d ]{0,5}\d|\d)\s*KM(?!\s*\/?\s*H)/); if(m) al=+m[1].replace(/ /g,""); }
   const now=Date.now(), L=S.last;
   // Vor dem Start (T−) nichts übernehmen: Rakete bleibt am Boden, Anzeige „wartet auf den Start“
-  if(selected && TELE.t0==null && now < new Date(selected.net).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
+  if(selected && TELE.t0==null && now < new Date(netOf(selected)).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
   let okv = sp!=null && al!=null && sp<=lim.v && al<=lim.h;
   if(okv && L){ const dt=(now-L.t)/1000; if(Math.abs(sp-L.v)>3000*dt+800 || Math.abs(al-L.h)>20*dt+8) okv=false; }
   if(!okv){ S.bad++; return; }
   if(k==="s2"){
     if(L){ const dt=(now-L.t)/1000, vk=(sp+L.v)/2/3600, dh=(al-L.h)/dt; TELE.vh=Math.sqrt(Math.max(0,vk*vk-dh*dh)); TELE.d=(TELE.d||0)+TELE.vh*dt; }
-    else if(TELE.d==null){ const ts=selected?(now-new Date(selected.net))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
+    else if(TELE.d==null){ const ts=selected?(now-new Date(netOf(selected)))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
     TELE.v=sp; TELE.h=al;
   }
   S.rate=L?(al-L.h)/((now-L.t)/1000):null;
   S.last={t:now,v:sp,h:al}; S.v=sp; S.h=al; S.ok++;
+  // Gemessenes Tempo nach T-0 = Start ist erfolgt (auch wenn die API noch „Go“ meldet)
+  if(selected && sp>300 && S.ok>=2 && !LAUNCHED[selected.id] && launchState(selected)!=="flying") confirmLaunch(selected.id);
   S.hist.push([teleT(now),al,sp]); if(S.hist.length>1800) S.hist.shift();
   teleSave(false);
-  if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(selected.net))/1000); if(s) s.value=ts; placeRocket(ts); }
+  if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(netOf(selected)))/1000); if(s) s.value=ts; placeRocket(ts); }
 }
 // Zeitachse: T+ Sekunden ab Startzeit (falls ein Start gewählt und schon gestartet), sonst Sekunden seit Messbeginn
 function teleT(now){
-  if(selected){ const ts=(now-new Date(selected.net))/1000; if(ts>-120 && ts<4*3600) return ts; }
+  if(selected){ const ts=(now-new Date(netOf(selected)))/1000; if(ts>-120 && ts<4*3600) return ts; }
   if(TELE.t0==null) TELE.t0=now; return (now-TELE.t0)/1000;
 }
 function teleDist(){ if(!TELE.on||TELE.d==null||!TELE.S.s2.last) return null; return TELE.d+TELE.vh*Math.min(3,(Date.now()-TELE.S.s2.last.t)/1000); }
 function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;
-    const pre=!off && selected && TELE.t0==null && Date.now()<new Date(selected.net).getTime()-5000;
+    const pre=!off && selected && TELE.t0==null && Date.now()<new Date(netOf(selected)).getTime()-5000;
     b.textContent=off?"aus":pre?"wartet auf den Start":fresh?"● gemessen":"keine Werte"; b.style.background=off||pre?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off||pre?"#aab":fresh?"#7be07b":"#f5b041";
     document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
     document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }

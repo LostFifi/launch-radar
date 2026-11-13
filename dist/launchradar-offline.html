@@ -1008,7 +1008,8 @@ var I18N_EN = {
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
   // ---------- Info, Datenschutz ----------
-  "Grösse ändern":"Resize","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
+  "Grösse ändern":"Resize","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
+  "Start bestätigt – Abhebezeit auf jetzt gesetzt":"Launch confirmed – liftoff time set to now","Start bestätigt – die Rakete fliegt mit":"Launch confirmed – the rocket is now tracked","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
   "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
   "Push-Nachrichten wieder eingeschaltet":"Push notifications turned back on","Abmelden fehlgeschlagen":"Unsubscribing failed","Alle Daten gelöscht":"All data deleted",
@@ -1201,9 +1202,21 @@ function dataInfo(){
 }
 // Ist der Start wirklich erfolgt? Nach T-0 reicht „Go“ nicht – der Start kann verschoben sein, ohne dass wir es schon wissen.
 //   upcoming | flying | done | likely (kurz nach T-0, frische echte Daten) | unconfirmed (Startzeit vorbei, nicht bestätigt)
+// Manuell bestätigter Start (Knopf „Ist gestartet“ oder Telemetrie misst Tempo): {id:{t:Abhebezeit ms, at}}
+// Hilft, wenn die API gedrosselt ist und der Status noch „Go“ zeigt. Gilt 12 h.
+var LAUNCHED={}; try{ LAUNCHED=JSON.parse(localStorage.getItem("lr_launched")||"{}"); for(const k in LAUNCHED) if(Date.now()-LAUNCHED[k].at>12*3600e3) delete LAUNCHED[k]; }catch(e){}
+function netOf(l){ return LAUNCHED[l?.id]?.t || new Date(l.net).getTime(); }   // effektive Abhebezeit
+function confirmLaunch(id,now){
+  const l=[...launches,...(PAST||[])].find(x=>x.id===id)||selected; if(!l) return;
+  LAUNCHED[id]={t:now?Date.now():new Date(l.net).getTime(),at:Date.now()};
+  try{ localStorage.setItem("lr_launched",JSON.stringify(LAUNCHED)); }catch(e){}
+  toast(now?"Start bestätigt – Abhebezeit auf jetzt gesetzt":"Start bestätigt – die Rakete fliegt mit");
+  if(selected&&selected.id===id) select(selected); liveBanner&&liveBanner();
+}
 function launchState(l){
-  const a=(l.status?.abbrev||"").toLowerCase(), t=Date.now()-new Date(l.net);
+  const a=(l.status?.abbrev||"").toLowerCase(), t=Date.now()-netOf(l);
   if(/in flight/.test(a)) return "flying";
+  if(LAUNCHED[l.id] && !/success|fail|partial/.test(a)) return "flying";
   if(/success|fail|partial/.test(a)) return "done";
   if(t<0) return "upcoming";
   if(a==="go" && (DATA.src==="live"||DATA.src==="cache") && Date.now()-DATA.ts<20*60e3 && t<20*60e3) return "likely";
@@ -1465,7 +1478,7 @@ function select(l){
   // Timeline
   if(l.timeline?.length){
     // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
-    const t0=new Date(l.net).getTime();
+    const t0=netOf(l);
     html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl" id="tlList">`+
       l.timeline.slice().sort((a,b)=>(relSec(a.relative_time)??0)-(relSec(b.relative_time)??0))
         .map(t=>`<li data-at="${t0+(relSec(t.relative_time)??0)*1000}"><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
@@ -1517,11 +1530,12 @@ function select(l){
   };
   // echter Flug läuft?
   // nur mitfliegen, wenn der Start bestätigt ist (oder kurz nach T-0 mit frischen Daten); sonst ist er evtl. verschoben
-  const tSince=(Date.now()-new Date(l.net))/1000, lst=launchState(l);
+  const tSince=(Date.now()-netOf(l))/1000, lst=launchState(l);
   if(tSince>0 && tSince<est.tMax && !failed && lst!=="unconfirmed"){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
   else placeRocket(0);
   if(lst==="unconfirmed" && tSince>0 && tSince<6*3600){
-    document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.</div>`); }
+    document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn" style="margin:0" onclick="confirmLaunch('${l.id}')">Ist gestartet (um T-0)</button><button class="btn sec2" style="margin:0" onclick="confirmLaunch('${l.id}',true)">Gerade eben abgehoben</button></div></div>`); }
   else if(lst==="likely") document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox">Start vermutlich erfolgt, aber noch nicht bestätigt (${esc(dataInfo())}).</div>`);
 }
 
@@ -1537,7 +1551,7 @@ function timelineTick(){
 setInterval(timelineTick,1000);
 function liveFollow(l,est){
   simTimer=setInterval(()=>{
-    const t=(Date.now()-new Date(l.net))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();
+    const t=(Date.now()-netOf(l))/1000; if(t>est.tMax || launchState(selected||l)==="unconfirmed") return stopSim();
     const s=document.getElementById("sim"); if(s) s.value=t; placeRocket(t);
   },1000);
 }
@@ -3154,31 +3168,33 @@ function teleParse(k,text){
   if(al==null){ const m=t.match(/(\d[\d ]{0,5}\d|\d)\s*KM(?!\s*\/?\s*H)/); if(m) al=+m[1].replace(/ /g,""); }
   const now=Date.now(), L=S.last;
   // Vor dem Start (T−) nichts übernehmen: Rakete bleibt am Boden, Anzeige „wartet auf den Start“
-  if(selected && TELE.t0==null && now < new Date(selected.net).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
+  if(selected && TELE.t0==null && now < new Date(netOf(selected)).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
   let okv = sp!=null && al!=null && sp<=lim.v && al<=lim.h;
   if(okv && L){ const dt=(now-L.t)/1000; if(Math.abs(sp-L.v)>3000*dt+800 || Math.abs(al-L.h)>20*dt+8) okv=false; }
   if(!okv){ S.bad++; return; }
   if(k==="s2"){
     if(L){ const dt=(now-L.t)/1000, vk=(sp+L.v)/2/3600, dh=(al-L.h)/dt; TELE.vh=Math.sqrt(Math.max(0,vk*vk-dh*dh)); TELE.d=(TELE.d||0)+TELE.vh*dt; }
-    else if(TELE.d==null){ const ts=selected?(now-new Date(selected.net))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
+    else if(TELE.d==null){ const ts=selected?(now-new Date(netOf(selected)))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
     TELE.v=sp; TELE.h=al;
   }
   S.rate=L?(al-L.h)/((now-L.t)/1000):null;
   S.last={t:now,v:sp,h:al}; S.v=sp; S.h=al; S.ok++;
+  // Gemessenes Tempo nach T-0 = Start ist erfolgt (auch wenn die API noch „Go“ meldet)
+  if(selected && sp>300 && S.ok>=2 && !LAUNCHED[selected.id] && launchState(selected)!=="flying") confirmLaunch(selected.id);
   S.hist.push([teleT(now),al,sp]); if(S.hist.length>1800) S.hist.shift();
   teleSave(false);
-  if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(selected.net))/1000); if(s) s.value=ts; placeRocket(ts); }
+  if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(netOf(selected)))/1000); if(s) s.value=ts; placeRocket(ts); }
 }
 // Zeitachse: T+ Sekunden ab Startzeit (falls ein Start gewählt und schon gestartet), sonst Sekunden seit Messbeginn
 function teleT(now){
-  if(selected){ const ts=(now-new Date(selected.net))/1000; if(ts>-120 && ts<4*3600) return ts; }
+  if(selected){ const ts=(now-new Date(netOf(selected)))/1000; if(ts>-120 && ts<4*3600) return ts; }
   if(TELE.t0==null) TELE.t0=now; return (now-TELE.t0)/1000;
 }
 function teleDist(){ if(!TELE.on||TELE.d==null||!TELE.S.s2.last) return null; return TELE.d+TELE.vh*Math.min(3,(Date.now()-TELE.S.s2.last.t)/1000); }
 function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;
-    const pre=!off && selected && TELE.t0==null && Date.now()<new Date(selected.net).getTime()-5000;
+    const pre=!off && selected && TELE.t0==null && Date.now()<new Date(netOf(selected)).getTime()-5000;
     b.textContent=off?"aus":pre?"wartet auf den Start":fresh?"● gemessen":"keine Werte"; b.style.background=off||pre?"#33384a":fresh?"#1f4d33":"#4d3a1f"; b.style.color=off||pre?"#aab":fresh?"#7be07b":"#f5b041";
     document.getElementById("tV_"+k).textContent=S.v!=null?S.v.toLocaleString(LOC)+" km/h":"–";
     document.getElementById("tH_"+k).textContent=S.h!=null?S.h.toLocaleString(LOC)+" km":"–"; }

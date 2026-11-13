@@ -53,9 +53,21 @@ function dataInfo(){
 }
 // Ist der Start wirklich erfolgt? Nach T-0 reicht „Go“ nicht – der Start kann verschoben sein, ohne dass wir es schon wissen.
 //   upcoming | flying | done | likely (kurz nach T-0, frische echte Daten) | unconfirmed (Startzeit vorbei, nicht bestätigt)
+// Manuell bestätigter Start (Knopf „Ist gestartet“ oder Telemetrie misst Tempo): {id:{t:Abhebezeit ms, at}}
+// Hilft, wenn die API gedrosselt ist und der Status noch „Go“ zeigt. Gilt 12 h.
+var LAUNCHED={}; try{ LAUNCHED=JSON.parse(localStorage.getItem("lr_launched")||"{}"); for(const k in LAUNCHED) if(Date.now()-LAUNCHED[k].at>12*3600e3) delete LAUNCHED[k]; }catch(e){}
+function netOf(l){ return LAUNCHED[l?.id]?.t || new Date(l.net).getTime(); }   // effektive Abhebezeit
+function confirmLaunch(id,now){
+  const l=[...launches,...(PAST||[])].find(x=>x.id===id)||selected; if(!l) return;
+  LAUNCHED[id]={t:now?Date.now():new Date(l.net).getTime(),at:Date.now()};
+  try{ localStorage.setItem("lr_launched",JSON.stringify(LAUNCHED)); }catch(e){}
+  toast(now?"Start bestätigt – Abhebezeit auf jetzt gesetzt":"Start bestätigt – die Rakete fliegt mit");
+  if(selected&&selected.id===id) select(selected); liveBanner&&liveBanner();
+}
 function launchState(l){
-  const a=(l.status?.abbrev||"").toLowerCase(), t=Date.now()-new Date(l.net);
+  const a=(l.status?.abbrev||"").toLowerCase(), t=Date.now()-netOf(l);
   if(/in flight/.test(a)) return "flying";
+  if(LAUNCHED[l.id] && !/success|fail|partial/.test(a)) return "flying";
   if(/success|fail|partial/.test(a)) return "done";
   if(t<0) return "upcoming";
   if(a==="go" && (DATA.src==="live"||DATA.src==="cache") && Date.now()-DATA.ts<20*60e3 && t<20*60e3) return "likely";
