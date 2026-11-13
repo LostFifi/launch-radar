@@ -26,6 +26,15 @@ const PROFILES={
   lv:{name:"LVM3 / GSLV",meco:313,seco:960,
     pts:[[0,0,0,0],[60,8,1300,2],[128,55,5800,50],[313,160,16000,700],[600,175,22000,2000],[960,180,33000,4600]],
     ev:[[128,"Feststoffbooster ab"],[313,"Kernstufe aus"],[320,"Verkleidung / Oberstufe zündet"],[960,"Oberstufe aus (Transferbahn)"]]},
+  cz:{name:"Langer Marsch / chinesische Rakete",meco:160,seco:580,
+    pts:[[0,0,0,0],[62,10,1400,3],[140,55,6200,60],[160,68,7000,90],[260,140,9500,320],[420,185,17000,900],[580,200,27000,1900]],
+    ev:[[62,"Max-Q"],[140,"Booster ab"],[160,"Stufentrennung"],[220,"Verkleidung ab"],[580,"Brennschluss Stufe 2"]]},
+  h3:{name:"H3",meco:298,seco:990,
+    pts:[[0,0,0,0],[60,10,1500,3],[116,50,5500,45],[210,110,8000,190],[298,150,12000,430],[600,190,20500,1800],[990,200,27500,4300]],
+    ev:[[60,"Max-Q"],[116,"Feststoffbooster ab"],[210,"Verkleidung ab"],[298,"MECO"],[306,"Stufentrennung"],[990,"SECO-1"]]},
+  ng:{name:"New Glenn",meco:189,seco:800,
+    pts:[[0,0,0,0],[75,12,1600,4],[189,80,8200,130],[300,150,11500,420],[500,180,18500,1300],[800,190,27500,3200]],
+    ev:[[75,"Max-Q"],[189,"MECO"],[195,"Stufentrennung"],[215,"Verkleidung ab"],[580,"Booster-Landung auf dem Schiff"],[800,"SECO-1"]]},
   gen:{name:"typische Rakete",meco:165,seco:540,
     pts:[[0,0,0,0],[70,12,1500,5],[165,80,7000,110],[300,160,14000,520],[420,190,20000,1060],[540,205,27000,1800]],
     ev:[[70,"Max-Q"],[165,"Brennschluss Stufe 1"],[200,"Verkleidung ab"],[540,"Brennschluss Oberstufe"]]}
@@ -34,7 +43,9 @@ function profileKey(l){
   const r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
   if(r.includes("starship")) return "ss"; if(r.includes("falcon heavy")) return "fh"; if(r.includes("falcon 9")) return "f9";
   if(r.includes("electron")) return "el"; if(/vulcan|atlas v/.test(r)) return "vu"; if(r.includes("ariane 6")) return "a6";
-  if(/soyuz|sojus/.test(r)) return "so"; if(/lvm3|gslv|mark-3|mk iii/.test(r)) return "lv"; return "gen";
+  if(/soyuz|sojus/.test(r)) return "so"; if(/lvm3|gslv|mark-3|mk iii/.test(r)) return "lv";
+  if(/new glenn/.test(r)) return "ng"; if(/\bh3\b|h-iii/.test(r)) return "h3";
+  if(/long march|chang zheng|kuaizhou|zhuque|tianlong|ceres|gravity|lijian|kinetica/.test(r)) return "cz"; return "gen";
 }
 // Profil holen und Zeiten an die Timeline dieses Starts anpassen (MECO, SECO)
 function profileFor(l){

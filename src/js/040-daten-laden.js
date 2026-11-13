@@ -51,12 +51,29 @@ function launchState(l){
   return "unconfirmed";
 }
 
-function visible(){
-  return launches.filter(l=>{
-    const p=(l.launch_service_provider?.name||"").toLowerCase();
-    const r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
-    if(filter==="spacex") return p.includes("spacex");
-    if(filter==="starship") return r.includes("starship");
-    return true;
-  });
+// ---------- Filter: Chips oben (Alle/SpaceX/Starship) + Suche, Betreiber, Land (Liste) – gelten für Karte UND Liste ----------
+var FILT={q:"",prov:"",cty:""};
+const CTY_DE={"USA":"USA","People's Republic of China":"China","Russian Federation":"Russland","New Zealand":"Neuseeland","India":"Indien",
+  "Japan":"Japan","French Guiana":"Frankreich (Kourou)","Republic of Kazakhstan":"Kasachstan","Kazakhstan":"Kasachstan","Norway":"Norwegen",
+  "South Korea":"Südkorea","Republic of Korea":"Südkorea","Sweden":"Schweden","Iran":"Iran","Israel":"Israel","Australia":"Australien","United Kingdom":"Grossbritannien"};
+// Live-Daten haben pad.country (mit Ländercode), der Schnappschuss nur den Ortsnamen → beides auf dieselben deutschen Namen bringen
+const CC_DE={US:"USA",CN:"China",RU:"Russland",NZ:"Neuseeland",IN:"Indien",JP:"Japan",GF:"Frankreich (Kourou)",FR:"Frankreich (Kourou)",
+  KZ:"Kasachstan",NO:"Norwegen",KR:"Südkorea",SE:"Schweden",IR:"Iran",IL:"Israel",AU:"Australien",GB:"Grossbritannien",KP:"Nordkorea"};
+function countryOf(l){
+  if(/^sea launch|offshore/i.test(l.pad?.location?.name||"")) return "Auf See";
+  const cc=l.pad?.country?.alpha_2_code; if(cc&&CC_DE[cc]) return CC_DE[cc];
+  const c=l.pad?.country?.name||(l.pad?.location?.name||"").split(",").pop().trim();
+  return CTY_DE[c]||c||"?"; }
+function provOf(l){ return l.launch_service_provider?.name||"?"; }
+function matchFilter(l){
+  const p=provOf(l).toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
+  if(filter==="spacex" && !p.includes("spacex")) return false;
+  if(filter==="starship" && !r.includes("starship")) return false;
+  if(FILT.prov && provOf(l)!==FILT.prov) return false;
+  if(FILT.cty && countryOf(l)!==FILT.cty) return false;
+  if(FILT.q){ const hay=[l.name,r,p,l.pad?.name,l.pad?.location?.name,l.mission?.name,l.mission?.orbit?.name,l.mission?.type].join(" ").toLowerCase();
+    if(!FILT.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false; }
+  return true;
 }
+function filterActive(){ return !!(FILT.q||FILT.prov||FILT.cty); }
+function visible(){ return launches.filter(matchFilter); }

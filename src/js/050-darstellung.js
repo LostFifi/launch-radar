@@ -44,6 +44,7 @@ function render(){
       .bindTooltip(`<b>${esc(s.name)}</b>${s.pads.length>1?` <span class="mute">· ${s.pads.length} Startkomplexe</span>`:""}<br>Nächster: ${esc(l.name)}<br><small>${fmtDate(l.net)}</small>`)
       .on("click",()=>openGroup(list));
   });
+  document.getElementById("listBtn").classList.toggle("filt",filterActive());   // Punkt am Liste-Knopf: Filter aktiv
   updateNext(); livePoll(false);   // Live-Banner sofort nach dem Laden (fragt höchstens alle 5 Min nach)
   openFromHash();                  // #start=<id> in der Adresse → diesen Start öffnen
 }

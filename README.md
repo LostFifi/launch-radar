@@ -57,7 +57,11 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 **Karte & Globus**
 - Leaflet-Karte: Esri Dark Gray (Retina-Kacheln auf hochauflösenden Bildschirmen) + Beschriftungs-Ebene darüber; eingebettete Weltkarte liegt darunter und ist nur offline sichtbar. Satelliten-Zeichenfläche liegt in einer Leaflet-Ebene und macht die Zoom-Animation mit (CARTO bräuchte inzwischen einen API-Schlüssel) und eigener 3D-Globus (d3-geo orthographisch, drehen/zoomen/antippen)
 - Startplätze mit Status-Farbe (grün Go, gelb TBD, rot Live/Fehlstart). **Ein Punkt pro Startort** (`buildSites()`: gleicher Standort oder < 40 km, z.B. Cape Canaveral + Kennedy); Klick → Liste mit aufklappbaren Unterkapiteln je Startkomplex (SLC-40, LC-39A …)
-- Filter Alle / SpaceX / Starship, Liste (Kommende/Vergangene), Countdown zum nächsten Start
+- Filter Alle / SpaceX / Starship, Liste (Kommende/Vergangene) mit **Suche, Betreiber- und Länderfilter** (gelten auch für die Karte, gelber Punkt am Liste-Knopf), Countdown zum nächsten Start
+- **Verschiebungen** (`045-verschiebungen.js`): jede Startzeit wird gemerkt (`lr_net`), Änderungen als „verschoben +23 h“ angezeigt und bei Erinnerungen gemeldet
+- **Link pro Start** `#start=<id>` + Teilen-Knopf (`055-teilen.js`)
+- **Wetter am Startplatz** (`095-wetter.js`, Open-Meteo): Wind/Böen, Wolken, Regen, Gewitter-Energie, Höhenwind + Faustregel-Einschätzung
+- **Von meinem Standort aus** (`147-start-sichtbar.js`): Richtung, Höhe über Horizont, Zeitfenster, Quallen-Effekt
 - Tag/Nacht-Grenze, Zeitraffer-Leiste (1×–3600×) für Satelliten und Tag/Nacht
 - Ebenen-Menü: alles einzeln ausschaltbar, Auswahl wird gespeichert
 
@@ -68,7 +72,7 @@ Icons (SVG) · Konfiguration · Karte · Daten laden · Darstellung/Liste · Det
 
 **Bahnen** (Schätzung – keine offiziellen Positionsdaten!)
 - Kreisbahn-Bodenspur mit Erdrotation; Neigung aus Missionsdaten/Faustregeln (ISS 51,6°, SSO 97,6°, Starlink-Gruppen, Vandenberg 70° Süd …)
-- **Aufstiegsprofile je Rakete** (`065-aufstiegsprofile.js`): Falcon 9, Falcon Heavy, Starship, Electron, Vulcan/Atlas, Ariane 6, Sojus, LVM3, sonst typisches Profil. Je Zeit → Höhe, Tempo, Bodendistanz + Ereignisse (Max-Q, MECO, SECO …), an MECO/SECO aus der Timeline des Starts angepasst. Detailfenster „Aufstieg (geschätzt)“, Kartenzeile zeigt geschätzte Höhe/Tempo, Telemetrie-Diagramm zeigt die Schätzung gestrichelt zum Vergleich
+- **Aufstiegsprofile je Rakete** (`065-aufstiegsprofile.js`): Falcon 9, Falcon Heavy, Starship, Electron, Vulcan/Atlas, Ariane 6, Sojus, LVM3, Langer Marsch (+ chinesische Kleinraketen), H3, New Glenn, sonst typisches Profil. Je Zeit → Höhe, Tempo, Bodendistanz + Ereignisse (Max-Q, MECO, SECO …), an MECO/SECO aus der Timeline des Starts angepasst. Detailfenster „Aufstieg (geschätzt)“, Kartenzeile zeigt geschätzte Höhe/Tempo, Telemetrie-Diagramm zeigt die Schätzung gestrichelt zum Vergleich
 - `distAt()`: Aufstieg aus dem Profil, danach Orbitgeschwindigkeit
 - **Startrichtung** aus Bahnneigung und Breite, korrigiert um die Erddrehung; Polar/SSO ab Florida, China, Indien nach Süden
 - Jeder Orbit eigene Farbe, durchgezogen; blass = kommend, kräftig = geflogen

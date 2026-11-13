@@ -44,6 +44,11 @@ async function launchBrowser() {
         const s = document.getElementById('sim'); s.value = 300; s.oninput(); out.rocket = !!curPos;
         openGroup(padGroups.find(g => g.length > 1) || padGroups[0]); await wait(100);
         out.list = document.querySelectorAll('#panel .item').length;
+        await showStartList('up'); const n0 = document.querySelectorAll('#panel .item').length;
+        FILT.q = 'falcon'; await applyListFilter(); const n1 = document.querySelectorAll('#panel .item').length;
+        FILT.q = ''; FILT.cty = 'China'; await applyListFilter(); const n2 = document.querySelectorAll('#panel .item').length;
+        FILT = { q: '', prov: '', cty: '' }; render();
+        out.filter = `${n0} alle, ${n1} Falcon, ${n2} China`; out.filterOk = n0 > 0 && n1 > 0 && n1 < n0 && n2 < n0;
         openStats(); await wait(200); out.stats = document.getElementById('panel').innerText.length > 100;
         openDB(); await wait(200); out.db = document.querySelectorAll('#panel table.db tr').length;
         document.getElementById('globeBtn').click(); await wait(300); out.globe = G.on; document.getElementById('globeBtn').click();
@@ -58,6 +63,7 @@ async function launchBrowser() {
       check(`[${vp.name}] Aufstiegsprofil`, r.profile);
       check(`[${vp.name}] Link #start=`, r.hash);
       check(`[${vp.name}] Startort-Liste`, r.list > 0, `${r.list} Einträge`);
+      check(`[${vp.name}] Suche + Filter`, r.filterOk, r.filter);
       check(`[${vp.name}] Statistik`, r.stats);
       check(`[${vp.name}] Raketen-Datenbank`, r.db > 10, `${r.db} Zeilen`);
       check(`[${vp.name}] Globus`, r.globe);
