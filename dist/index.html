@@ -1008,7 +1008,8 @@ var I18N_EN = {
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
   // ---------- Info, Datenschutz ----------
-  "Grösse ändern":"Resize","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
+  "Grösse ändern":"Resize","Was die App sieht":"What the app sees","Noch kein Bild.":"No image yet.","(kein Text erkannt)":"(no text recognised)",
+  "{0} → Tempo {1} · Höhe {2}":"{0} → speed {1} · altitude {2}","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
   "Start bestätigt – Abhebezeit auf jetzt gesetzt":"Launch confirmed – liftoff time set to now","Start bestätigt – die Rakete fliegt mit":"Launch confirmed – the rocket is now tracked","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
   "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
@@ -3067,7 +3068,9 @@ setInterval(()=>{ if(PNL.classList.contains("min")) syncMini(); },250);
 function teleStage(){ return {region:null,last:null,v:null,h:null,hist:[],ok:0,bad:0,raw:""}; }
 var TELE={on:false,auto:false,stream:null,video:null,worker:null,busy:false,timer:null,use1:true,edit:"s2",t0:null,
   d:null,vh:0,v:null,h:null,S:{s1:teleStage(),s2:teleStage()}};
-const TPRESET={s2:[0.64,0.78,0.35,0.21],s1:[0.01,0.78,0.35,0.21]};
+// Bereiche im Stream: untere 32 %, linke Hälfte = Stufe 1 (Booster), rechte Hälfte = Stufe 2 (Ship/Oberstufe).
+// Bewusst grosszügig – die Einblendungen sitzen je nach Stream und Flugphase etwas anders.
+const TPRESET={s2:[0.5,0.68,0.5,0.32],s1:[0,0.68,0.5,0.32]};
 const TLIM={s1:{v:12000,h:300},s2:{v:32000,h:3000}};          // Plausibilitätsgrenzen je Stufe
 const TCOL={s1:"#f5a142",s2:"#4ea1ff"}, TLAB={s1:"Stufe 1",s2:"Stufe 2"};
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
@@ -3101,7 +3104,7 @@ async function teleBegin(stream,auto){
   try{
     if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
     TELE.worker=await Tesseract.createWorker("eng");
-    await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTU/ ",tessedit_pageseg_mode:"6"});
+    await TELE.worker.setParameters({tessedit_char_whitelist:"0123456789KMHSPEDALTUI/ ",tessedit_pageseg_mode:"6"});
   }catch(e){ toast("Texterkennung konnte nicht geladen werden (Internet nötig)"); return teleStop(); }
   TELE.timer=setInterval(teleTick,1000); teleTick();
 }
@@ -3117,6 +3120,7 @@ function buildTeleBox(){
      <button class="chip" data-te="s1">Stufe 1</button><button class="chip" data-te="s2">Stufe 2</button>
      <label class="chip" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="tUse1" ${TELE.use1?"checked":""} style="margin:0">Stufe 1 lesen</label>
      <button class="chip" onclick="teleCSV()" title="Messwerte als CSV-Datei speichern">CSV</button></div>
+   <details class="tdbg" open><summary>Was die App sieht</summary><div id="tDbg" class="mute" style="font-size:12px">Noch kein Bild.</div></details>
    <div class="note" id="tStat"></div>`;
   teleChrome(B);
   const mark=()=>B.querySelectorAll("[data-te]").forEach(b=>b.classList.toggle("on",b.dataset.te===TELE.edit));
@@ -3143,41 +3147,73 @@ async function teleOCR(region){
   const v=TELE.video, W=v.videoWidth, H=v.videoHeight, [rx,ry,rw,rh]=region;
   const sc=Math.max(1,900/(rw*W)), c=document.createElement("canvas"); c.width=Math.round(rw*W*sc); c.height=Math.round(rh*H*sc);
   const x=c.getContext("2d"); x.drawImage(v,rx*W,ry*H,rw*W,rh*H,0,0,c.width,c.height);
-  const im=x.getImageData(0,0,c.width,c.height), p=im.data;          // helle Schrift -> schwarz auf weiss
-  for(let i=0;i<p.length;i+=4){ const g=.3*p[i]+.59*p[i+1]+.11*p[i+2], o=g>140?0:255; p[i]=p[i+1]=p[i+2]=o; }
+  // Nur fast-weisse Pixel (alle Farbkanäle hell) gelten als Schrift → schwarz auf weiss.
+  // So werden orange Flammen, blauer Himmel und graue Flächen ignoriert.
+  const im=x.getImageData(0,0,c.width,c.height), p=im.data;
+  for(let i=0;i<p.length;i+=4){ const mn=Math.min(p[i],p[i+1],p[i+2]), mx=Math.max(p[i],p[i+1],p[i+2]), o=(mn>170&&mx-mn<60)?0:255; p[i]=p[i+1]=p[i+2]=o; }
   x.putImageData(im,0,0);
+  TELE.dbg=TELE.dbg||{}; TELE.dbg[TELE.cur]=c;          // für die Vorschau „Was die App sieht“
   return (await TELE.worker.recognize(c)).data.text;
+}
+// Vorschau: aufbereiteter Bildausschnitt je Stufe + erkannter Text (zum Prüfen, ob der Bereich stimmt)
+function teleDebug(){
+  const box=document.getElementById("tDbg"); if(!box||!TELE.dbg) return;
+  if(!box.dataset.ready){ box.innerHTML=["s2","s1"].map(k=>`<div style="margin:6px 0"><div style="color:${TCOL[k]};font-weight:700">${TLAB[k]}</div><canvas id="tDbg_${k}" style="width:100%;height:auto;background:#fff;border-radius:6px;margin:3px 0"></canvas><div id="tDbgT_${k}" style="word-break:break-word"></div></div>`).join(""); box.dataset.ready=1; }
+  for(const k of ["s2","s1"]){ const src=TELE.dbg[k], cv=document.getElementById("tDbg_"+k), tx=document.getElementById("tDbgT_"+k); if(!cv) continue;
+    cv.parentElement.style.display=(k==="s1"&&!TELE.use1)?"none":"";
+    if(src){ cv.width=Math.min(600,src.width); cv.height=Math.round(cv.width*src.height/src.width); cv.getContext("2d").drawImage(src,0,0,cv.width,cv.height); }
+    const S=TELE.S[k], x=teleExtract(S.raw||"");
+    tx.textContent=(S.raw?`„${S.raw}“`:"(kein Text erkannt)")+` → Tempo ${x.sp??"–"} · Höhe ${x.al??"–"}`; }
+}
+// Zahlen aus dem erkannten Text holen – egal ob neben oder unter der Beschriftung:
+//   „SPEED 5 300 KM/H“ · „SPEED ALTITUDE \n 5 300 62 \n KM/H KM“ · „5 300 KM/H“ · nur „ALTITUDE 62 KM“
+function teleExtract(text){
+  const t=String(text).toUpperCase().replace(/[^0-9A-Z\n\/ ]/g," ");
+  const lines=t.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const nums=s=>(String(s).replace(/KM\s*\/?\s*H|KM/g," ").match(/\d{1,3}(?: \d{3})+|\d+/g)||[]).map(x=>+x.replace(/ /g,""));
+  const S_RX=/SPEED|SPEE|PEED|SP[E3]D/, A_RX=/ALT|LTITU|TITUDE/;
+  let sp=null, al=null;
+  lines.forEach((ln,i)=>{
+    const hs=S_RX.test(ln), ha=A_RX.test(ln); if(!hs&&!ha) return;
+    let n=nums(ln); if(!n.length) n=nums(lines[i+1]||"");
+    if(hs&&ha){ if(n.length>=2){ const sFirst=ln.search(S_RX)<ln.search(A_RX); if(sp==null) sp=sFirst?n[0]:n[1]; if(al==null) al=sFirst?n[1]:n[0]; } }
+    else if(hs){ if(n.length&&sp==null) sp=n[0]; }
+    else if(n.length&&al==null) al=n[0];
+  });
+  if(sp==null){ const m=t.match(/(\d{1,3}(?: \d{3})+|\d+)\s*KM\s*\/\s*H/); if(m) sp=+m[1].replace(/ /g,""); }
+  if(al==null){ const m=t.match(/(\d{1,3}(?: \d{3})+|\d+)\s*KM(?!\s*\/?\s*H)/); if(m) al=+m[1].replace(/ /g,""); }
+  return {sp,al};
 }
 async function teleTick(){
   if(!TELE.on||TELE.busy||!TELE.worker||!TELE.video?.videoWidth) return; TELE.busy=true;
   try{
     drawTelePrev();
-    for(const k of TELE.use1?["s2","s1"]:["s2"]){ const r=teleRegion(k); if(!r) continue; teleParse(k,await teleOCR(r)); }
+    for(const k of TELE.use1?["s2","s1"]:["s2"]){ const r=teleRegion(k); if(!r) continue; TELE.cur=k; teleParse(k,await teleOCR(r)); }
+    teleDebug();
     teleUI();
   }catch(e){ console.warn(e); }
   TELE.busy=false;
 }
 function teleParse(k,text){
-  const S=TELE.S[k], lim=TLIM[k], t=text.toUpperCase().replace(/[^0-9A-Z\n ]/g," ");
-  S.raw=text.replace(/\s+/g," ").trim().slice(0,40);
-  let sp=null, al=null;
-  const ms=t.match(/SPEED[^0-9\n]*([0-9][0-9 ]{0,7}[0-9]|[0-9])/), ma=t.match(/ALT[A-Z]*[^0-9\n]*([0-9][0-9 ]{0,5}[0-9]|[0-9])/);
-  if(ms) sp=+ms[1].replace(/ /g,""); if(ma) al=+ma[1].replace(/ /g,"");
-  // Ohne Beschriftung nur Zahlen MIT Einheit (… KM/H = Tempo, … KM = Höhe) – keine beliebigen Zahlen (z.B. Countdown-Uhr)
-  if(sp==null){ const m=t.match(/(\d[\d ]{0,7}\d|\d)\s*KM\s*\/?\s*H/); if(m) sp=+m[1].replace(/ /g,""); }
-  if(al==null){ const m=t.match(/(\d[\d ]{0,5}\d|\d)\s*KM(?!\s*\/?\s*H)/); if(m) al=+m[1].replace(/ /g,""); }
+  const S=TELE.S[k], lim=TLIM[k];
+  S.raw=text.replace(/\s+/g," ").trim().slice(0,60);
+  let {sp,al}=teleExtract(text);
   const now=Date.now(), L=S.last;
   // Vor dem Start (T−) nichts übernehmen: Rakete bleibt am Boden, Anzeige „wartet auf den Start“
-  if(selected && TELE.t0==null && now < new Date(netOf(selected)).getTime()-5000){ S.pre=(S.pre||0)+1; S.bad=S.bad; return; }
-  let okv = sp!=null && al!=null && sp<=lim.v && al<=lim.h;
-  if(okv && L){ const dt=(now-L.t)/1000; if(Math.abs(sp-L.v)>3000*dt+800 || Math.abs(al-L.h)>20*dt+8) okv=false; }
-  if(!okv){ S.bad++; return; }
+  if(selected && TELE.t0==null && now < new Date(netOf(selected)).getTime()-5000){ S.pre=(S.pre||0)+1; return; }
+  // Jeden Wert einzeln prüfen (Bereich + kein unmöglicher Sprung); fehlt einer, gilt der letzte bekannte
+  const dt=L?(now-L.t)/1000:0;
+  if(sp!=null && (sp>lim.v || (L&&L.v!=null&&Math.abs(sp-L.v)>3000*dt+800))) sp=null;
+  if(al!=null && (al>lim.h || (L&&L.h!=null&&Math.abs(al-L.h)>20*dt+8))) al=null;
+  if(sp==null && al==null){ S.bad++; return; }
+  if(sp==null) sp=L?.v??null; if(al==null) al=L?.h??null;
+  if(sp==null || al==null){ S.v=sp??S.v; S.h=al??S.h; S.last={t:now,v:sp,h:al}; S.ok++; return; }   // erst ein Wert bekannt: anzeigen, noch nicht rechnen
   if(k==="s2"){
-    if(L){ const dt=(now-L.t)/1000, vk=(sp+L.v)/2/3600, dh=(al-L.h)/dt; TELE.vh=Math.sqrt(Math.max(0,vk*vk-dh*dh)); TELE.d=(TELE.d||0)+TELE.vh*dt; }
+    if(L&&L.v!=null&&L.h!=null){ const vk=(sp+L.v)/2/3600, dh=(al-L.h)/dt; TELE.vh=Math.sqrt(Math.max(0,vk*vk-dh*dh)); TELE.d=(TELE.d||0)+TELE.vh*dt; }
     else if(TELE.d==null){ const ts=selected?(now-new Date(netOf(selected)))/1000:0; TELE.d=(curTrack&&ts>0)?distAt(ts,curTrack):0; }
     TELE.v=sp; TELE.h=al;
   }
-  S.rate=L?(al-L.h)/((now-L.t)/1000):null;
+  S.rate=L&&L.h!=null&&dt>0?(al-L.h)/dt:null;
   S.last={t:now,v:sp,h:al}; S.v=sp; S.h=al; S.ok++;
   // Gemessenes Tempo nach T-0 = Start ist erfolgt (auch wenn die API noch „Go“ meldet)
   if(selected && sp>300 && S.ok>=2 && !LAUNCHED[selected.id] && launchState(selected)!=="flying") confirmLaunch(selected.id);

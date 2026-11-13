@@ -237,7 +237,8 @@ var I18N_EN = {
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs",
   "Karte © Esri, HERE, Garmin, © OpenStreetMap | Daten: The Space Devs,":"Map © Esri, HERE, Garmin, © OpenStreetMap | Data: The Space Devs,",
   // ---------- Info, Datenschutz ----------
-  "Grösse ändern":"Resize","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
+  "Grösse ändern":"Resize","Was die App sieht":"What the app sees","Noch kein Bild.":"No image yet.","(kein Text erkannt)":"(no text recognised)",
+  "{0} → Tempo {1} · Höhe {2}":"{0} → speed {1} · altitude {2}","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
   "Start bestätigt – Abhebezeit auf jetzt gesetzt":"Launch confirmed – liftoff time set to now","Start bestätigt – die Rakete fliegt mit":"Launch confirmed – the rocket is now tracked","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
   "Push-Nachrichten abgemeldet – deine Daten auf dem Server sind gelöscht":"Push notifications turned off – your data on the server has been deleted",
