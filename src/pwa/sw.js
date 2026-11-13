@@ -4,7 +4,7 @@
 // - Hintergrund-Prüfung der Erinnerungen (Periodic Background Sync: nur Chrome/Edge, installierte App, Zeitpunkt bestimmt der Browser)
 const VERSION = "/*SW_VERSION*/";
 const SHELL = "lr-shell-" + VERSION, DATA = "lr-data";
-const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png"];
+const ASSETS = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/badge-96.png", "data/tle.json", "data/img.json"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

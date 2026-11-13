@@ -66,6 +66,20 @@ async function launchBrowser() {
       check(`[${vp.name}] kein seitliches Scrollen`, wide <= 1, wide > 1 ? `${wide}px zu breit` : '');
       await ctx.close();
     }
+    // Offline-Datei (alles eingebettet) und ausgelagerte Reserve-Daten der Online-Version
+    const ctx = await browser.newContext({ serviceWorkers: 'block' });
+    await ctx.route(u => !u.href.startsWith(base), r => r.abort());
+    const page = await ctx.newPage();
+    page.on('pageerror', e => errors.push(`[Offline-Datei] JS-Fehler: ${e.message}`));
+    await page.goto(base + 'launchradar-offline.html');
+    await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
+    const off = await page.evaluate(async () => ({ tle: !!TLE_SNAP, img: !!IMG_SNAP }));
+    check('[Offline-Datei] lädt mit eingebetteten Reserve-Daten', off.tle && off.img);
+    await page.goto(base);
+    await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
+    const on = await page.evaluate(async () => { const t = await snapData('tle'), i = await snapData('img'); return { inline: TLE_SNAP !== null, tle: !!(t && t.starlink), img: !!(i && Object.keys(i).length) }; });
+    check('[Online] Reserve-Daten ausgelagert und nachladbar', !on.inline && on.tle && on.img);
+    await ctx.close();
   } catch (e) { errors.push('Test abgebrochen: ' + e.message); }
   await browser.close(); server.close();
   console.log(results.join('\n'));

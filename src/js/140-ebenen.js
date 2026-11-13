@@ -56,7 +56,7 @@ async function loadSats(g){
   if(!txt){ try{ const r=await fetch(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${SAT_SRC[g].celestrak}&FORMAT=tle`);
       if(!r.ok) throw 0; txt=await r.text(); if(!txt.includes("\n1 ")) throw 0;
       try{ localStorage.setItem("lr_tle_"+g,JSON.stringify({ts:Date.now(),t:txt})); }catch(e){} }catch(e){ txt=null; } }
-  if(!txt && TLE_SNAP[g]){ txt=TLE_SNAP[g]; src="snap"; }
+  if(!txt){ const T=await snapData("tle"); if(T&&T[g]){ txt=T[g]; src="snap"; } }
   if(!txt){ toast(SAT_SRC[g].label+": nur online verfügbar (im Browser öffnen)"); SATS[g]=[]; return; }
   if(src==="snap") toast(SAT_SRC[g].label+": Bahndaten vom "+SNAP_TS+" (Positionen trotzdem live berechnet)");
   SATS[g]=parseTLE(txt); propGroup(g,new Date());

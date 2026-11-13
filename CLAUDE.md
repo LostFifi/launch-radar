@@ -10,7 +10,8 @@ Projekt von Fionn: **LaunchRadar**, Raketenstart-Tracker im Flightradar-Stil. Au
 ## Arbeitsweise
 - Quellcode ist `src/js/NNN-*.js` (klassische Scripts, gemeinsamer globaler Bereich, kein import/export), `src/css/app.css`, `src/index.html`. **Nie** `dist/index.html` direkt bearbeiten – immer `npm run build`.
 - Neue Datei in `src/js/` → Nummer so wählen, dass sie nach allem kommt, was sie beim Laden braucht.
-- Nach Änderungen: bauen, mit `npm run serve` lokal öffnen, auf Desktop **und** Handy-Breite (≤ 799 px) prüfen.
+- Nach Änderungen: bauen, `npm test` (Smoke-Test), mit `npm run serve` lokal öffnen, auf Desktop **und** Handy-Breite (≤ 799 px) prüfen. Neue Funktionen im Smoke-Test (`scripts/smoke.js`) ergänzen.
+- Reserve-Daten `TLE_SNAP`/`IMG_SNAP` sind online `null` → immer über `snapData("tle"|"img")` (async) holen.
 - Die App muss **offline** (eingebetteter Schnappschuss) und **online** (Live-Daten) funktionieren. Jeder Fetch braucht einen Fallback.
 - **API-Limit beachten**: Launch Library 2 gratis ≈ 15 Abfragen/Stunde. Neue Abfragen nur mit Cache (`localStorage`) und zeitversetzt.
 - Geschätzte Werte immer als „geschätzt“ kennzeichnen, gemessene als „gemessen“.

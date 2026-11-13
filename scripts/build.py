@@ -122,9 +122,18 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
      '/*SAT_JS*/':rd('satellite.js/dist/satellite.min.js'),
      '/*WORLD*/':open(b+'data/world.json').read(),'/*SNAP*/':J(up),'/*PAST*/':J(past),'/*ROCKETS*/':J(rk),'/*STATS*/':J(STATS),
      '/*TLE*/':tle,'/*IMG*/':J(snapimg),'/*SNAPTS*/':SNAP_DATE}
-for k,v in rep.items(): h=h.replace(k,v)
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
-os.makedirs(b+'dist',exist_ok=True); open(b+'dist/index.html','w').write(h); print(len(h)//1024,'KB')
+# Zwei Varianten:
+#  dist/index.html               online (GitHub Pages): Reserve-Bahndaten + Vorschaubilder als eigene Dateien data/*.json → ~2,4 MB weniger
+#  dist/launchradar-offline.html alles eingebettet (Claude-Vorschau, als Datei öffnen, ohne Server)
+os.makedirs(b+'dist/data',exist_ok=True)
+full=h; online=h
+for k,v in rep.items():
+    full=full.replace(k,v)
+    online=online.replace(k,'null' if k in ('/*TLE*/','/*IMG*/') else v)
+open(b+'dist/data/tle.json','w').write(tle); open(b+'dist/data/img.json','w').write(J(snapimg))
+open(b+'dist/launchradar-offline.html','w').write(full)
+h=online; open(b+'dist/index.html','w').write(h); print(len(h)//1024,'KB online,',len(full)//1024,'KB offline-Datei')
 
 # ---- PWA: Manifest, Icons, Service Worker (Version = Hash der App → Browser lädt neue Version) ----
 import shutil

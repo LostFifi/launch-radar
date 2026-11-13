@@ -23,6 +23,12 @@ function fmtRel(iso){ // z.B. "PT2M30S", "-PT45M"
 function imgTag(l,small){ const im=l.image&&typeof l.image==="object"?l.image:null; if(!im) return small?'<div class="th"></div>':"";
   const th=im.thumbnail_url||"", src=small?(th||im.image_url):(im.image_url||th);
   return `<img class="${small?"th":""}" loading="lazy" alt="" src="${esc(src)}" data-th="${esc(th)}" onerror="imgFail(this)">`; }
-function imgFail(el){ const s=IMG_SNAP[el.dataset.th]; el.onerror=null;
-  if(s && el.src!==s) el.src=s; else if(el.classList.contains("th")) el.style.visibility="hidden"; else el.closest(".hero")?.remove(); }
+// Reserve-Daten (Bahndaten, Vorschaubilder): in der Online-Version eigene Dateien data/*.json, erst bei Bedarf geladen
+// (Service Worker speichert sie für offline). In der Offline-Datei (launchradar-offline.html) sind sie eingebettet.
+const SNAPF={}; function snapData(k){
+  const inl={tle:TLE_SNAP,img:IMG_SNAP}[k]; if(inl) return Promise.resolve(inl);
+  return SNAPF[k] ||= fetch("data/"+k+".json").then(r=>r.ok?r.json():null).catch(()=>null); }
+function imgFail(el){ el.onerror=null;
+  snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
+    if(s && el.src!==s) el.src=s; else if(el.classList.contains("th")) el.style.visibility="hidden"; else el.closest(".hero")?.remove(); }); }
 function toast(t){ const m=document.getElementById("msg"); m.textContent=t; m.style.display="block"; setTimeout(()=>m.style.display="none",5000); }

@@ -2,7 +2,13 @@
 
 Raketenstarts live verfolgen – im Stil von Flightradar24. Karte und 3D-Globus mit allen kommenden Starts, geschätzten Flugbahnen, Livestream im Mini-Fenster, echter Telemetrie per Texterkennung, Satelliten (ISS, Starlink, GPS …), Statistik und einer Raketen-Datenbank mit Vergleich.
 
-Die fertige App ist **eine einzige HTML-Datei** (`dist/index.html`, ~3,5 MB) – alle Bibliotheken und ein Daten-Schnappschuss sind eingebettet, damit sie auch offline bzw. in Vorschauen (Claude-App) läuft. Online lädt sie alles live nach.
+Der Build erzeugt zwei Varianten:
+- `dist/index.html` (~1,2 MB, GitHub Pages): Bibliotheken + Start-Schnappschuss eingebettet, Reserve-Bahndaten und Vorschaubilder als `dist/data/*.json` (nur bei Bedarf geladen, vom Service Worker für offline gespeichert)
+- `dist/launchradar-offline.html` (~3,5 MB): **alles in einer Datei** – für die Claude-Vorschau oder zum Öffnen ohne Server
+
+Online lädt die App alles live nach.
+
+**Live:** https://lostfifi.github.io/launch-radar/ – GitHub baut bei jedem Push und jede Nacht mit frischen Daten neu (`.github/workflows/pages.yml`, inkl. `npm test`).
 
 ---
 
@@ -13,7 +19,8 @@ npm install          # Bibliotheken (Leaflet, d3-geo, satellite.js, Weltkarte)
 npm run build        # src/ + data/ → dist/index.html
 npm run watch        # beim Entwickeln: baut bei jeder Änderung in src/ automatisch neu
 npm run serve        # http://localhost:8000  (Webserver nötig, sonst blockt YouTube)
-npm run fetch        # optional: neuen Daten-Schnappschuss laden (~12 API-Abfragen!)
+npm test             # Smoke-Test: öffnet die App in Edge/Chrome, klickt alles durch (Desktop + Handy)
+npm run fetch        # optional: neuen Daten-Schnappschuss laden (~8 API-Abfragen, FULL=1 mit Raketen-DB)
 ```
 
 Python 3 (+ Pillow) und Node.js werden gebraucht.
