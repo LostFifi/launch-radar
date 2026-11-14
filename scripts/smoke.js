@@ -117,11 +117,14 @@ async function launchBrowser() {
     await page.route(base + 'mockworker/feedback', r => { fbBody = JSON.parse(r.request().postData()); r.fulfill({ contentType: 'application/json', body: '{"ok":true}' }); });
     const fbr = await page.evaluate(async () => { fbOpen(); document.querySelector('#fb .fbstars button[data-r="4"]').click();
       document.getElementById('fbWish').value = 'Mehr Raketen'; await fbSend(); await new Promise(r => setTimeout(r, 300));
-      return { gone: !document.getElementById('fb'), use: USE.on, menu: infoMenuHtml().includes('fbOpen()') }; });
+      return { gone: !document.getElementById('fb'), use: USE.on, menu: infoMenuHtml().includes('fbOpen()'),
+        // auf der echten Seite (gleicher Host wie siteUrl, normaler Browser) muss die Messung an sein
+        live: useAllowed({ host: new URL(CONFIG.siteUrl).host }, {}), dnt: useAllowed({ host: new URL(CONFIG.siteUrl).host }, { doNotTrack: '1' }) }; });
     const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
       const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length; return { n: ev.length, tl, pay: ev.some(e => e.kind === 'pay') }; });
     check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
+    check('[Messung] auf der echten Seite aktiv, bei Do Not Track aus', fbr.live === true && fbr.dnt === false);
     await ctx.close();
     // Teilen-Vorschau, Datenschutz-Seite, Suchmaschinen, „Alle Daten löschen“
     {

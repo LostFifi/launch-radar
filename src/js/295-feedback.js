@@ -3,10 +3,10 @@
 // der Worker zählt nur Tagessummen (worker/src/index.js → /t). Nur auf der echten Seite, nicht lokal/in Tests,
 // nicht bei „Do Not Track“ / Global Privacy Control. Feedback (Sterne, Wunsch, Kommentar) → /feedback.
 var USE={on:false, sec:0, sent:0, first:true, f:new Set(), fSent:new Set()};
-(function(){
-  let host=""; try{ host=new URL(CONFIG.siteUrl).host; }catch(e){}
-  USE.on=!!CONFIG.worker && location.host===host && !navigator.webdriver && navigator.doNotTrack!=="1" && !navigator.globalPrivacyControl;
-})();
+// Nur auf der echten Seite messen (Host aus config.json → siteUrl, beim Bauen eingesetzt)
+function useAllowed(loc,nav){ let host=""; try{ host=new URL(CONFIG.siteUrl).host; }catch(e){}
+  return !!CONFIG.worker && !!host && loc.host===host && !nav.webdriver && nav.doNotTrack!=="1" && !nav.globalPrivacyControl; }
+USE.on=useAllowed(location,navigator);
 function useMark(f){ USE.f.add(f); }
 function useSend(){
   if(!USE.on || USE.sec<3) return;   // ganz kurze Besuche (Bots, Fehlklicks) nicht zählen

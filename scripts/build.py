@@ -126,7 +126,7 @@ rep={'/*LEAFLET_CSS*/':open(b+'node_modules/leaflet/dist/leaflet.css').read(),
 h=h.replace('/*RCUT*/',json.dumps(STATS['cut']))
 CONFIG=json.load(open(b+'src/config.json')); CONFIG['worker']=(CONFIG.get('worker') or '').rstrip('/')
 SITE=(CONFIG.get('siteUrl') or '').rstrip('/')+'/'
-h=h.replace('/*CONFIG*/',J({k:CONFIG.get(k) for k in ('worker','vapidPublic')})).replace('/*SNAPAT*/',SNAP_AT).replace('/*SITEURL*/',SITE)
+h=h.replace('/*CONFIG*/',J({k:CONFIG.get(k) for k in ('worker','vapidPublic','siteUrl')})).replace('/*SNAPAT*/',SNAP_AT).replace('/*SITEURL*/',SITE)
 # Besucherzählung (Cloudflare Web Analytics, ohne Cookies) – nur wenn ein Token in src/config.json steht
 TOK=(CONFIG.get('analyticsToken') or '').strip()
 # Bestätigung für Google Search Console / Bing Webmaster Tools (Codes aus src/config.json)

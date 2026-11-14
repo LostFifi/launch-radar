@@ -765,7 +765,7 @@ const ROCKETS = [{"id":136,"n":"Angara 1.2","v":"1.2","fam":"Angara, Angara 1.2"
 const STATS = {"year":2026,"asof":"13.11.2026","cut":"2026-11-12T04:36:30Z","provAll":{"SpaceX":126,"China Aerospace Science and Technology Corporation":54,"Russian Space Forces":7,"Galactic Energy":5,"CAS Space":7,"Rocket Lab":20,"Indian Space Research Organization":3,"Mitsubishi Heavy Industries":3,"LandSpace":5,"Korea Aerospace Research Institute":1,"ExPace":3,"Russian Federal Space Agency (ROSCOSMOS)":6,"Orienspace Technology":2,"Avio S.p.A":2,"Isar Aerospace":1,"Arianespace":4,"China Rocket Co. Ltd.":4,"Skyroot Aerospace":1,"Northrop Grumman Space Systems":2,"United Launch Alliance":5,"RKK Energiya":1,"Blue Origin":2,"Space Pioneer":1,"National Aeronautics and Space Administration":1,"Firefly Aerospace":1,"Space One":1,"Khrunichev State Research and Production Space Center":1},"ctyAll":{"USA":139,"China":81,"Russia":9,"Neuseeland":17,"Indien":4,"Japan":4,"South Korea":1,"Kasachstan":6,"Frankreich (Kourou)":6,"Norwegen":1,"Marshall Islands":1},"rockAll":{"Falcon 9 Block 5":120,"Long March 2D":6,"Long March 12":6,"Soyuz 2.1b Fregat-M":3,"Ceres-2":2,"Long March 2C":4,"Kinetica 2":2,"Electron":20,"GSLV Mk. II":2,"Long March 8A":6,"Long March 4B":3,"Long March 6A":9,"Ceres-1S":2,"H3-24":1,"Zhuque-2E Block 2":4,"KSLV-2 Nuri":1,"Falcon Heavy":3,"Starship V3":3,"Kinetica 1":5,"Kuaizhou 11":3,"Soyuz 2.1b":3,"Gravity-1":2,"Vega-C":2,"Spectrum":1,"Pallas-1":1,"Ariane 62":1,"Long March 6C":1,"Soyuz 2.1b Fregat":1,"Zhuque-3":1,"H3-22":1,"Long March 7A":4,"Smart Dragon 3":4,"Long March 3B/E":3,"Vikram-I":1,"Soyuz 2.1a":3,"Long March 10B":1,"Pegasus XL":1,"Atlas V 551":4,"Ariane 64 Block 2":1,"H3-30":1,"Long March 5":1,"Long March 8":3,"Long March 12B":1,"Long March 2F/G":2,"Long March 7":1,"Soyuz-5":1,"Ariane 64":2,"Long March 6":1,"Angara 1.2":1,"New Glenn":1,"Long March 4C":1,"Soyuz 2.1b Volga":1,"Minotaur IV":1,"Soyuz 2.1a Fregat-M":1,"Tianlong-3":1,"Space Launch System Block 1":1,"Long March 2C/YZ-1S":1,"Firefly Alpha":1,"Kii-based Advanced & Instant ROcket System":1,"Vulcan VC4S":1,"Proton-M Blok DM-03":1,"New Shepard":1,"PSLV-DL":1},"total":269,"status":{"Success":262,"Failure":7},"prov":[["SpaceX",126],["China Aerospace Science and Technology Corporation",54],["Rocket Lab",20],["Russian Space Forces",7],["CAS Space",7],["Russian Federal Space Agency (ROSCOSMOS)",6],["Galactic Energy",5],["LandSpace",5],["Andere",39]],"cty":[["USA",139],["China",81],["Neuseeland",17],["Russia",9],["Kasachstan",6],["Frankreich (Kourou)",6],["Indien",4],["Andere",7]],"rock":[["Falcon 9 Block 5",120],["Electron",20],["Long March 6A",9],["Long March 2D",6],["Long March 12",6],["Long March 8A",6],["Kinetica 1",5],["Long March 2C",4],["Zhuque-2E Block 2",4],["Long March 7A",4],["Andere",85]],"month":[25,19,30,33,23,29,27,26,27,21,9,0]};
 const RCUT_SNAP = "2026-11-12T04:36:30Z";
 const SNAP_AT = "2026-11-13T17:45:48Z";   // genauer Zeitpunkt des Schnappschusses (UTC)
-const CONFIG = {"worker":"https://launch-radar.lostfifi.workers.dev","vapidPublic":"BGxDrlg81pGBcPUX-yRuy7kFIFzmlfGbON4D6wQ9wUPMA1X-rWzUb-tyCc0chtr-xv3Rx81Y6GNCO_LVXN0pKEo"};   // src/config.json: Worker-Adresse + VAPID-Schlüssel (leer = ohne Worker)
+const CONFIG = {"worker":"https://launch-radar.lostfifi.workers.dev","vapidPublic":"BGxDrlg81pGBcPUX-yRuy7kFIFzmlfGbON4D6wQ9wUPMA1X-rWzUb-tyCc0chtr-xv3Rx81Y6GNCO_LVXN0pKEo","siteUrl":"https://launch-radar.com/"};   // src/config.json: Worker-Adresse + VAPID-Schlüssel (leer = ohne Worker)
 </script>
 <script>
 // ---- 004-i18n-en.js ----
@@ -3887,10 +3887,10 @@ function pwaMenuHtml(){
 // der Worker zählt nur Tagessummen (worker/src/index.js → /t). Nur auf der echten Seite, nicht lokal/in Tests,
 // nicht bei „Do Not Track“ / Global Privacy Control. Feedback (Sterne, Wunsch, Kommentar) → /feedback.
 var USE={on:false, sec:0, sent:0, first:true, f:new Set(), fSent:new Set()};
-(function(){
-  let host=""; try{ host=new URL(CONFIG.siteUrl).host; }catch(e){}
-  USE.on=!!CONFIG.worker && location.host===host && !navigator.webdriver && navigator.doNotTrack!=="1" && !navigator.globalPrivacyControl;
-})();
+// Nur auf der echten Seite messen (Host aus config.json → siteUrl, beim Bauen eingesetzt)
+function useAllowed(loc,nav){ let host=""; try{ host=new URL(CONFIG.siteUrl).host; }catch(e){}
+  return !!CONFIG.worker && !!host && loc.host===host && !nav.webdriver && nav.doNotTrack!=="1" && !nav.globalPrivacyControl; }
+USE.on=useAllowed(location,navigator);
 function useMark(f){ USE.f.add(f); }
 function useSend(){
   if(!USE.on || USE.sec<3) return;   // ganz kurze Besuche (Bots, Fehlklicks) nicht zählen
