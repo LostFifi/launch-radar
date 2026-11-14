@@ -156,7 +156,8 @@ for f in os.listdir(b+'src/pwa/icons'): shutil.copyfile(b+'src/pwa/icons/'+f,b+'
 shutil.copyfile(b+'src/pwa/og-image.png',b+'dist/og-image.png')
 # Datenschutz/Impressum (statische Seite, auch ohne JavaScript lesbar) + Suchmaschinen
 open(b+'dist/datenschutz.html','w').write(open(b+'src/pages/datenschutz.html').read().replace('/*SITEURL*/',SITE))
-open(b+'dist/robots.txt','w').write(f"User-agent: *\nAllow: /\nSitemap: {SITE}sitemap.xml\n")
+open(b+'dist/stats.html','w').write(open(b+'src/pages/stats.html').read().replace('/*WORKER*/""',json.dumps(CONFIG.get('worker') or '')))   # Statistik nur für Fionn (Passwort im Worker)
+open(b+'dist/robots.txt','w').write(f"User-agent: *\nAllow: /\nDisallow: /stats.html\nSitemap: {SITE}sitemap.xml\n")
 open(b+'dist/sitemap.xml','w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
   +''.join(f'<url><loc>{SITE}{p}</loc></url>' for p in ['','?lang=en','datenschutz.html'])+'</urlset>\n')
 sw=open(b+'src/pwa/sw.js').read(); ver=hashlib.md5((h+sw).encode()).hexdigest()[:10]

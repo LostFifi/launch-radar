@@ -95,6 +95,7 @@ async function visitAll(page, all) {
     await step(() => { DATA.src = 'dev'; DATA.stand = Date.now(); liveBanner(); }); await step(() => { DATA.src = 'cache'; DATA.limited = true; liveBanner(); });
     await step(() => { setSpeed(60); }); await step(() => simReset());
     await step(() => { PWA.prompt = {}; buildLayerMenu(); PWA.prompt = null; });
+    await step(() => { CONFIG.worker = CONFIG.worker || 'https://w.example'; fbOpen(true); }); await step(() => fbClose(0));
     return [...found];
   }, !!all);
 }

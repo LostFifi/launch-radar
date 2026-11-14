@@ -78,4 +78,23 @@ await worker.scheduled({ scheduledTime: Date.now() }, env, {});
 check("Wartezeit eingehalten (keine weitere API-Abfrage)", llCalls === 1);
 j = await (await call("/status")).json();
 check("/status zeigt Sperre", j.launches.status === 429 && j.retryUntil > Date.now());
+
+// 4) Nutzungsmessung + Feedback + Statistik
+{ env.STATS_KEY = "geheim\n";
+  const post = (path, body, origin = "https://launch-radar.com") => worker.fetch(new Request("https://w.example" + path, { method: "POST", headers: { origin, "content-type": "text/plain" }, body: JSON.stringify(body) }), env, {});
+  await post("/t", { first: true, tot: 20, prev: 0, f: ["globe", "detail", "boese"], lang: "en", mob: true });
+  await post("/t", { first: false, tot: 400, prev: 20, f: ["tele"] });   // gleicher Besuch, später versteckt
+  await post("/t", { first: true, tot: 5, prev: 0, f: [], lang: "de" });
+  const fremd = await post("/t", { first: true, tot: 5 }, "https://boese.example");
+  check("Messung nur von der eigenen Seite", fremd.status === 403);
+  const fb = await post("/feedback", { r: 5, wish: "Mehr Raketen", c: "Super", lang: "de" });
+  const fb2 = await post("/feedback", { r: 4 });
+  check("Feedback gespeichert, Spam-Schutz", fb.status === 200 && fb2.status === 429);
+  const no = await call("/admin/stats");
+  const st = await (await worker.fetch(new Request("https://w.example/admin/stats", { headers: { origin: "https://launch-radar.com", authorization: "Bearer geheim" } }), env, {})).json();
+  const d = Object.values(st.days)[0];
+  check("Statistik nur mit Passwort", no.status === 401 && !!d);
+  check("Besuche, Dauer-Gruppen, Funktionen gezählt", d.v === 2 && d.dur === 405 && d.b.join() === "1,0,0,0,1,0" && d.f.globe === 1 && d.f.tele === 1 && !d.f.boese && d.lang.en === 1 && d.dev.mobile === 1, JSON.stringify(d));
+  check("Feedback in der Statistik", st.feedback.length === 1 && st.feedback[0].wish === "Mehr Raketen" && st.feedback[0].r === 5);
+}
 console.log(bad ? `\n${bad} Fehler` : "\nAlles in Ordnung"); process.exit(bad ? 1 : 0);

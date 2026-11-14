@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /stats.html
 Sitemap: https://launch-radar.com/sitemap.xml

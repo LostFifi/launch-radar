@@ -57,6 +57,7 @@ function infoMenuHtml(){
   return `<h4>Info</h4><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:4px 0">
     <a class="chip" href="datenschutz.html${LANG==="en"?"#en":""}" target="_blank" rel="noopener" style="text-decoration:none">Datenschutz & Impressum</a>
     ${CONFIG.worker&&CONFIG.vapidPublic&&PWA_OK?(pushOff()?`<button class="chip" onclick="pushResume()">Push-Nachrichten wieder einschalten</button>`:`<button class="chip" onclick="pushUnsubscribe()">Push-Nachrichten abmelden</button>`):""}
+    ${CONFIG.worker?`<button class="chip" onclick="fbOpen()">Feedback & Wünsche senden</button>`:""}
     <button class="chip" onclick="deleteAllData()">Alle meine Daten löschen</button></div>`;
 }
 let pushLast="", pushTimer=null;

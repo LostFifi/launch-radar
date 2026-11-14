@@ -110,6 +110,13 @@ async function launchBrowser() {
         pad: { id: 1, name: 'SLC-40', latitude: '28.56', longitude: '-80.58', location: { name: 'Cape Canaveral SFS, FL, USA' } }, rocket: { configuration: { name: 'Falcon 9' } } }] }) }));
     const w = await page.evaluate(async b => { CONFIG.worker = b + 'mockworker'; localStorage.removeItem('lr_cache'); await load(); return { via: DATA.via, n: launches.length, name: launches[0].name }; }, base);
     check('[Worker] App nutzt eingetragenen Worker', w.via === 'worker' && w.name === 'Worker | Test');
+    // Feedback: Karte öffnen, Sterne + Wunsch, senden → Worker bekommt die Daten; Messung ist in Tests aus
+    let fbBody = null;
+    await page.route(base + 'mockworker/feedback', r => { fbBody = JSON.parse(r.request().postData()); r.fulfill({ contentType: 'application/json', body: '{"ok":true}' }); });
+    const fbr = await page.evaluate(async () => { fbOpen(); document.querySelector('#fb .fbstars button[data-r="4"]').click();
+      document.getElementById('fbWish').value = 'Mehr Raketen'; await fbSend(); await new Promise(r => setTimeout(r, 300));
+      return { gone: !document.getElementById('fb'), use: USE.on, menu: infoMenuHtml().includes('fbOpen()') }; });
+    check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     await ctx.close();
     // Teilen-Vorschau, Datenschutz-Seite, Suchmaschinen, „Alle Daten löschen“
     {

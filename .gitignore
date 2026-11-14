@@ -5,3 +5,4 @@ __pycache__/
 build/
 worker/.dev.vars
 worker/.wrangler/
+worker/.stats-key.txt

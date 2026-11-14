@@ -46,6 +46,34 @@ export default {
         const p = s.pending || []; if (p.length) { s.pending = []; await env.LR.put(key, JSON.stringify(s), { expirationTtl: 40 * 86400 }); }
         return json(p, 200, cors);
       }
+      // ---- Anonyme Nutzungsmessung (keine Cookies, keine IDs, nur Tageszähler) ----
+      if (url.pathname === "/t" && req.method === "POST") {
+        if (!fromSite(req, env)) return json({ ok: false }, 403, cors);
+        let d; try { d = JSON.parse(await req.text()); } catch (e) { return json({ ok: false }, 400, cors); }
+        await countVisit(env, d); return json({ ok: true }, 200, cors);
+      }
+      // ---- Feedback: Bewertung 1–5, Funktionswunsch, Kommentar ----
+      if (url.pathname === "/feedback" && req.method === "POST") {
+        if (!fromSite(req, env)) return json({ ok: false }, 403, cors);
+        let d; try { d = JSON.parse(await req.text()); } catch (e) { return json({ ok: false }, 400, cors); }
+        const r = Math.round(+d.r), wish = String(d.wish || "").trim().slice(0, 600), c = String(d.c || "").trim().slice(0, 600);
+        if (!(r >= 1 && r <= 5) && !wish && !c) return json({ ok: false }, 400, cors);
+        const rl = "rl:" + await hash((req.headers.get("cf-connecting-ip") || "") + new Date().toISOString().slice(0, 10));   // gegen Spam: 1×/Minute
+        if (await env.LR.get(rl)) return json({ ok: false, error: "zu schnell" }, 429, cors);
+        await env.LR.put(rl, "1", { expirationTtl: 60 });
+        const list = (await env.LR.get("fb:list", "json")) || [];
+        list.unshift({ at: Date.now(), r: r >= 1 && r <= 5 ? r : null, wish, c, lang: d.lang === "en" ? "en" : "de", mob: !!d.mob });
+        await env.LR.put("fb:list", JSON.stringify(list.slice(0, 1000)));
+        return json({ ok: true }, 200, cors);
+      }
+      // ---- Statistik für Fionn (Passwort = Secret STATS_KEY) ----
+      if (url.pathname === "/admin/stats") {
+        const k = (env.STATS_KEY || "").trim(), got = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+        if (!k || got !== k) return json({ error: "Passwort falsch" }, 401, cors);
+        const days = {}, keys = (await env.LR.list({ prefix: "st:" })).keys.map(x => x.name).sort().slice(-90);
+        for (const key of keys) days[key.slice(3)] = await env.LR.get(key, "json");
+        return json({ days, feedback: (await env.LR.get("fb:list", "json")) || [] }, 200, { ...cors, "cache-control": "no-store" });
+      }
       if (url.pathname === "/") return json({ name: "LaunchRadar Worker", routes: ["/launches", "/previous", "/push/key", "/push/subscribe", "/push/pending"] }, 200, cors);
       return json({ error: "nicht gefunden" }, 404, cors);
     } catch (e) { return json({ error: String(e.message || e) }, 500, cors); }
@@ -182,5 +210,23 @@ function json(o, status, headers) { return new Response(JSON.stringify(o), { sta
 function corsHeaders(req, env) {
   const o = req.headers.get("origin") || "", allow = (env.ALLOW_ORIGIN || "https://lostfifi.github.io").split(",");
   const ok = allow.includes(o) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
-  return { "access-control-allow-origin": ok ? o : allow[0], "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type", vary: "origin" };
+  return { "access-control-allow-origin": ok ? o : allow[0], "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type, authorization", vary: "origin" };
+}
+
+// ---------- Nutzungsmessung ----------
+// Nur Anfragen von der eigenen Seite zählen (nicht localhost, nicht fremde Seiten)
+function fromSite(req, env) { const o = req.headers.get("origin") || ""; return (env.ALLOW_ORIGIN || "").split(",").includes(o); }
+const FEATS = ["detail", "globe", "map", "list", "stats", "rockets", "layers", "sim", "live", "tele", "pip", "iss", "visible", "moon", "mars", "sub", "remind", "share", "review", "weather", "lang", "install", "feedback"];
+const BUCKET = [10, 30, 120, 300, 900, Infinity];   // <10 s, <30 s, <2 min, <5 min, <15 min, länger
+const bucketOf = s => BUCKET.findIndex(b => s < b);
+// d = { first, tot (Sekunden sichtbar bisher), prev (beim letzten Senden), f: [neu benutzte Funktionen], lang, mob }
+async function countVisit(env, d) {
+  const day = new Date().toISOString().slice(0, 10), key = "st:" + day;
+  const s = (await env.LR.get(key, "json")) || { v: 0, dur: 0, b: [0, 0, 0, 0, 0, 0], f: {}, lang: {}, dev: {} };
+  const tot = Math.max(0, Math.min(6 * 3600, +d.tot || 0)), prev = Math.max(0, Math.min(tot, +d.prev || 0));
+  if (d.first) { s.v++; const L = d.lang === "en" ? "en" : "de", D = d.mob ? "mobile" : "desktop"; s.lang[L] = (s.lang[L] || 0) + 1; s.dev[D] = (s.dev[D] || 0) + 1; }
+  else { const pb = bucketOf(prev); if (s.b[pb] > 0) s.b[pb]--; }   // Besuch wandert in die neue Dauer-Gruppe
+  s.b[bucketOf(tot)]++; s.dur += tot - prev;
+  (Array.isArray(d.f) ? d.f : []).slice(0, 30).forEach(f => { if (FEATS.includes(f)) s.f[f] = (s.f[f] || 0) + 1; });
+  await env.LR.put(key, JSON.stringify(s), { expirationTtl: 400 * 86400 });
 }

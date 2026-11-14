@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>LaunchRadar – Statistik</title>
+<style>
+:root{--bg:#0b0f17;--card:#121a2a;--line:rgba(255,255,255,.09);--tx:#e8eefc;--mute:#8a94a8;--acc:#4ea1ff;--go:#2ecc71;--tbd:#f5b041}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}h1{font-size:22px;margin:0 0 4px}h1 span{color:var(--acc)}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:26px 0 10px}
+.mute{color:var(--mute)}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;color:var(--tx);background:#0f1726;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+button{background:var(--acc);color:#04101f;border:0;font-weight:600;cursor:pointer}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.tile b{display:block;font-size:26px}.tile small{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:140px}.bars div{flex:1;background:var(--acc);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.bars div:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#000;padding:3px 6px;border-radius:5px;font-size:12px;white-space:nowrap}
+.axis{display:flex;justify-content:space-between;color:var(--mute);font-size:12px;margin-top:4px}
+.hb{display:grid;grid-template-columns:150px 1fr 52px;gap:8px;align-items:center;margin:5px 0;font-size:14px}
+.hb i{display:block;height:12px;background:var(--acc);border-radius:6px}.hb span:last-child{text-align:right;color:var(--mute)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.grid2{grid-template-columns:1fr}.hb{grid-template-columns:110px 1fr 44px}}
+.fb{border-top:1px solid var(--line);padding:10px 0}.fb:first-child{border:0}.st{color:var(--tbd);letter-spacing:2px}
+.fb .q{color:var(--mute);font-size:12.5px}.err{color:#ff8a8a}
+</style></head><body><div class="wrap">
+<h1>Launch<span>Radar</span> – Statistik</h1>
+<p class="mute">Nur für dich. Anonyme Tagessummen aus der App + Feedback. Cloudflare Web Analytics zeigt zusätzlich Länder und Quellen.</p>
+<div class="row" id="login"><input id="key" type="password" placeholder="Passwort" autocomplete="current-password"><button onclick="go()">Anzeigen</button><span id="msg" class="err"></span></div>
+<div id="out" style="display:none">
+  <div class="row" style="margin:14px 0"><label class="mute">Zeitraum</label><select id="range" onchange="render()"><option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option></select>
+    <button onclick="go()" style="background:#22304a;color:var(--tx)">Neu laden</button><button onclick="logout()" style="background:#22304a;color:var(--tx)">Abmelden</button></div>
+  <div class="tiles" id="tiles"></div>
+  <h2>Besuche pro Tag</h2><div class="card"><div class="bars" id="bars"></div><div class="axis" id="axis"></div></div>
+  <div class="grid2">
+    <div><h2>Wie lange bleiben die Leute?</h2><div class="card" id="dur"></div></div>
+    <div><h2>Sprache &amp; Gerät</h2><div class="card" id="ld"></div></div>
+  </div>
+  <h2>Beliebteste Funktionen <span class="mute" style="text-transform:none;letter-spacing:0">(Anteil der Besuche)</span></h2><div class="card" id="feat"></div>
+  <h2>Bewertungen</h2><div class="card" id="rate"></div>
+  <h2>Feedback &amp; Wünsche</h2><div class="card" id="fbl"></div>
+</div>
+<script>
+const WORKER="https://launch-radar.lostfifi.workers.dev";
+const FN={detail:"Start-Details geöffnet",globe:"Globus",map:"Karte",list:"Liste",stats:"Statistik",rockets:"Raketen-Datenbank",layers:"Ebenen-Menü",
+  sim:"Flug simulieren",live:"Live mitverfolgt",tele:"Echte Telemetrie",pip:"Mini-Player / Stream",iss:"ISS-Überflüge",visible:"Sichtbarkeit",
+  moon:"Mond-Mission",mars:"Mars-Mission",sub:"Abo angelegt",remind:"Erinnerung gesetzt",share:"Teilen",review:"Rückblick (vergangener Start)",
+  weather:"Wetter",lang:"Sprache gewechselt",install:"App installiert",feedback:"Feedback gesendet"};
+const DUR=["< 10 s","10–30 s","30 s – 2 min","2–5 min","5–15 min","> 15 min"];
+let D=null; const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+try{ $("key").value=localStorage.getItem("lr_stats_key")||""; }catch(e){}
+$("key").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+async function go(){
+  const k=$("key").value.trim(); if(!k) return; $("msg").textContent="Lade …";
+  try{ const r=await fetch(WORKER.replace(/\/$/,"")+"/admin/stats",{headers:{authorization:"Bearer "+k},cache:"no-store"});
+    if(r.status===401){ $("msg").textContent="Passwort falsch"; return; } if(!r.ok) throw new Error("Fehler "+r.status);
+    D=await r.json(); try{ localStorage.setItem("lr_stats_key",k); }catch(e){}
+    $("msg").textContent=""; $("login").style.display="none"; $("out").style.display="block"; render();
+  }catch(e){ $("msg").textContent="Konnte nicht laden: "+e.message; }
+}
+function logout(){ try{ localStorage.removeItem("lr_stats_key"); }catch(e){} location.reload(); }
+const fmtDur=s=>s<60?Math.round(s)+" s":Math.floor(s/60)+" min "+String(Math.round(s%60)).padStart(2,"0")+" s";
+const hbar=(rows,max)=>rows.map(([k,v,t])=>`<div class="hb"><span>${esc(k)}</span><i style="width:${max?Math.max(1,v/max*100):0}%"></i><span>${t??v}</span></div>`).join("")||'<span class="mute">Noch keine Daten</span>';
+function render(){
+  const n=+$("range").value, days=[]; for(let i=n-1;i>=0;i--){ const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10); days.push([d,D.days[d]||null]); }
+  const S={v:0,dur:0,b:[0,0,0,0,0,0],f:{},lang:{},dev:{}};
+  days.forEach(([,x])=>{ if(!x) return; S.v+=x.v; S.dur+=x.dur; x.b.forEach((c,i)=>S.b[i]+=c);
+    for(const g of ["f","lang","dev"]) for(const k in x[g]||{}) S[g][k]=(S[g][k]||0)+x[g][k]; });
+  const since=Date.now()-n*864e5, fb=D.feedback.filter(f=>f.at>=since), rated=fb.filter(f=>f.r), avg=rated.length?rated.reduce((a,f)=>a+f.r,0)/rated.length:0;
+  const engaged=S.b.slice(3).reduce((a,c)=>a+c,0);
+  $("tiles").innerHTML=[[S.v,"Besuche"],[S.v?fmtDur(S.dur/S.v):"–","Ø Zeit pro Besuch"],[S.v?Math.round(engaged/S.v*100)+" %":"–","bleiben länger als 2 min"],
+    [rated.length?avg.toFixed(1)+" / 5":"–",`Ø Bewertung (${rated.length})`],[fb.filter(f=>f.wish).length,"Funktionswünsche"]].map(([b,s])=>`<div class="tile"><b>${b}</b><small>${s}</small></div>`).join("");
+  const mx=Math.max(1,...days.map(([,x])=>x?.v||0));
+  $("bars").innerHTML=days.map(([d,x])=>`<div style="height:${(x?.v||0)/mx*100}%" data-t="${d.slice(5).split("-").reverse().join(".")}: ${x?.v||0} Besuche${x&&x.v?", Ø "+fmtDur(x.dur/x.v):""}"></div>`).join("");
+  $("axis").innerHTML=`<span>${days[0][0].slice(5).split("-").reverse().join(".")}</span><span>heute</span>`;
+  const tb=S.b.reduce((a,c)=>a+c,0), bm=Math.max(...S.b);
+  $("dur").innerHTML=hbar(S.b.map((c,i)=>[DUR[i],c,tb?Math.round(c/tb*100)+" %":"0"]),bm);
+  const lm=Math.max(1,...Object.values(S.lang),...Object.values(S.dev));
+  $("ld").innerHTML=hbar([["Englisch",S.lang.en||0],["Deutsch",S.lang.de||0],["Handy",S.dev.mobile||0],["Computer",S.dev.desktop||0]].map(([k,v])=>[k,v,S.v?Math.round(v/S.v*100)+" %":"0"]),lm);
+  const fr=Object.entries(S.f).sort((a,b)=>b[1]-a[1]);
+  $("feat").innerHTML=hbar(fr.map(([k,v])=>[FN[k]||k,v,S.v?Math.round(v/S.v*100)+" %":v]),fr[0]?.[1]||1);
+  const rc=[5,4,3,2,1].map(s=>[s+" Sterne",rated.filter(f=>f.r===s).length]);
+  $("rate").innerHTML=hbar(rc,Math.max(1,...rc.map(r=>r[1])));
+  $("fbl").innerHTML=fb.length?fb.map(f=>`<div class="fb"><div class="row" style="gap:8px"><span class="st">${f.r?"★".repeat(f.r)+"☆".repeat(5-f.r):""}</span>
+    <span class="mute" style="font-size:12.5px">${new Date(f.at).toLocaleString("de-CH",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})} · ${f.lang==="en"?"EN":"DE"} · ${f.mob?"Handy":"Computer"}</span></div>
+    ${f.wish?`<div><span class="q">Wunsch:</span> ${esc(f.wish)}</div>`:""}${f.c?`<div><span class="q">Kommentar:</span> ${esc(f.c)}</div>`:""}</div>`).join(""):'<span class="mute">Noch kein Feedback in diesem Zeitraum</span>';
+}
+if($("key").value) go();
+</script></div></body></html>
