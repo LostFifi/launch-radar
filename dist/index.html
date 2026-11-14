@@ -3058,7 +3058,10 @@ function applyFilter(list){ return list.filter(matchFilter); }
 var LIST_TAB="up";
 async function showStartList(tab){
   LIST_TAB=tab=tab||LIST_TAB;
-  const all=tab==="past"?await loadPast():launches, list=applyFilter(all).sort((a,b)=>tab==="past"?new Date(b.net)-new Date(a.net):new Date(a.net)-new Date(b.net));
+  // Die API führt Starts noch einige Stunden als „kommend“, auch wenn sie schon erfolgreich waren → abgeschlossene
+  // gehören in „Vergangene“ (dort ergänzt, falls die Vergangenheits-Liste sie noch nicht hat)
+  const done=launches.filter(l=>launchState(l)==="done");
+  const all=tab==="past"?(p=>[...done.filter(d=>!p.some(x=>x.id===d.id)),...p])(await loadPast()):launches.filter(l=>launchState(l)!=="done"), list=applyFilter(all).sort((a,b)=>tab==="past"?new Date(b.net)-new Date(a.net):new Date(a.net)-new Date(b.net));
   showList(list,tab==="past"?"Vergangene Starts":"Kommende Starts",tab);
   // Such-/Filterleiste (Optionen aus allen Starts dieser Liste, damit man sich nicht „wegfiltern“ kann)
   const opts=(f,cur)=>[...new Set(all.map(f))].sort((a,b)=>a.localeCompare(b,"de")).map(v=>`<option ${v===cur?"selected":""}>${esc(v)}</option>`).join("");
