@@ -83,7 +83,7 @@ var I18N_EN = {
   "Booster {0}":"Booster {0}","Booster-Steckbrief {0}":"Booster profile {0}","Ship-Steckbrief {0}":"Ship profile {0}","Raumschiff-Steckbrief {0}":"Spacecraft profile {0}",
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
-  "Landung fehlgeschlagen":"Landing failed","Landung abgebrochen":"Landing aborted",
+  "Landung fehlgeschlagen":"Landing failed","Landung abgebrochen":"Landing aborted","Noch im Flug":"Still in flight",
   "Anbieter":"Providers","Keine":"None","Alle ausser":"All except","SpaceX (Falcon)":"SpaceX (Falcon)","Europa":"Europe","Russland":"Russia","Indien":"India","Andere":"Others",
   "Land, Betreiber und Suche: in der":"Country, operator and search: in the","Liste":"List",
   "Bildergalerie":"Photo gallery","Lade Bilder …":"Loading photos …","Keine Bilder gefunden":"No photos found","Kein Bild":"No image","Bild":"Photo","Quelle":"Source",

@@ -1,4 +1,10 @@
 // ===================== Darstellung =====================
+// Status-Etikett: „Payload Deployed“ ist ein Erfolg → grün; fliegt noch → zusätzlich „Noch im Flug“
+function statusBadge(l,long){
+  const a=(l.status?.abbrev||"").toLowerCase(), dep=/deploy/.test(((l.status?.name||"")+" "+a).toLowerCase()), st=launchState(l);
+  let h=`<span class="badge" style="background:${dep?"var(--go)":statusColor(l)};color:#000">${esc((long?l.status?.name:l.status?.abbrev)||"")}</span>`;
+  if(st==="flying" && !/in flight/.test(a)) h+=` <span class="badge fly">Noch im Flug</span>`;
+  return h; }
 function statusColor(l){
   const a=(l.status?.abbrev||"").toLowerCase();
   const st=launchState(l);
@@ -75,7 +81,7 @@ function showList(list,title,tab,groups){
   const P=document.getElementById("panel"); P.classList.remove("wide");
   const item=(l,i)=>`<div class="item" data-i="${i}">${imgTag(l,true)}<div><b>${esc(l.name)}</b><br>
       <small>${fmtDate(l.net)} · ${esc(groups?padShort(l.pad?.name):l.pad?.location?.name||"")}</small><br>
-      <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.abbrev||"")}</span>
+      ${statusBadge(l)}
       ${l.webcast_live&&launchState(l)!=="done"?'<span class="badge" style="background:var(--live)">● LIVE</span>':""}
       ${postponedPill(l)} ${landIcons(l)} ${REM[l.id]?ICON.bell:""}</div></div>`;
   let body;

@@ -10,7 +10,7 @@ function select(l){
   const yt=vids.map(v=>ytId(v.url)).find(Boolean);
 
   let html=`<div class="hd"><h2>${esc(l.name)}<br>
-     <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.name||"")}</span>
+     ${statusBadge(l,true)}
      ${l.webcast_live&&launchState(l)!=="done"?' <span class="badge" style="background:var(--live)">● LIVE</span>':""}</h2>
      <button class="x" onclick="closeP()">×</button></div>`;
 
