@@ -12,7 +12,7 @@ function heroUpdate(n){
   document.getElementById("next").style.display=show?"none":"";
   if(!show){ if(el) el.style.display="none"; return; }
   if(!el){ el=document.createElement("div"); el.id="hero"; document.body.appendChild(el); }
-  el.style.display="";
+  el.style.display=""; el.style.top=innerWidth>=800?(document.querySelector("header").offsetHeight+6)+"px":"";
   const st=launchState(n), past=new Date(n.net)<Date.now();
   if(HERO.id!==n.id){ HERO.id=n.id;
     const name=(n.name.split("|")[1]||n.name).trim(), rocket=n.rocket?.configuration?.name||n.name.split("|")[0].trim();

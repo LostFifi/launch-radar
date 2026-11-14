@@ -287,4 +287,4 @@ button.btn{border:0;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
 #hero .hb{display:flex;gap:8px;margin-top:12px}
 #hero .hb .btn{margin:0;flex:1;padding:10px 12px;font-size:14px}
 @media (max-width:799px){#hero{left:10px;right:10px;width:auto;bottom:58px;padding:12px 14px 12px}#hero .hcd{font-size:28px;margin-top:8px}#hero .th{width:46px;height:46px}#hero .hn{font-size:17px}}
-@media (min-width:1100px){#hero{bottom:14px}}
+@media (min-width:800px){#hero{left:auto;right:12px;bottom:auto;top:66px}}
