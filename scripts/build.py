@@ -130,7 +130,7 @@ h=h.replace('/*CONFIG*/',J({k:CONFIG.get(k) for k in ('worker','vapidPublic')}))
 # Besucherzählung (Cloudflare Web Analytics, ohne Cookies) – nur wenn ein Token in src/config.json steht
 TOK=(CONFIG.get('analyticsToken') or '').strip()
 # Bestätigung für Google Search Console / Bing Webmaster Tools (Codes aus src/config.json)
-VER=''.join(f'<meta name="{n}" content="{CONFIG.get(k).strip()}">' for k,n in (('googleVerify','google-site-verification'),('bingVerify','msvalidate.01')) if (CONFIG.get(k) or '').strip())
+VER=''.join(f'<meta name="{n}" content="{v.strip()}">' for k,n in (('googleVerify','google-site-verification'),('bingVerify','msvalidate.01')) for v in (CONFIG.get(k) or '').split(',') if v.strip())   # mehrere Codes kommagetrennt
 h=h.replace('<!--ANALYTICS-->','<!--ANALYTICS-->'+VER)
 h=h.replace('<!--ANALYTICS-->',("<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='{\"token\": \""+TOK+"\"}'></script>") if TOK else '')
 # Zwei Varianten:
