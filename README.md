@@ -8,7 +8,7 @@ Der Build erzeugt zwei Varianten:
 
 Online lädt die App alles live nach.
 
-**Live:** https://lostfifi.github.io/launch-radar/ – GitHub baut bei jedem Push und jede Nacht mit frischen Daten neu (`.github/workflows/pages.yml`, inkl. `npm test`).
+**Live:** https://launch-radar.com/ (eigene Domain bei Cloudflare; lostfifi.github.io/launch-radar leitet weiter) – GitHub baut bei jedem Push und jede Nacht mit frischen Daten neu (`.github/workflows/pages.yml`, inkl. `npm test`).
 
 ---
 

@@ -10,7 +10,7 @@ const { privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
 const jwk = privateKey.export({ format: "jwk" });
 const pub = Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x, "base64url"), Buffer.from(jwk.y, "base64url")]).toString("base64url");
 const store = new Map();
-const env = { VAPID_PUBLIC: pub, VAPID_PRIVATE_JWK: JSON.stringify(jwk), ALLOW_ORIGIN: "https://lostfifi.github.io",
+const env = { VAPID_PUBLIC: pub, VAPID_PRIVATE_JWK: JSON.stringify(jwk), ALLOW_ORIGIN: "https://launch-radar.com,https://www.launch-radar.com,https://lostfifi.github.io",
   LR: { async get(k, t) { const v = store.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; },
         async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); },
         async list({ prefix }) { return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; } } };
@@ -29,11 +29,11 @@ globalThis.fetch = async (url, o = {}) => {
   if (url.startsWith("https://push.example")) { pushes.push(o.headers.Authorization); return new Response(null, { status: 201 }); }
   return new Response("?", { status: 404 });
 };
-const call = (path, init) => worker.fetch(new Request("https://w.example" + path, { headers: { origin: "https://lostfifi.github.io" }, ...init }), env, {});
+const call = (path, init) => worker.fetch(new Request("https://w.example" + path, { headers: { origin: "https://launch-radar.com" }, ...init }), env, {});
 
 let r = await call("/launches"); let j = await r.json();
 check("/launches lädt und speichert", r.status === 200 && j.results.length === 1);
-check("CORS für GitHub Pages", r.headers.get("access-control-allow-origin") === "https://lostfifi.github.io");
+check("CORS für launch-radar.com", r.headers.get("access-control-allow-origin") === "https://launch-radar.com");
 r = await call("/push/subscribe", { method: "POST", body: JSON.stringify({ sub: { endpoint: "https://push.example/abc", keys: {} }, rem: { abc: { net: "2020-01-01T00:00:00Z", name: "Falcon 9 | Test" } } }) });
 check("/push/subscribe", r.status === 200);
 await worker.scheduled({ scheduledTime: Date.now() }, env, {});
@@ -70,7 +70,7 @@ check("kein doppelter Push", pushes.length === 1);
 store.clear(); let llCalls = 0;
 globalThis.fetch = async (url) => { url = String(url);
   if (url.includes("thespacedevs")) { llCalls++; return new Response('{"detail":"Request was throttled. Expected available in 600 seconds."}', { status: 429 }); }
-  if (url.includes("github.io")) return new Response(JSON.stringify({ ts: Date.now() - 3600e3, results: [{ id: "g1", name: "GitHub | Reserve", net: soon }] }));
+  if (url.includes("launch-radar.com/data/")) return new Response(JSON.stringify({ ts: Date.now() - 3600e3, results: [{ id: "g1", name: "GitHub | Reserve", net: soon }] }));
   return new Response("?", { status: 404 }); };
 r = await call("/launches"); j = await r.json();
 check("429 → GitHub-Schnappschuss als Reserve", r.status === 200 && j.results[0].id === "g1" && j.src === "github");

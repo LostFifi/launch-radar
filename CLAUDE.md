@@ -31,4 +31,4 @@ Projekt von Fionn: **LaunchRadar**, Raketenstart-Tracker im Flightradar-Stil. Au
 - `notify()`, `syncRem()`, `pwaMenuHtml()` (285) – PWA; Service Worker in `src/pwa/sw.js` (kein localStorage dort, Erinnerungen via Cache `lr-data`)
 
 ## Offene Wünsche
-Siehe „Ideen / nächste Schritte“ im README. Live: https://lostfifi.github.io/launch-radar/ (Push auf master veröffentlicht automatisch).
+Siehe „Ideen / nächste Schritte“ im README. Live: https://launch-radar.com/ (früher lostfifi.github.io/launch-radar, leitet weiter) (Push auf master veröffentlicht automatisch).

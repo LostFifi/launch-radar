@@ -25,7 +25,7 @@ const { startServer, launchBrowser } = require('./i18n-views.js');
     o.innerHTML = `<div style="font:800 64px system-ui,Segoe UI,sans-serif;letter-spacing:.5px;color:#e6ebf5">Launch<span style="color:#4ea1ff">Radar</span></div>
       <div style="font:600 28px system-ui,Segoe UI,sans-serif;color:#e6ebf5;margin-top:6px">Track rocket launches live</div>
       <div style="font:400 21px system-ui,Segoe UI,sans-serif;color:#8a96ad;margin-top:10px;max-width:520px;line-height:1.35">Map &amp; 3D globe · ascent profiles · real telemetry · ISS passes · Moon &amp; Mars</div>
-      <div style="font:600 18px system-ui,Segoe UI,sans-serif;color:#4ea1ff;margin-top:18px">lostfifi.github.io/launch-radar</div>`;
+      <div style="font:600 18px system-ui,Segoe UI,sans-serif;color:#4ea1ff;margin-top:18px">launch-radar.com</div>`;
     Object.assign(o.style, { position: 'absolute', left: '0', top: '62px', bottom: '0', zIndex: 5000, padding: '0 48px', width: '720px',
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
       background: 'linear-gradient(90deg,#0b0f17f5 0%,#0b0f17e6 55%,#0b0f1700 100%)' });

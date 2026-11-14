@@ -9,7 +9,7 @@
 const LL = "https://ll.thespacedevs.com/2.3.0";
 const UPCOMING = `${LL}/launches/upcoming/?limit=40&mode=detailed&hide_recent_previous=false`;
 const PREVIOUS = `${LL}/launches/previous/?mode=detailed&limit=30`;
-const SUBJECT = "https://lostfifi.github.io/launch-radar/";   // VAPID-Kontakt (öffentliche Seite statt E-Mail)
+const SUBJECT = "https://launch-radar.com/";   // VAPID-Kontakt (öffentliche Seite statt E-Mail)
 
 export default {
   async fetch(req, env, ctx) {
@@ -60,7 +60,7 @@ export default {
 };
 
 // Reserve: GitHub baut die App bei jedem Push und jede Nacht mit frischen Daten und veröffentlicht sie auch als Datei
-const SNAPSHOT_URL = "https://lostfifi.github.io/launch-radar/data/upcoming.json";
+const SNAPSHOT_URL = "https://launch-radar.com/data/upcoming.json";
 async function refresh(env, key) {
   const ok = await refreshLL(env, key);
   if (!ok && key === "launches") {                     // API gesperrt → GitHub-Schnappschuss, falls neuer als unsere Daten
@@ -76,7 +76,7 @@ async function refreshLL(env, key) {
   if (prev.retryUntil && now < prev.retryUntil) return false;   // gesperrt: nicht unnötig Kontingent verbrauchen
   let st = 0, info = "";
   try {
-    const r = await fetch(key === "previous" ? PREVIOUS : UPCOMING, { headers: { "user-agent": "LaunchRadar-Worker (+https://lostfifi.github.io/launch-radar/)", accept: "application/json" } });
+    const r = await fetch(key === "previous" ? PREVIOUS : UPCOMING, { headers: { "user-agent": "LaunchRadar-Worker (+https://launch-radar.com/)", accept: "application/json" } });
     st = r.status;
     if (r.ok) {
       const j = await r.json();

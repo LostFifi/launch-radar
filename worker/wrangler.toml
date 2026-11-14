@@ -13,4 +13,4 @@ binding = "LR"
 id = "557bd845c2704bf094e69c259710b217"
 
 [vars]
-ALLOW_ORIGIN = "https://lostfifi.github.io"
+ALLOW_ORIGIN = "https://launch-radar.com,https://www.launch-radar.com,https://lostfifi.github.io"
