@@ -72,6 +72,7 @@ export default {
         if (!k || got !== k) return json({ error: "Passwort falsch" }, 401, cors);
         const days = {}, keys = (await env.LR.list({ prefix: "st:" })).keys.map(x => x.name).sort().slice(-90);
         for (const key of keys) days[key.slice(3)] = await env.LR.get(key, "json");
+        for (let i = 0; i < 5; i++) { const d = dayStr(Date.now() - i * 864e5); if (!days[d] || i === 0) { const r = await rollup(env, d); if (r.v || !days[d]) days[d] = r; } }   // heute immer live
         return json({ days, feedback: (await env.LR.get("fb:list", "json")) || [] }, 200, { ...cors, "cache-control": "no-store" });
       }
       if (url.pathname === "/") return json({ name: "LaunchRadar Worker", routes: ["/launches", "/previous", "/push/key", "/push/subscribe", "/push/pending"] }, 200, cors);
@@ -82,6 +83,7 @@ export default {
   async scheduled(event, env, ctx) {
     const min = new Date(event.scheduledTime).getUTCMinutes();
     await refresh(env, "launches");
+    { const y = dayStr(event.scheduledTime - 864e5); if (!(await env.LR.get("st:" + y))) { const r = await rollup(env, y); await env.LR.put("st:" + y, JSON.stringify(r), { expirationTtl: 400 * 86400 }); } }
     if (min < 5) await refresh(env, "previous");      // stündlich
     await sendReminders(env);
   }
@@ -220,13 +222,23 @@ const FEATS = ["detail", "globe", "map", "list", "stats", "rockets", "layers", "
 const BUCKET = [10, 30, 120, 300, 900, Infinity];   // <10 s, <30 s, <2 min, <5 min, <15 min, länger
 const bucketOf = s => BUCKET.findIndex(b => s < b);
 // d = { first, tot (Sekunden sichtbar bisher), prev (beim letzten Senden), f: [neu benutzte Funktionen], lang, mob }
+// Jede Meldung = eigener Schlüssel mit den Werten in den Metadaten → keine Lese-Ändern-Schreiben-Konflikte
+// (KV ist nicht sofort konsistent). vid = zufällige Kennung pro Seitenaufruf (nirgends gespeichert, nur zum Zusammenfassen).
 async function countVisit(env, d) {
-  const day = new Date().toISOString().slice(0, 10), key = "st:" + day;
-  const s = (await env.LR.get(key, "json")) || { v: 0, dur: 0, b: [0, 0, 0, 0, 0, 0], f: {}, lang: {}, dev: {} };
-  const tot = Math.max(0, Math.min(6 * 3600, +d.tot || 0)), prev = Math.max(0, Math.min(tot, +d.prev || 0));
-  if (d.first) { s.v++; const L = d.lang === "en" ? "en" : "de", D = d.mob ? "mobile" : "desktop"; s.lang[L] = (s.lang[L] || 0) + 1; s.dev[D] = (s.dev[D] || 0) + 1; }
-  else { const pb = bucketOf(prev); if (s.b[pb] > 0) s.b[pb]--; }   // Besuch wandert in die neue Dauer-Gruppe
-  s.b[bucketOf(tot)]++; s.dur += tot - prev;
-  (Array.isArray(d.f) ? d.f : []).slice(0, 30).forEach(f => { if (FEATS.includes(f)) s.f[f] = (s.f[f] || 0) + 1; });
-  await env.LR.put(key, JSON.stringify(s), { expirationTtl: 400 * 86400 });
+  const vid = String(d.vid || "").replace(/[^a-z0-9]/gi, "").slice(0, 16); if (vid.length < 6) return;
+  const meta = { t: Math.max(0, Math.min(6 * 3600, Math.round(+d.tot || 0))), f: (Array.isArray(d.f) ? d.f : []).filter(f => FEATS.includes(f)).slice(0, 25),
+    l: d.lang === "en" ? "en" : "de", m: d.mob ? 1 : 0 };
+  await env.LR.put(`ev:${dayStr(Date.now())}:${vid}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, "", { metadata: meta, expirationTtl: 6 * 86400 });
+}
+const dayStr = t => new Date(t).toISOString().slice(0, 10);
+// Alle Meldungen eines Tages → Tagessumme (pro Besuch: längste Zeit, alle benutzten Funktionen)
+async function rollup(env, day) {
+  const V = new Map(); let cursor;
+  do { const r = await env.LR.list({ prefix: `ev:${day}:`, cursor }); cursor = r.list_complete ? null : r.cursor;
+    for (const k of r.keys) { const vid = k.name.split(":")[2], m = k.metadata || {}, v = V.get(vid) || { t: 0, f: new Set(), l: m.l, m: m.m };
+      v.t = Math.max(v.t, +m.t || 0); (m.f || []).forEach(f => v.f.add(f)); V.set(vid, v); } } while (cursor);
+  const s = { v: 0, dur: 0, b: [0, 0, 0, 0, 0, 0], f: {}, lang: {}, dev: {} };
+  for (const v of V.values()) { if (v.t < 3) continue; s.v++; s.dur += v.t; s.b[bucketOf(v.t)]++;
+    v.f.forEach(f => s.f[f] = (s.f[f] || 0) + 1); const L = v.l === "en" ? "en" : "de", D = v.m ? "mobile" : "desktop"; s.lang[L] = (s.lang[L] || 0) + 1; s.dev[D] = (s.dev[D] || 0) + 1; }
+  return s;
 }

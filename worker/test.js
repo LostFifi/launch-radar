@@ -9,11 +9,11 @@ let ok = 0, bad = 0; const check = (n, c, i = "") => { console.log(`${c ? "✓" 
 const { privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
 const jwk = privateKey.export({ format: "jwk" });
 const pub = Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x, "base64url"), Buffer.from(jwk.y, "base64url")]).toString("base64url");
-const store = new Map();
+const store = new Map(), metas = new Map();
 const env = { VAPID_PUBLIC: pub, VAPID_PRIVATE_JWK: JSON.stringify(jwk), ALLOW_ORIGIN: "https://launch-radar.com,https://www.launch-radar.com,https://lostfifi.github.io",
   LR: { async get(k, t) { const v = store.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; },
-        async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); },
-        async list({ prefix }) { return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; } } };
+        async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
+        async list({ prefix }) { return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name, metadata: metas.get(name) })), list_complete: true }; } } };
 
 // 1) VAPID-JWT ist gültig signiert (ES256)
 const jwt = await vapidJwt("https://fcm.googleapis.com", env), [h, p, s] = jwt.split(".");
@@ -82,19 +82,22 @@ check("/status zeigt Sperre", j.launches.status === 429 && j.retryUntil > Date.n
 // 4) Nutzungsmessung + Feedback + Statistik
 { env.STATS_KEY = "geheim\n";
   const post = (path, body, origin = "https://launch-radar.com") => worker.fetch(new Request("https://w.example" + path, { method: "POST", headers: { origin, "content-type": "text/plain" }, body: JSON.stringify(body) }), env, {});
-  await post("/t", { first: true, tot: 20, prev: 0, f: ["globe", "detail", "boese"], lang: "en", mob: true });
-  await post("/t", { first: false, tot: 400, prev: 20, f: ["tele"] });   // gleicher Besuch, später versteckt
-  await post("/t", { first: true, tot: 5, prev: 0, f: [], lang: "de" });
-  const fremd = await post("/t", { first: true, tot: 5 }, "https://boese.example");
+  // gleichzeitig abgeschickt (wie echte Beacons) – darf nichts doppelt oder verloren zählen
+  await Promise.all([post("/t", { vid: "aaaaaa11", tot: 20, f: ["globe", "detail", "boese"], lang: "en", mob: true }),
+    post("/t", { vid: "aaaaaa11", tot: 400, f: ["tele"], lang: "en", mob: true }),   // gleicher Besuch, später versteckt
+    post("/t", { vid: "bbbbbb22", tot: 5, f: [], lang: "de" }), post("/t", { vid: "cccccc33", tot: 1, f: [] })]);   // < 3 s zählt nicht
+  const fremd = await post("/t", { vid: "dddddd44", tot: 5 }, "https://boese.example");
   check("Messung nur von der eigenen Seite", fremd.status === 403);
   const fb = await post("/feedback", { r: 5, wish: "Mehr Raketen", c: "Super", lang: "de" });
   const fb2 = await post("/feedback", { r: 4 });
   check("Feedback gespeichert, Spam-Schutz", fb.status === 200 && fb2.status === 429);
   const no = await call("/admin/stats");
   const st = await (await worker.fetch(new Request("https://w.example/admin/stats", { headers: { origin: "https://launch-radar.com", authorization: "Bearer geheim" } }), env, {})).json();
-  const d = Object.values(st.days)[0];
+  const d = st.days[new Date().toISOString().slice(0, 10)];
   check("Statistik nur mit Passwort", no.status === 401 && !!d);
-  check("Besuche, Dauer-Gruppen, Funktionen gezählt", d.v === 2 && d.dur === 405 && d.b.join() === "1,0,0,0,1,0" && d.f.globe === 1 && d.f.tele === 1 && !d.f.boese && d.lang.en === 1 && d.dev.mobile === 1, JSON.stringify(d));
+  check("Besuche, Dauer-Gruppen, Funktionen gezählt", d.v === 2 && d.dur === 405 && d.b.join() === "1,0,0,0,1,0" && d.dev.desktop === 1 && d.f.globe === 1 && d.f.tele === 1 && !d.f.boese && d.lang.en === 1 && d.dev.mobile === 1, JSON.stringify(d));
+  await worker.scheduled({ scheduledTime: Date.now() + 864e5 }, env, {});   // nächster Tag: Cron fasst gestern zusammen
+  check("Cron fasst den Vortag zusammen", JSON.parse(store.get("st:" + new Date().toISOString().slice(0, 10)) || "{}").v === 2);
   check("Feedback in der Statistik", st.feedback.length === 1 && st.feedback[0].wish === "Mehr Raketen" && st.feedback[0].r === 5);
 }
 console.log(bad ? `\n${bad} Fehler` : "\nAlles in Ordnung"); process.exit(bad ? 1 : 0);
