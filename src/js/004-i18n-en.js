@@ -5,7 +5,7 @@ var I18N_EN = {
   // ---------- Kopfzeile, Allgemeines ----------
   "Launch Radar – Raketenstarts live":"Launch Radar – live rocket launches",
   "Alle":"All","Liste":"List","Globus":"Globe","Karte":"Map","Ebenen":"Layers","Statistik":"Statistics","Raketen":"Rockets",
-  "Nächster:":"Next:","Keine Starts":"No launches","Lade Starts…":"Loading launches…","Schliessen":"Close","Grösse":"Size",
+  "Nächster:":"Next:","Nächster Start":"Next launch","Gerade gestartet":"Just launched","Verfolgen":"Follow","Keine Starts":"No launches","Lade Starts…":"Loading launches…","Schliessen":"Close","Grösse":"Size",
   "Ein-/ausklappen":"Collapse/expand","Teilen":"Share","löschen":"delete","ändern":"change","nein":"no","Jetzt":"Now",
   "Zoom in":"Zoom in","Zoom out":"Zoom out","Sprache":"Language","Aktiv":"Active","Inaktiv":"Inactive","aktiv":"active","inaktiv":"inactive",
   "Erfolg":"Success","Fehlschläge":"Failures","Fehlstarts":"Failures","Andere":"Other","Name":"Name","Status":"Status","Typ":"Type",

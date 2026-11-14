@@ -69,6 +69,7 @@ function showSite(s){
 function updateNext(){
   const v=visible().filter(l=>new Date(l.net)>Date.now()-3600e3).sort((a,b)=>new Date(a.net)-new Date(b.net));
   const n=v[0]; const el=document.getElementById("next");
+  if(typeof heroUpdate==="function") heroUpdate(n);
   if(!n){el.textContent="Keine Starts";return;}
   el.innerHTML=`Nächster: <b>${esc(n.name.split("|")[1]||n.name)}</b> · ${launchState(n)==="unconfirmed"?'<span style="color:var(--tbd)">Startzeit vorbei, nicht bestätigt</span>':countdown(n.net)}`;
   el.onclick=()=>select(n);

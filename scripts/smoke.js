@@ -122,6 +122,11 @@ async function launchBrowser() {
         live: useAllowed({ host: new URL(CONFIG.siteUrl).host }, {}), dnt: useAllowed({ host: new URL(CONFIG.siteUrl).host }, { doNotTrack: '1' }) }; });
     const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
       const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length, tip = [...document.querySelectorAll('#tlList li')].every(li => /\d{2}:\d{2}/.test(li.dataset.tip || '')); return { n: ev.length, tl, tip, pay: ev.some(e => e.kind === 'pay') }; });
+    const hero = await page.evaluate(async () => { closeP(); updateNext(); const h = document.getElementById('hero'); if (!h) return { e: 'keine Startkarte' };
+      const r = { vis: h.style.display !== 'none', cd: /T[−+] /.test(document.getElementById('heroCd').textContent), chip: document.getElementById('next').style.display === 'none' };
+      document.getElementById('heroGo').click(); updateNext(); r.go = !!selected && h.style.display === 'none'; closeP(); updateNext(); r.back = h.style.display !== 'none';
+      heroClose(); r.x = h.style.display === 'none' && document.getElementById('next').style.display === ''; HERO.off = false; return r; });
+    check('[Start] Startkarte: Countdown, Verfolgen, Schliessen', hero.vis && hero.cd && hero.chip && hero.go && hero.back && hero.x, JSON.stringify(hero));
     const shr = await page.evaluate(async () => { const all = (await (await fetch('data/upcoming.json')).json()).results, l = all.find(x => typeof SHARE_IDS !== 'undefined' && SHARE_IDS.includes(x.id.slice(0, 6))); if (!l) return { u: 'keine SHARE_IDS' };
       const u = launchUrl(l), r = await fetch(u), t = await r.text(); return { u, ok: /\/s\/[0-9a-f]{6}\.html$/.test(u) && r.ok && /og:image" content="[^"]*og\/[0-9a-f]{6}\.jpg/.test(t) && t.includes('#start=' + l.id) }; });
     check('[Teilen] kurzer Link mit eigenem Vorschaubild', shr.ok, shr.u);
