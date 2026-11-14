@@ -24,11 +24,13 @@ function estimateProfile(l){
   else inc=Math.max(Math.abs(lat)+2,45);
 
   if(vandenberg) south=true;
+  const mp=missionProfile(l); if(mp?.inc) inc=mp.inc;   // bekanntes Missionsprofil (069)
   if(inc>80 && lat>10 && !vandenberg) south=true;      // Polar/SSO ab Florida, China, Indien, Norwegen → Richtung Süden (Kourou fliegt nach Norden)
   if(inc<Math.abs(lat)) inc=Math.abs(lat)+0.05;         // physikalisch nicht erreichbar → nach Osten
 
   const desc=l.mission?.description||"";
   let orbits=1, P=5400;
+  if(mp?.alt){ const a=R_E+mp.alt; P=2*Math.PI*Math.sqrt(a**3/398600.4418); }
   if(rocket.includes("starship") && !sub){
     const mo=desc.match(/(\d+)\s+orbits?/i); orbits = mo ? +mo[1] : 1;
     const mh=desc.match(/(\d{3,4})\s*km/i); if(mh){ const a=R_E+ +mh[1]; P=2*Math.PI*Math.sqrt(a**3/398600.4418); }
@@ -41,6 +43,9 @@ function estimateProfile(l){
     const low=["LEO","SSO","PO","VLEO",""].includes(orb) || /iss|crew|crs|dragon/.test(name);
     const esc_=["TLI","LO","HCO","SO","L1","L2","MARS","HELIOCENTRIC"].some(x=>orb.startsWith(x));
     if(esc_) stage={mode:"escape",label:"Oberstufe verlässt mit der Nutzlast die Erdumlaufbahn"};
+    else if(mp?.deorbit){ const Td=mp.deorbit, Tre=mp.reentry||Td+20*60;
+      stage={mode:"deorbit",Td,Tre,src:mp.src,label:"Oberstufe: Deorbit-Zündung, dann Wiedereintritt und Verglühen über dem Ozean"};
+      tMax=Math.max(tMax,Tre+10*60); }
     else if(spx && low){
       const tdl=(()=>{ const e=(l.timeline||[]).find(t=>/deorbit burn start/i.test(t.type?.abbrev||"")); return e?relSec(e.relative_time):null; })();
       const Td=tdl ?? ((pp?pp.t1:3700)+35*60), Tre=Td+15*60;

@@ -12,12 +12,14 @@ function payloadPlan(l){
   while((m=re.exec(desc))){ const k=+m[1], before=desc.slice(Math.max(0,m.index-70),m.index).toLowerCase();
     if(k>=1 && k<=60 && !/constellation|total|consist|of up to/.test(before)){ n=k; break; } }
   const starlink=/starlink/i.test(name);
+  const mp=missionProfile(l); if(mp?.n) n=mp.n;
   if(n==null) n = starlink ? 24 : 1;
   const label = starlink ? "Starlink" : /dragon|crew|crs/i.test(name) ? "Dragon" : (l.mission?.name||"Nutzlast");
   // Zeitpunkte aus der Timeline
   const f=rx=>{ const e=tl.find(t=>rx.test(t.type?.abbrev||t.type?.description||"")); return e?relSec(e.relative_time):null; };
   let t0=f(/payload deployment sequence start|deploy.*start/i), t1=f(/payload deployment sequence end|deploy.*end/i), src="laut offizieller Timeline";
   if(t0==null){ const s=f(/payload separation|payload deploy|starlink deploy|spacecraft separation|dragon separation|satellite deploy/i); if(s!=null){ t0=s; t1=s; } }
+  if(t0==null && mp?.deploy){ [t0,t1]=mp.deploy; src=mp.src; }
   if(t0==null){ t0 = starlink ? 3700 : 3000; t1=t0; src="geschätzt"; }
   if(t1==null||t1<t0) t1=t0;
   const times=Array.from({length:n},(_,i)=>n>1? t0+(t1-t0)*i/(n-1) : t0);

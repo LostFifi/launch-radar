@@ -855,6 +855,11 @@ var I18N_EN = {
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
   "Landung fehlgeschlagen":"Landing failed","Landung abgebrochen":"Landing aborted",
+  "Erste Satelliten-Trennung":"First satellite separation","Letzte Trennung (21 Trennvorgänge)":"Last separation (21 separation events)",
+  "Centaur: 3. Zündung (Deorbit)":"Centaur: 3rd burn (deorbit)","Centaur: Wiedereintritt über dem Südpazifik (Zeit geschätzt)":"Centaur: reentry over the South Pacific (time estimated)",
+  "Aus dem Missionsprofil":"From the mission profile","Zeiten ungefähr":"times approximate",
+  "laut ULA-Missionsprofil (NASASpaceFlight)":"per ULA mission profile (NASASpaceFlight)","Bahnebene der Konstellation":"constellation orbital plane",
+  "Oberstufe: Deorbit-Zündung, dann Wiedereintritt und Verglühen über dem Ozean":"Upper stage: deorbit burn, then reentry and burn-up over the ocean",
   "Wie gefällt dir LaunchRadar?":"How do you like LaunchRadar?","Welche Funktion wünschst du dir?":"Which feature would you like to see?",
   "z.B. Starts einer bestimmten Rakete, Benachrichtigung für …":"e.g. launches of a specific rocket, notifications for …",
   "Sonst noch etwas? (optional)":"Anything else? (optional)","Lob, Kritik, Fehler …":"Praise, criticism, bugs …","Senden":"Send","Später":"Later",
@@ -1497,12 +1502,15 @@ function select(l){
       `<div class="mute">Noch keine COSPAR-Kennung vergeben – Bahndaten folgen meist 1–3 Tage nach dem Start.</div>`}<div id="objRes"></div></div>`;
   }
   // Timeline
-  if(l.timeline?.length){
+  const mtl=l.timeline?.length?[]:missionTimeline(l);   // keine API-Timeline → bekanntes Missionsprofil (069)
+  if(l.timeline?.length||mtl.length){
     // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
     const t0=netOf(l);
-    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3><ul class="tl" id="tlList">`+
-      l.timeline.slice().sort((a,b)=>(relSec(a.relative_time)??0)-(relSec(b.relative_time)??0))
-        .map(t=>`<li data-at="${t0+(relSec(t.relative_time)??0)*1000}"><span>${fmtRel(t.relative_time)}</span><span>${esc(t.type?.abbrev||t.type?.description||"")}</span></li>`).join("")+`</ul></div>`;
+    const items=l.timeline?.length
+      ? l.timeline.map(t=>({s:relSec(t.relative_time)??0, rel:fmtRel(t.relative_time), txt:t.type?.abbrev||t.type?.description||""}))
+      : mtl.map(x=>({s:x.s, rel:"T+ "+mmss(x.s), txt:x.txt}));
+    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3>${mtl.length?`<div class="mute" style="margin-bottom:6px"><span>Aus dem Missionsprofil</span> · <span>${esc(missionProfile(l).src)}</span> · <span>Zeiten ungefähr</span></div>`:""}<ul class="tl" id="tlList">`+
+      items.sort((a,b)=>a.s-b.s).map(t=>`<li data-at="${t0+t.s*1000}"><span>${t.rel}</span><span>${esc(t.txt)}</span></li>`).join("")+`</ul></div>`;
   }
 
   // Live-Updates
@@ -1796,6 +1804,41 @@ function deepSection(l,est){
     <div class="note">Blick von oben auf die Bahnebene, Abstände nicht massstäblich zur Grösse. Transferbahn als Ellipse vereinfacht – echte Missionen fliegen Korrekturen, Vorbeiflüge oder lange Spiralen.</div></div>`;
 }
 
+// ---- 069-missionsprofile.js ----
+// ===================== Bekannte Missionsprofile =====================
+// Für Missionen, bei denen die API keine Timeline liefert, aber der Ablauf öffentlich bekannt ist (Presse-Kit,
+// NASASpaceFlight). Ergänzt die Schätzung in estimateProfile()/payloadPlan(): Bahnneigung, Anzahl Satelliten,
+// Zeitfenster fürs Aussetzen, Deorbit/Wiedereintritt der Oberstufe und zusätzliche Timeline-Schritte.
+// Zeiten in Sekunden nach dem Abheben. Neue Einträge oben einfügen (erster Treffer gilt).
+const MISSION_PROFILES=[
+  { // ULA Vulcan mit Amazon Leo (ehemals Kuiper): 2 Centaur-Zündungen bis 450 km / 51,9°, 21 Trennungen ab T+1:17
+    // über 25:40 Min, danach 219 s Freiflug und 3. Zündung → Wiedereintritt über dem Pazifik.
+    match:(l,r,n)=>/vulcan/.test(r) && /amazon leo|kuiper/.test(n),
+    src:"laut ULA-Missionsprofil (NASASpaceFlight)",
+    inc:51.9, alt:450, n:n=>/\blv-01\b/.test(n)?40:null,
+    deploy:[4620,6160], deorbit:6380,
+    // Zeitpunkt des Wiedereintritts nicht veröffentlicht: geschätzt, wann die Bahn nach der Zündung den Südpazifik erreicht
+    reentry:10200,
+    events:[[4620,"Erste Satelliten-Trennung"],[6160,"Letzte Trennung (21 Trennvorgänge)"],
+      [6380,"Centaur: 3. Zündung (Deorbit)"],[10200,"Centaur: Wiedereintritt über dem Südpazifik (Zeit geschätzt)"]] },
+  { // Amazon Leo allgemein (andere Raketen): nur die Bahnneigung der ersten Schale ist sicher
+    match:(l,r,n)=>/amazon leo|kuiper/.test(n), inc:51.9, alt:450, src:"Bahnebene der Konstellation" },
+];
+function missionProfile(l){
+  if(!l) return null; if(l._mp!==undefined) return l._mp;
+  const r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase(), n=(l.name||"").toLowerCase();
+  const p=MISSION_PROFILES.find(x=>x.match(l,r,n))||null;
+  const out=p?{...p, n:typeof p.n==="function"?p.n(n):p.n}:null;
+  try{ Object.defineProperty(l,"_mp",{value:out,enumerable:false,configurable:true}); }catch(e){}
+  return out;
+}
+// Timeline-Schritte, wenn die API keine liefert: Aufstiegsprofil + bekannte Missionsschritte
+function missionTimeline(l){
+  const mp=missionProfile(l); if(!mp?.events) return [];
+  let ev=[]; try{ ev=(PROFILES[profileKey(l)]?.ev||[]).slice(); }catch(e){}
+  return ev.concat(mp.events).sort((a,b)=>a[0]-b[0]).map(([s,txt])=>({s,txt}));
+}
+
 // ---- 070-bahn-schaetzung.js ----
 // ===================== Bahn-Schätzung =====================
 function estimateProfile(l){
@@ -1823,11 +1866,13 @@ function estimateProfile(l){
   else inc=Math.max(Math.abs(lat)+2,45);
 
   if(vandenberg) south=true;
+  const mp=missionProfile(l); if(mp?.inc) inc=mp.inc;   // bekanntes Missionsprofil (069)
   if(inc>80 && lat>10 && !vandenberg) south=true;      // Polar/SSO ab Florida, China, Indien, Norwegen → Richtung Süden (Kourou fliegt nach Norden)
   if(inc<Math.abs(lat)) inc=Math.abs(lat)+0.05;         // physikalisch nicht erreichbar → nach Osten
 
   const desc=l.mission?.description||"";
   let orbits=1, P=5400;
+  if(mp?.alt){ const a=R_E+mp.alt; P=2*Math.PI*Math.sqrt(a**3/398600.4418); }
   if(rocket.includes("starship") && !sub){
     const mo=desc.match(/(\d+)\s+orbits?/i); orbits = mo ? +mo[1] : 1;
     const mh=desc.match(/(\d{3,4})\s*km/i); if(mh){ const a=R_E+ +mh[1]; P=2*Math.PI*Math.sqrt(a**3/398600.4418); }
@@ -1840,6 +1885,9 @@ function estimateProfile(l){
     const low=["LEO","SSO","PO","VLEO",""].includes(orb) || /iss|crew|crs|dragon/.test(name);
     const esc_=["TLI","LO","HCO","SO","L1","L2","MARS","HELIOCENTRIC"].some(x=>orb.startsWith(x));
     if(esc_) stage={mode:"escape",label:"Oberstufe verlässt mit der Nutzlast die Erdumlaufbahn"};
+    else if(mp?.deorbit){ const Td=mp.deorbit, Tre=mp.reentry||Td+20*60;
+      stage={mode:"deorbit",Td,Tre,src:mp.src,label:"Oberstufe: Deorbit-Zündung, dann Wiedereintritt und Verglühen über dem Ozean"};
+      tMax=Math.max(tMax,Tre+10*60); }
     else if(spx && low){
       const tdl=(()=>{ const e=(l.timeline||[]).find(t=>/deorbit burn start/i.test(t.type?.abbrev||"")); return e?relSec(e.relative_time):null; })();
       const Td=tdl ?? ((pp?pp.t1:3700)+35*60), Tre=Td+15*60;
@@ -2051,12 +2099,14 @@ function payloadPlan(l){
   while((m=re.exec(desc))){ const k=+m[1], before=desc.slice(Math.max(0,m.index-70),m.index).toLowerCase();
     if(k>=1 && k<=60 && !/constellation|total|consist|of up to/.test(before)){ n=k; break; } }
   const starlink=/starlink/i.test(name);
+  const mp=missionProfile(l); if(mp?.n) n=mp.n;
   if(n==null) n = starlink ? 24 : 1;
   const label = starlink ? "Starlink" : /dragon|crew|crs/i.test(name) ? "Dragon" : (l.mission?.name||"Nutzlast");
   // Zeitpunkte aus der Timeline
   const f=rx=>{ const e=tl.find(t=>rx.test(t.type?.abbrev||t.type?.description||"")); return e?relSec(e.relative_time):null; };
   let t0=f(/payload deployment sequence start|deploy.*start/i), t1=f(/payload deployment sequence end|deploy.*end/i), src="laut offizieller Timeline";
   if(t0==null){ const s=f(/payload separation|payload deploy|starlink deploy|spacecraft separation|dragon separation|satellite deploy/i); if(s!=null){ t0=s; t1=s; } }
+  if(t0==null && mp?.deploy){ [t0,t1]=mp.deploy; src=mp.src; }
   if(t0==null){ t0 = starlink ? 3700 : 3000; t1=t0; src="geschätzt"; }
   if(t1==null||t1<t0) t1=t0;
   const times=Array.from({length:n},(_,i)=>n>1? t0+(t1-t0)*i/(n-1) : t0);
