@@ -1,17 +1,20 @@
 // ===================== 3D-Globus =====================
 const G={on:false, rot:[60,-20,0], scale:0, target:null, auto:true, ptr:new Map(), drag:null, pinch:null, hits:[]};
 const gc=document.getElementById("globe"), gx=gc.getContext("2d"), grat=d3.geoGraticule10();
+// Grösse vom sichtbaren Bereich, nicht von innerWidth: auf dem Handy wächst innerWidth, sobald etwas übersteht –
+// dann wurde der Globus breiter, die Seite noch breiter (Teufelskreis, Globus „unten rechts“ + seitliches Schieben)
+const gW=()=>document.documentElement.clientWidth||innerWidth, gH=()=>document.documentElement.clientHeight||innerHeight;
 const HEX={go:"#2ecc71",tbd:"#f5b041",live:"#ff3b3b",ok:"#9b59b6"};
 function statusHex(l){ const a=(l.status?.abbrev||"").toLowerCase();
   const st=launchState(l); if(st==="flying"||(l.webcast_live&&st!=="done")) return HEX.live; if(st==="done"&&!/fail/.test(a)) return HEX.go; if(a==="go") return HEX.go; if(a==="success") return HEX.go; if(/fail/.test(a)) return HEX.live; return HEX.tbd; }
-function gResize(){ const r=devicePixelRatio||1; gc.width=innerWidth*r; gc.height=innerHeight*r; gc.style.width=innerWidth+"px"; gc.style.height=innerHeight+"px"; gx.setTransform(r,0,0,r,0,0);
-  if(!G.scale) G.scale=Math.min(innerWidth,innerHeight)*0.40; }
+function gResize(){ const r=devicePixelRatio||1, w=gW(), h=gH(); gc.width=w*r; gc.height=h*r; gc.style.width=w+"px"; gc.style.height=h+"px"; gx.setTransform(r,0,0,r,0,0);
+  if(!G.scale) G.scale=Math.min(w,h)*0.40; }
 function panelOpen(){ const p=document.getElementById("panel"); return p.style.display==="block" && !p.classList.contains("min"); }
-function gView(){ const w=innerWidth,h=innerHeight, po=panelOpen();
+function gView(){ const w=gW(),h=gH(), po=panelOpen();
   if(w>=800) return {cx:po?(w-450)/2:w/2, cy:h/2+25, sc:G.scale};
   return po ? {cx:w/2, cy:h*0.17+45, sc:Math.min(G.scale,h*0.12)} : {cx:w/2, cy:h/2+25, sc:G.scale}; }
 function gDraw(){
-  const w=innerWidth,h=innerHeight, v=gView();
+  const w=gW(),h=gH(), v=gView();
   gx.fillStyle="#0b0f17"; gx.fillRect(0,0,w,h);
   // Sterne
   gx.fillStyle="rgba(255,255,255,.5)"; for(let i=0;i<120;i++){ const x=(i*7919)%w, y=(i*104729)%h; gx.fillRect(x,y,(i%3)?1:1.5,(i%3)?1:1.5); }

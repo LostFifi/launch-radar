@@ -87,7 +87,9 @@ async function launchBrowser() {
       check(`[${vp.name}] Reise zum Mars`, r.mars);
       check(`[${vp.name}] Rückblick mit eigener Messung`, r.review);
       check(`[${vp.name}] Abo anlegen/entfernen`, r.subs, r.subsInfo);
-      const wide = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      // gegen die echte Fensterbreite prüfen (innerWidth wächst auf dem Handy mit, wenn etwas übersteht) + Globus-Grösse
+      const wide = await page.evaluate(w => { const was = G.on; setGlobe(true, false); gResize(); const g = document.getElementById('globe').getBoundingClientRect();
+        const r = Math.max(document.documentElement.scrollWidth, innerWidth, g.width) - w; setGlobe(was, false); return r; }, vp.width);
       check(`[${vp.name}] kein seitliches Scrollen`, wide <= 1, wide > 1 ? `${wide}px zu breit` : '');
       await ctx.close();
     }
