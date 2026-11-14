@@ -55,7 +55,7 @@ function select(l){
     html+=stages.map(s=>boosterBlock(l,s)).join('<hr class="sthr">');
   } else html+=`<div class="mute">Noch keine Booster-Infos veröffentlicht.</div>`;
   html+=`</div>${spacecraftSection(l)}<div class="sec" style="padding-top:0;border:0">`;
-  if(est.landings.length) html+=`<div class="note">Auf der Karte: ${est.landings.map(x=>`<span class="lg" style="--c:${LAND[x.kind].c}"></span>${esc(x.label)}`).join(" · ")}</div>`;
+  if(est.landings.length) html+=`<div class="note">Auf der Karte: ${est.landings.map(x=>`<span class="lg" style="--c:${LAND[x.kind].c}"></span><span>${esc(x.label)}</span>`).join(" · ")}</div>`;
   html+=`</div>`;
 
   // Objekte im Orbit (nach dem Start)
