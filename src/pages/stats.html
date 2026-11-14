@@ -22,7 +22,7 @@ button{background:var(--acc);color:#04101f;border:0;font-weight:600;cursor:point
 .fb .q{color:var(--mute);font-size:12.5px}.err{color:#ff8a8a}
 </style></head><body><div class="wrap">
 <h1>Launch<span>Radar</span> – Statistik</h1>
-<p class="mute">Nur für dich. Anonyme Tagessummen aus der App + Feedback. Cloudflare Web Analytics zeigt zusätzlich Länder und Quellen.<br>Nach dem Anmelden ist dieser Browser auch <b>Telemetrie-Sender</b>: Liest du im Startfenster die echte Telemetrie aus dem Stream, sehen alle anderen die Werte automatisch.</p>
+<p class="mute">Nur für dich. Anonyme Tagessummen aus der App + Feedback. Cloudflare Web Analytics zeigt zusätzlich Länder und Quellen.</p>
 <div class="row" id="login"><input id="key" type="password" placeholder="Passwort" autocomplete="current-password"><button onclick="go()">Anzeigen</button><span id="msg" class="err"></span></div>
 <div id="out" style="display:none">
   <div class="row" style="margin:14px 0"><label class="mute">Zeitraum</label><select id="range" onchange="render()"><option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option></select>

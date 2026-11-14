@@ -15,11 +15,11 @@ id = "557bd845c2704bf094e69c259710b217"
 [vars]
 ALLOW_ORIGIN = "https://launch-radar.com,https://www.launch-radar.com,https://lostfifi.github.io"
 
-# Live-Telemetrie-Verteiler (Durable Object, SQLite – im Gratis-Plan enthalten)
-[[durable_objects.bindings]]
-name = "TELE"
-class_name = "TeleHub"
-
+# Live-Telemetrie-Verteiler wieder entfernt (v1 angelegt, v2 gelöscht)
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["TeleHub"]
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["TeleHub"]

@@ -37,7 +37,7 @@ function reviewTele(T,est){
       <text x="${pl}" y="10">${title} (${unit})</text><text x="${pl-4}" y="${pt+4}" text-anchor="end">${ym.toLocaleString(LOC)}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text>
       <text x="${pl}" y="${H-4}">T+${mmss(t0)}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">T+${mmss(t1)}</text></g>
       <path d="M${pl} ${H-pb}H${W-pr}" stroke="#232c3f"/>${est.length?line(est,"#8a96ad",true):""}${ser.map(s=>line(s[1],s[0])).join("")}</svg>`; };
-  return `<h3 style="margin-top:12px">Deine Messung</h3>
+  return `<details class="ownm"><summary>Deine Messung</summary>
     <div class="mute" style="font-size:12px">Gemessen mit „Echte Telemetrie“: <span style="color:#4ea1ff">Stufe 2</span>${T.s1.length?`, <span style="color:#f5a142">Stufe 1</span>`:""} · gestrichelt = Schätzung${mx(2)!=null?` · höchstes gemessenes Tempo ${mx(2).toLocaleString(LOC)} km/h, Höhe ${mx(1)} km`:""}</div>
-    ${chart(1,"Höhe","km")}${chart(2,"Tempo","km/h")}`;
+    ${chart(1,"Höhe","km")}${chart(2,"Tempo","km/h")}</details>`;
 }

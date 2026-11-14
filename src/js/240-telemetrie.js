@@ -57,12 +57,10 @@ function buildTeleBox(){
    <div class="tbtns">
      <label class="chip" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="tUse1" ${TELE.use1?"checked":""} style="margin:0">Stufe 1 lesen</label>
      <button class="chip" onclick="teleCSV()" title="Messwerte als CSV-Datei speichern">CSV</button></div>
-   ${typeof teleSendHtml==="function"?teleSendHtml():""}
    <details class="tdbg" open><summary>Was die App sieht</summary><div id="tDbg" class="mute" style="font-size:12px">Noch kein Bild.</div></details>
    <div class="note" id="tStat"></div>`;
   teleChrome(B);
   document.getElementById("tUse1").onchange=e=>{ TELE.use1=e.target.checked; teleUI(); };
-  const so=document.getElementById("tSendOn"); if(so) so.onchange=e=>{ TELE.sendOn=e.target.checked; };
   const cv=document.getElementById("tPrev"); let st=null;
   cv.style.display=TELE.auto?"none":"block";
   const pos=e=>{ const r=cv.getBoundingClientRect(); return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))]; };
@@ -289,7 +287,7 @@ function teleAccept(k,sp,al,text){
   // Gemessenes Tempo nach T-0 = Start ist erfolgt (auch wenn die API noch „Go“ meldet)
   if(selected && sp>300 && S.ok>=2 && !LAUNCHED[selected.id] && launchState(selected)!=="flying") confirmLaunch(selected.id);
   S.hist.push([teleT(now),al,sp]); if(S.hist.length>1800) S.hist.shift();
-  teleSave(false); if(typeof teleSend==="function") teleSend();
+  teleSave(false);
   if(k==="s2" && curTrack && selected){ const s=document.getElementById("sim"), ts=Math.max(0,(now-new Date(netOf(selected)))/1000); if(s) s.value=ts; placeRocket(ts); }
 }
 // Zeitachse: T+ Sekunden ab Startzeit (falls ein Start gewählt und schon gestartet), sonst Sekunden seit Messbeginn
@@ -297,7 +295,7 @@ function teleT(now){
   if(selected){ const ts=(now-new Date(netOf(selected)))/1000; if(ts>-120 && ts<48*3600) return ts; }
   if(TELE.t0==null) TELE.t0=now; return (now-TELE.t0)/1000;
 }
-function teleDist(){ if(!TELE.on) return typeof rtDist==="function"?rtDist():null; if(TELE.d==null||!TELE.S.s2.last) return null; return TELE.d+TELE.vh*Math.min(3,(Date.now()-TELE.S.s2.last.t)/1000); }
+function teleDist(){ if(!TELE.on||TELE.d==null||!TELE.S.s2.last) return null; return TELE.d+TELE.vh*Math.min(3,(Date.now()-TELE.S.s2.last.t)/1000); }
 function teleUI(){
   if(!document.getElementById("tV_s2")) return;
   for(const k of ["s1","s2"]){ const S=TELE.S[k], fresh=S.last&&Date.now()-S.last.t<4000, b=document.getElementById("tB_"+k), off=k==="s1"&&!TELE.use1;

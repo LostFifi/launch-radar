@@ -17,7 +17,6 @@ function select(l){
   html+=reviewSection(l,est);   // Rückblick (nur nach dem Start) ganz oben
   html+="<!--SIM-->";
   // Bild + Missions-Patch
-  html+=`<div id="rtele"></div>`;   // Live-Telemetrie vom Sender (245-tele-live.js)
   html+=launchGalHtml(l);   // Galerie: Startfoto, Raketenfoto, Wikipedia-Fotos der Rakete (225-galerie.js)
 
   // Livestream
@@ -99,7 +98,7 @@ function select(l){
       ${pp?`<button class="btn sec2" id="jumpDep" style="margin:0">Zum Aussetzen (${pp.n>1?pp.n+"× ":""}${esc(pp.label)})</button>`:""}
     </div></div>`;
   html=html.replace("<!--SIM-->",simHtml);
-  P.innerHTML=html; P.style.display="block"; P.scrollTop=0; if(typeof rtRender==="function"){ rtRender(); if(!TELE.on) rtPoll(); }
+  P.innerHTML=html; P.style.display="block"; P.scrollTop=0;
   loadWeather(l);
   drawRoute(l,est);
   if(G.on) G.target=[-(+l.pad.longitude), -(+l.pad.latitude)];
