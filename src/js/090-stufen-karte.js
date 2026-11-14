@@ -59,7 +59,7 @@ function shipBlock(l,x){
     desc:ld.description, sum:`${isSS?"Ship":"Raumschiff"}-Steckbrief ${sc.serial_number||sc.name||""}`, more:sc.description,
     st:{flights:sc.flights_count??null, landings:sc.flights_count===0?"0/0":null,
         turn:sc.fastest_turnaround?fmtDur(sc.fastest_turnaround):null,
-        status:esc(st||"")+(sc.in_space?" · gerade im All":""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
+        status:esc(st||"")+(sc.in_space?` · <span>gerade im All</span>`:""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
         space:sc.time_in_space&&sc.time_in_space!=="P0D"?fmtDur(sc.time_in_space):"0", height:fmtN(cf.height,"m",1), dia:fmtN(cf.diameter,"m",1),
         fam:cf.total_launch_count!=null?`${esc(cf.name||"")}: ${cf.total_launch_count} Flüge · ${cf.successful_landings??0}/${cf.attempted_landings??0} Landungen`:null,
         famFirst:cf.maiden_flight?fmtDay(cf.maiden_flight):null} });

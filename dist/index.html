@@ -854,7 +854,7 @@ var I18N_EN = {
   "Booster {0}":"Booster {0}","Booster-Steckbrief {0}":"Booster profile {0}","Ship-Steckbrief {0}":"Ship profile {0}","Raumschiff-Steckbrief {0}":"Spacecraft profile {0}",
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
-  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space",
+  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space","gerade im All":"in space now",
   "Erstflug":"First flight","Letzter Flug":"Last flight","Höhe (m)":"Height (m)","(Gesamthöhe − Ship)":"(total height − Ship)","Durchmesser":"Diameter",
   "{0} · {1} Flug":"{0} · flight {1}","{0}. Flug":"flight {0}","Ergebnis noch offen":"Result pending","nicht geborgen (Einweg)":"not recovered (expendable)",
   // ---------- Rückblick ----------
@@ -2142,7 +2142,7 @@ function shipBlock(l,x){
     desc:ld.description, sum:`${isSS?"Ship":"Raumschiff"}-Steckbrief ${sc.serial_number||sc.name||""}`, more:sc.description,
     st:{flights:sc.flights_count??null, landings:sc.flights_count===0?"0/0":null,
         turn:sc.fastest_turnaround?fmtDur(sc.fastest_turnaround):null,
-        status:esc(st||"")+(sc.in_space?" · gerade im All":""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
+        status:esc(st||"")+(sc.in_space?` · <span>gerade im All</span>`:""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
         space:sc.time_in_space&&sc.time_in_space!=="P0D"?fmtDur(sc.time_in_space):"0", height:fmtN(cf.height,"m",1), dia:fmtN(cf.diameter,"m",1),
         fam:cf.total_launch_count!=null?`${esc(cf.name||"")}: ${cf.total_launch_count} Flüge · ${cf.successful_landings??0}/${cf.attempted_landings??0} Landungen`:null,
         famFirst:cf.maiden_flight?fmtDay(cf.maiden_flight):null} });

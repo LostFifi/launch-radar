@@ -83,7 +83,7 @@ var I18N_EN = {
   "Booster {0}":"Booster {0}","Booster-Steckbrief {0}":"Booster profile {0}","Ship-Steckbrief {0}":"Ship profile {0}","Raumschiff-Steckbrief {0}":"Spacecraft profile {0}",
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
-  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space",
+  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space","gerade im All":"in space now",
   "Erstflug":"First flight","Letzter Flug":"Last flight","Höhe (m)":"Height (m)","(Gesamthöhe − Ship)":"(total height − Ship)","Durchmesser":"Diameter",
   "{0} · {1} Flug":"{0} · flight {1}","{0}. Flug":"flight {0}","Ergebnis noch offen":"Result pending","nicht geborgen (Einweg)":"not recovered (expendable)",
   // ---------- Rückblick ----------
