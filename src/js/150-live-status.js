@@ -1,8 +1,8 @@
 // ===================== Live-Status bei laufenden Starts =====================
 let lastPoll=0, liveId=null;
 function liveCandidate(){ const now=Date.now();
-  return launches.filter(l=>{ const t=new Date(l.net)-now, a=(l.status?.abbrev||"");
-    return l.webcast_live || a==="In Flight" || (t<45*60e3 && t>-3*3600e3 && !/success|fail/i.test(a)); })
+  return launches.filter(l=>{ const t=new Date(l.net)-now, st=launchState(l); if(st==="done") return false;
+    return l.webcast_live || st==="flying" || (t<45*60e3 && t>-3*3600e3); })
     .sort((a,b)=>new Date(a.net)-new Date(b.net))[0]; }
 async function livePoll(force){
   const B=document.getElementById("live");

@@ -3,7 +3,8 @@
 function reviewSection(l,est){
   const st=launchState(l); if(st!=="done" && !(st==="flying" && Date.now()-new Date(l.net)>3*3600e3)) return "";
   const a=(l.status?.abbrev||"").toLowerCase(), ok=a==="success", part=/partial/.test(a), fail=/fail/.test(a)&&!part;
-  const res=ok?["Erfolgreich","var(--go)"]:part?["Teilerfolg","var(--tbd)"]:fail?["Fehlstart","var(--live)"]:[l.status?.name||"?","var(--tbd)"];
+  const res=ok?["Erfolgreich","var(--go)"]:part?["Teilerfolg","var(--tbd)"]:fail?["Fehlstart","var(--live)"]
+    :/deploy/.test(((l.status?.name||"")+a).toLowerCase())?["Nutzlast ausgesetzt","var(--go)"]:flownStatus(l)||LAUNCHED[l.id]?["Gestartet – Ergebnis noch offen","var(--go)"]:[l.status?.name||"?","var(--tbd)"];
   const ago=Math.round((Date.now()-new Date(l.net))/864e5), h=NETH[l.id];
   const shift=h&&h.first&&Math.abs(new Date(l.net)-new Date(h.first))>=60e3?new Date(l.net)-new Date(h.first):0;
   const rows=[["Start",`${fmtDate(l.net)} <span class="mute">(${ago<1?"heute":ago===1?"gestern":"vor "+ago+" Tagen"})</span>`]];

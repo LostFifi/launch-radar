@@ -3,7 +3,7 @@ const G={on:false, rot:[60,-20,0], scale:0, target:null, auto:true, ptr:new Map(
 const gc=document.getElementById("globe"), gx=gc.getContext("2d"), grat=d3.geoGraticule10();
 const HEX={go:"#2ecc71",tbd:"#f5b041",live:"#ff3b3b",ok:"#9b59b6"};
 function statusHex(l){ const a=(l.status?.abbrev||"").toLowerCase();
-  if(l.webcast_live||a==="in flight") return HEX.live; if(a==="go") return HEX.go; if(a==="success") return HEX.go; if(/fail/.test(a)) return HEX.live; return HEX.tbd; }
+  const st=launchState(l); if(st==="flying"||(l.webcast_live&&st!=="done")) return HEX.live; if(st==="done"&&!/fail/.test(a)) return HEX.go; if(a==="go") return HEX.go; if(a==="success") return HEX.go; if(/fail/.test(a)) return HEX.live; return HEX.tbd; }
 function gResize(){ const r=devicePixelRatio||1; gc.width=innerWidth*r; gc.height=innerHeight*r; gc.style.width=innerWidth+"px"; gc.style.height=innerHeight+"px"; gx.setTransform(r,0,0,r,0,0);
   if(!G.scale) G.scale=Math.min(innerWidth,innerHeight)*0.40; }
 function panelOpen(){ const p=document.getElementById("panel"); return p.style.display==="block" && !p.classList.contains("min"); }

@@ -87,7 +87,7 @@ var I18N_EN = {
   "Erstflug":"First flight","Letzter Flug":"Last flight","Höhe (m)":"Height (m)","(Gesamthöhe − Ship)":"(total height − Ship)","Durchmesser":"Diameter",
   "{0} · {1} Flug":"{0} · flight {1}","{0}. Flug":"flight {0}","Ergebnis noch offen":"Result pending","nicht geborgen (Einweg)":"not recovered (expendable)",
   // ---------- Rückblick ----------
-  "Rückblick":"Review","Erfolgreich":"Successful","Teilerfolg":"Partial success","Fehlstart":"Launch failure","Ursprünglich":"Originally",
+  "Rückblick":"Review","Erfolgreich":"Successful","Nutzlast ausgesetzt":"Payload deployed","Gestartet – Ergebnis noch offen":"Launched – result pending","Teilerfolg":"Partial success","Fehlstart":"Launch failure","Ursprünglich":"Originally",
   "{0} – erreicht":"{0} – reached","▶ Aufzeichnung ansehen":"▶ Watch recording","▶ Aufzeichnung":"▶ Recording","Deine Messung":"Your measurement",
   "Gemessen mit „Echte Telemetrie“:":"Measured with “Real telemetry”:","· gestrichelt = Schätzung":"· dashed = estimate",
   "· gestrichelt = Schätzung · höchstes gemessenes Tempo {0} km/h, Höhe {1} km":"· dashed = estimate · highest measured speed {0} km/h, altitude {1} km",

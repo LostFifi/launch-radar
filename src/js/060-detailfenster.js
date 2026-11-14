@@ -11,7 +11,7 @@ function select(l){
 
   let html=`<div class="hd"><h2>${esc(l.name)}<br>
      <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.name||"")}</span>
-     ${l.webcast_live?' <span class="badge" style="background:var(--live)">● LIVE</span>':""}</h2>
+     ${l.webcast_live&&launchState(l)!=="done"?' <span class="badge" style="background:var(--live)">● LIVE</span>':""}</h2>
      <button class="x" onclick="closeP()">×</button></div>`;
 
   html+=reviewSection(l,est);   // Rückblick (nur nach dem Start) ganz oben
@@ -121,6 +121,7 @@ function select(l){
   // nur mitfliegen, wenn der Start bestätigt ist (oder kurz nach T-0 mit frischen Daten); sonst ist er evtl. verschoben
   const tSince=(Date.now()-netOf(l))/1000, lst=launchState(l);
   if(tSince>0 && tSince<est.tMax && !failed && lst!=="unconfirmed"){ s.value=tSince; placeRocket(tSince); liveFollow(l,est); }
+  else if(lst==="done" && !failed && tSince>=est.tMax){ s.value=est.tMax; placeRocket(est.tMax); }   // Flug vorbei: Rakete am Ende der Bahn
   else placeRocket(0);
   if(lst==="unconfirmed" && tSince>0 && tSince<6*3600){
     document.querySelector("#panel .simtop").insertAdjacentHTML("afterbegin",`<div class="warnbox"><b>Start nicht bestätigt.</b> Die Startzeit ist vorbei, der Status ist aber noch „${esc(l.status?.name||"?")}“ – der Start ist wahrscheinlich verschoben. ${esc(dataInfo())}. Die Simulation unten zeigt nur den Plan.

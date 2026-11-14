@@ -1,7 +1,9 @@
 // ===================== Darstellung =====================
 function statusColor(l){
   const a=(l.status?.abbrev||"").toLowerCase();
-  if(l.webcast_live||a==="in flight") return "var(--live)";
+  const st=launchState(l);
+  if(st==="flying"||(l.webcast_live&&st!=="done")) return "var(--live)";
+  if(st==="done"&&!/fail/.test(a)) return "var(--go)";
   if(a==="go") return "var(--go)";
   if(a==="success") return "var(--go)";
   if(/fail/.test(a)) return "var(--live)";
@@ -74,7 +76,7 @@ function showList(list,title,tab,groups){
   const item=(l,i)=>`<div class="item" data-i="${i}">${imgTag(l,true)}<div><b>${esc(l.name)}</b><br>
       <small>${fmtDate(l.net)} · ${esc(groups?padShort(l.pad?.name):l.pad?.location?.name||"")}</small><br>
       <span class="badge" style="background:${statusColor(l)};color:#000">${esc(l.status?.abbrev||"")}</span>
-      ${l.webcast_live?'<span class="badge" style="background:var(--live)">● LIVE</span>':""}
+      ${l.webcast_live&&launchState(l)!=="done"?'<span class="badge" style="background:var(--live)">● LIVE</span>':""}
       ${postponedPill(l)} ${landIcons(l)} ${REM[l.id]?ICON.bell:""}</div></div>`;
   let body;
   if(groups){ let i=0;

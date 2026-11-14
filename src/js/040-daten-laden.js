@@ -54,8 +54,8 @@ function dataInfo(){
 // Ist der Start wirklich erfolgt? Nach T-0 reicht „Go“ nicht – der Start kann verschoben sein, ohne dass wir es schon wissen.
 //   upcoming | flying | done | likely (kurz nach T-0, frische echte Daten) | unconfirmed (Startzeit vorbei, nicht bestätigt)
 // Manuell bestätigter Start (Knopf „Ist gestartet“ oder Telemetrie misst Tempo): {id:{t:Abhebezeit ms, at}}
-// Hilft, wenn die API gedrosselt ist und der Status noch „Go“ zeigt. Gilt 12 h.
-var LAUNCHED={}; try{ LAUNCHED=JSON.parse(localStorage.getItem("lr_launched")||"{}"); for(const k in LAUNCHED) if(Date.now()-LAUNCHED[k].at>12*3600e3) delete LAUNCHED[k]; }catch(e){}
+// Hilft, wenn die API gedrosselt ist und der Status noch „Go“ zeigt. Gilt 3 Tage.
+var LAUNCHED={}; try{ LAUNCHED=JSON.parse(localStorage.getItem("lr_launched")||"{}"); for(const k in LAUNCHED) if(Date.now()-LAUNCHED[k].at>3*864e5) delete LAUNCHED[k]; }catch(e){}
 function netOf(l){ return LAUNCHED[l?.id]?.t || new Date(l.net).getTime(); }   // effektive Abhebezeit
 function confirmLaunch(id,now){
   const l=[...launches,...(PAST||[])].find(x=>x.id===id)||selected; if(!l) return;
@@ -64,11 +64,15 @@ function confirmLaunch(id,now){
   toast(now?"Start bestätigt – Abhebezeit auf jetzt gesetzt":"Start bestätigt – die Rakete fliegt mit");
   if(selected&&selected.id===id) select(selected); liveBanner&&liveBanner();
 }
+// Ende des Flugs laut Modell (ms nach T-0), pro Start zwischengespeichert
+var FLY_END={};
+function flightEnd(l){ if(FLY_END[l.id]==null){ try{ FLY_END[l.id]=estimateProfile(l).tMax*1000; }catch(e){ FLY_END[l.id]=3*3600e3; } } return FLY_END[l.id]; }
+// Gestartet laut API: „Launch in Flight“, „Payload Deployed“ (die API stellt oft erst Stunden später auf „Success“)
+const flownStatus=l=>/in flight|deploy/.test(((l.status?.abbrev||"")+" "+(l.status?.name||"")).toLowerCase());
 function launchState(l){
   const a=(l.status?.abbrev||"").toLowerCase(), t=Date.now()-netOf(l);
-  if(/in flight/.test(a)) return "flying";
-  if(LAUNCHED[l.id] && !/success|fail|partial/.test(a)) return "flying";
   if(/success|fail|partial/.test(a)) return "done";
+  if(flownStatus(l) || LAUNCHED[l.id]) return t>flightEnd(l)+15*60e3 ? "done" : "flying";   // nach Flugende: fertig, nicht ewig „live“
   if(t<0) return "upcoming";
   if(a==="go" && (DATA.src==="live"||DATA.src==="cache") && Date.now()-DATA.ts<20*60e3 && t<20*60e3) return "likely";
   return "unconfirmed";
