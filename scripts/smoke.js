@@ -127,6 +127,10 @@ async function launchBrowser() {
       document.getElementById('heroGo').click(); updateNext(); r.go = !!selected && h.style.display === 'none'; closeP(); updateNext(); r.back = h.style.display !== 'none';
       heroClose(); r.x = h.style.display === 'none' && document.getElementById('next').style.display === ''; HERO.off = false; return r; });
     check('[Start] Startkarte: Countdown, Verfolgen, Schliessen', hero.vis && hero.cd && hero.chip && hero.go && hero.back && hero.x, JSON.stringify(hero));
+    const satm = await page.evaluate(async () => { document.getElementById('satBtn').click(); const m = document.getElementById('satMenu');
+      const r = { open: m.style.display === 'block', n: m.querySelectorAll('.gma').length, rows: m.querySelectorAll('input[data-s]').length };
+      await followStation(/ISS \(ZARYA\)/); r.iss = selSat?.s?.name || null; closeP(); return r; });
+    check('[Satelliten] Knopf in der Kopfzeile, ISS verfolgen', satm.open && satm.n === 3 && satm.rows === 4 && /ISS/.test(satm.iss || ''), JSON.stringify(satm));
     const shr = await page.evaluate(async () => { const all = (await (await fetch('data/upcoming.json')).json()).results, l = all.find(x => typeof SHARE_IDS !== 'undefined' && SHARE_IDS.includes(x.id.slice(0, 6))); if (!l) return { u: 'keine SHARE_IDS' };
       const u = launchUrl(l), r = await fetch(u), t = await r.text(); return { u, ok: /\/s\/[0-9a-f]{6}\.html$/.test(u) && r.ok && /og:image" content="[^"]*og\/[0-9a-f]{6}\.jpg/.test(t) && t.includes('#start=' + l.id) }; });
     check('[Teilen] kurzer Link mit eigenem Vorschaubild', shr.ok, shr.u);

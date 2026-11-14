@@ -24,8 +24,10 @@ function heroUpdate(n){
       </div></div>
       <div class="hcd" id="heroCd"></div>
       <div class="hd2" id="heroDt"></div>
-      <div class="hb"><button class="btn" id="heroGo">${i18n("Verfolgen")}</button><button class="btn sec2" id="heroAll">${i18n("Alle Starts")}</button></div>`;
+      <div class="hb"><button class="btn" id="heroGo">${i18n("Verfolgen")}</button><button class="btn sec2" id="heroAll">${i18n("Alle Starts")}</button></div>
+      <button class="hsat" id="heroSat">${ICON.sat}<span>${i18n("Auch: ISS & Satelliten live verfolgen")}</span></button>`;
     el.querySelector("#heroGo").onclick=()=>select(n);
+    el.querySelector("#heroSat").onclick=e=>{ e.stopPropagation(); satMenuOpen(document.getElementById("satBtn")); };
     el.querySelector("#heroAll").onclick=()=>document.getElementById("listBtn").click();
   }
   document.getElementById("heroK").innerHTML=past?(st==="unconfirmed"?`<span style="color:var(--tbd)">${i18n("Startzeit vorbei, nicht bestätigt")}</span>`:`<span class="hlive">${i18n("Gerade gestartet")}</span>`):i18n("Nächster Start");

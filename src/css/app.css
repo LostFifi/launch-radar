@@ -258,7 +258,7 @@ button.btn{border:0;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
 #grpBtn{display:inline-flex;align-items:center;gap:4px}
 #grpBtn .dd{opacity:.85;transition:transform .15s}#grpBtn[aria-expanded="true"] .dd{transform:rotate(180deg)}
 #grpBtn .lbl{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#grpMenu{position:fixed;z-index:1600;width:260px;max-height:calc(100dvh - 120px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 12px 40px #000b;display:none}
+#satMenu,#grpMenu{position:fixed;z-index:1600;width:260px;max-height:calc(100dvh - 120px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 12px 40px #000b;display:none}
 #grpMenu .gmh{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
 #grpMenu .gmh button,#grpMenu .gmf button{background:none;border:0;color:var(--acc);cursor:pointer;font:inherit;padding:0}
 #grpMenu .gmr{display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;cursor:pointer}
@@ -288,3 +288,17 @@ button.btn{border:0;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
 #hero .hb .btn{margin:0;flex:1;padding:10px 12px;font-size:14px}
 @media (max-width:799px){#hero{left:10px;right:10px;width:auto;bottom:58px;padding:12px 14px 12px}#hero .hcd{font-size:28px;margin-top:8px}#hero .th{width:46px;height:46px}#hero .hn{font-size:17px}}
 @media (min-width:800px){#hero{left:auto;right:12px;bottom:auto;top:66px}}
+
+/* Satelliten-Menü (142): gleiche Optik wie das Anbieter-Menü */
+#satMenu{width:280px}
+#satMenu .gmh{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+#satMenu .gmr{display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;cursor:pointer}
+#satMenu .gmr:hover,#satMenu .gma:hover{background:#ffffff0d}
+#satMenu .gmr span:not(.dot){flex:1}#satMenu .gmr small{color:var(--mute);font-variant-numeric:tabular-nums}
+#satMenu .gmr .dot{width:9px;height:9px;border-radius:50%;flex:none}
+#satMenu input{accent-color:var(--acc);width:16px;height:16px}
+#satMenu .gma{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--text);font:inherit;font-weight:600;text-align:left;padding:8px 6px;border-radius:8px;cursor:pointer}
+#satMenu .gma svg{color:var(--acc);flex:none}
+#satMenu .gms{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);padding:10px 6px 2px;border-top:1px solid var(--line);margin-top:4px}
+#satMenu .gmf{font-size:12px;color:var(--mute);padding:8px 6px 2px;border-top:1px solid var(--line);margin-top:4px}
+#hero .hsat{display:flex;align-items:center;gap:6px;margin-top:10px;background:none;border:0;padding:0;color:var(--acc);font:inherit;font-size:13px;cursor:pointer}
