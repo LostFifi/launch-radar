@@ -2284,9 +2284,23 @@ function boosterBlock(l,s){
         space:null, height:boosterHeight(l,fam), dia:fam?fmtN(fam.dia,"m",1):null,
         fam:fam?`${esc(fam.n)}: ${fam.tot} Flüge · ${fam.sl}/${fam.al} Landungen`:null, famFirst:fam?.first?fmtDay(fam.first):null} });
 }
+// Bisherige Flüge eines Raumschiffs aus allen bekannten Starts (API liefert beim Raumschiff keine Erst-/Letztflug-Daten und Landezahlen)
+function shipHistory(sc){
+  const seen=new Set(), fl=[];
+  for(const o of [...(launches||[]),...(PAST||[]),...(typeof PAST_SNAP!=="undefined"&&PAST_SNAP||[])]){
+    if(!o||seen.has(o.id)) continue; seen.add(o.id);
+    const y=(o.rocket?.spacecraft_stage||[]).find(z=>z.spacecraft&&(sc.id!=null&&z.spacecraft.id===sc.id || sc.serial_number&&z.spacecraft.serial_number===sc.serial_number));
+    if(!y || new Date(o.net)>Date.now() || !/success|fail|partial|in flight|deploy/i.test((o.status?.abbrev||"")+" "+(o.status?.name||"")) && !LAUNCHED[o.id]) continue;
+    fl.push({net:o.net, ld:y.landing||{}});
+  }
+  fl.sort((a,b)=>new Date(a.net)-new Date(b.net));
+  return fl;
+}
 function shipBlock(l,x){
   const sc=x.spacecraft||{}, cf=sc.spacecraft_config||{}, ld=x.landing||{}, loc=ld.landing_location||{}, isSS=/starship/i.test(l.rocket?.configuration?.name||"");
   const st=typeof sc.status==="object"?sc.status?.name:sc.status;
+  // vollständig, wenn wir alle Flüge kennen (Anzahl stimmt mit flights_count überein)
+  const H={fl:shipHistory(sc)}; H.complete=H.fl.length>0 && sc.flights_count!=null && H.fl.length>=sc.flights_count;
   return stageCard({
     img:stageImg(sc.image||l.image),
     rows:[["Name",`<b>${esc(sc.name||"–")}</b>${sc.serial_number&&sc.serial_number!==sc.name?` <span class="mute">(${esc(sc.serial_number)})</span>`:""}`],
@@ -2294,9 +2308,9 @@ function shipBlock(l,x){
           ["Landung",`${ld.attempt===false?"keine (Einweg)":esc(ld.type?.name||(loc.name?"geplant":"–"))}${loc.name?` · ${esc(loc.name)}${loc.abbrev?` (${esc(loc.abbrev)})`:""}`:""}`],
           ...landResult(ld)],
     desc:ld.description, sum:`${isSS?"Ship":"Raumschiff"}-Steckbrief ${sc.serial_number||sc.name||""}`, more:sc.description,
-    st:{flights:sc.flights_count??null, landings:sc.flights_count===0?"0/0":null,
+    st:{flights:sc.flights_count??null, landings:H.complete?`${H.fl.filter(f=>f.ld.success===true).length}/${H.fl.filter(f=>f.ld.attempt).length}`:(sc.flights_count===0?"0/0":null),
         turn:sc.fastest_turnaround?fmtDur(sc.fastest_turnaround):null,
-        status:esc(st||"")+(sc.in_space?` · <span>gerade im All</span>`:""), first:sc.flights_count===0?"dieser Flug":null, last:sc.flights_count===0?"–":null,
+        status:esc(st||"")+(sc.in_space?` · <span>gerade im All</span>`:""), first:sc.flights_count===0?"dieser Flug":H.complete&&H.fl[0]?fmtDay(H.fl[0].net):null, last:sc.flights_count===0?"–":H.fl.length?fmtDay(H.fl[H.fl.length-1].net):null,
         space:sc.time_in_space&&sc.time_in_space!=="P0D"?fmtDur(sc.time_in_space):"0", height:fmtN(cf.height,"m",1), dia:fmtN(cf.diameter,"m",1),
         fam:cf.total_launch_count!=null?`${esc(cf.name||"")}: ${cf.total_launch_count} Flüge · ${cf.successful_landings??0}/${cf.attempted_landings??0} Landungen`:null,
         famFirst:cf.maiden_flight?fmtDay(cf.maiden_flight):null} });
