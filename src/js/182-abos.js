@@ -8,15 +8,16 @@ var REMOFF={}; try{ REMOFF=JSON.parse(localStorage.getItem("lr_rem_off")||"{}");
 function remOff(id){ REMOFF[id]=Date.now(); for(const k in REMOFF) if(Date.now()-REMOFF[k]>60*864e5) delete REMOFF[k];
   try{ localStorage.setItem("lr_rem_off",JSON.stringify(REMOFF)); }catch(e){} }
 function ruleLabel(r){
-  const p=[r.chip==="spacex"?"SpaceX":r.chip==="starship"?"Starship":"", r.prov, r.cty, r.q?`„${r.q}“`:""].filter(Boolean);
+  const g=Array.isArray(r.grp)&&r.grp.length?r.grp.map(k=>(GROUPS.find(x=>x[0]===k)||[k,k])[1]).join(", "):"";
+  const p=[r.chip==="spacex"?"SpaceX":r.chip==="starship"?"Starship":"", g, r.prov, r.cty, r.q?`„${r.q}“`:""].filter(Boolean);
   return p.length?p.join(" · "):"Alle Starts";
 }
-const ruleKey=r=>JSON.stringify([r.chip||"",r.prov||"",r.cty||"",r.q||""]);
+const ruleKey=r=>JSON.stringify([r.chip||"",(r.grp||[]).join(),r.prov||"",r.cty||"",r.q||""]);
 function saveSubs(){ try{ localStorage.setItem("lr_subs",JSON.stringify(SUBS)); }catch(e){} applySubs(true); }
 function subscribeFilter(){
   const r=currentRule();
   if(SUBS.some(x=>ruleKey(x)===ruleKey(r))) return toast("Dieses Abo gibt es schon");
-  if(!r.chip&&!r.prov&&!r.cty&&!r.q && !confirm(i18n("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)"))) return;
+  if(!r.chip&&!r.grp&&!r.prov&&!r.cty&&!r.q && !confirm(i18n("Ohne Filter: wirklich bei ALLEN Starts weltweit erinnern? (ca. 5 pro Woche)"))) return;
   SUBS.push(r); saveSubs(); pwaAsk(); beep(true);
   const n=launches.filter(l=>new Date(l.net)>Date.now()&&matchRule(r,l)).length;
   toast(`Abo „${ruleLabel(r)}“ aktiv – ${n} kommende Starts, neue kommen automatisch dazu`);

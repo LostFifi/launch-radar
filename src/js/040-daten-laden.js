@@ -94,18 +94,40 @@ function countryOf(l){
   const c=l.pad?.country?.name||(l.pad?.location?.name||"").split(",").pop().trim();
   return CTY_DE[c]||c||"?"; }
 function provOf(l){ return l.launch_service_provider?.name||"?"; }
-// Regel = {chip:"spacex"|"starship"|"", prov, cty, q} – dieselbe Logik für Filter UND Abos (auch im Worker nachgebaut!)
+// Anbieter-Gruppen für den Filter oben (gleiche Logik im Worker: worker/src/index.js → launchGroup)
+const GROUPS=[["starship","Starship"],["spacex","SpaceX (Falcon)"],["blue","Blue Origin"],["ula","ULA"],["rocketlab","Rocket Lab"],
+  ["europe","Europa"],["russia","Russland"],["china","China"],["india","Indien"],["japan","Japan"],["other","Andere"]];
+function launchGroup(l){
+  const p=(l.launch_service_provider?.name||"").toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase(), c=countryOf(l);
+  if(r.includes("starship")) return "starship";
+  if(p.includes("spacex")) return "spacex";
+  if(p.includes("blue origin")) return "blue";
+  if(p.includes("united launch alliance")||/ula/.test(p)) return "ula";
+  if(p.includes("rocket lab")) return "rocketlab";
+  if(/arianespace|european space agency|esa|avio|isar aerospace|rocket factory|orbex|skyrora|pld space/.test(p)||/ariane|vega/.test(r)) return "europe";
+  if(c==="Russland"||c==="Kasachstan"||/roscosmos|russian|glavkosmos|khrunichev|progress rocket/.test(p)) return "russia";
+  if(c==="China"||/china|chinese|galactic energy|landspace|ispace|expace|space pioneer|orienspace|cas space/.test(p)) return "china";
+  if(c==="Indien"||/indian space|isro|skyroot|agnikul/.test(p)) return "india";
+  if(c==="Japan"||/jaxa|mitsubishi|interstellar tech|space one/.test(p)) return "japan";
+  return "other";
+}
+// Regel = {chip:"spacex"|"starship"|"" (alt), grp:[Gruppen] (nur wenn nicht alle), prov, cty, q} – dieselbe Logik für Filter UND Abos (auch im Worker nachgebaut!)
 function matchRule(f,l){
   const p=provOf(l).toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase();
   if(f.chip==="spacex" && !p.includes("spacex")) return false;
   if(f.chip==="starship" && !r.includes("starship")) return false;
+  if(Array.isArray(f.grp) && f.grp.length && !f.grp.includes(launchGroup(l))) return false;
   if(f.prov && provOf(l)!==f.prov) return false;
   if(f.cty && countryOf(l)!==f.cty) return false;
   if(f.q){ const hay=[l.name,r,p,l.pad?.name,l.pad?.location?.name,l.mission?.name,l.mission?.orbit?.name,l.mission?.type].join(" ").toLowerCase();
     if(!f.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false; }
   return true;
 }
-function currentRule(){ return {chip:filter==="all"?"":filter, prov:FILT.prov, cty:FILT.cty, q:FILT.q}; }
+// Abgewählte Gruppen (gemerkt im Browser); leer = alle
+var GRP_OFF=new Set(); try{ JSON.parse(localStorage.getItem("lr_grp_off")||"[]").forEach(k=>GRP_OFF.add(k)); }catch(e){}
+function grpSel(){ return GROUPS.map(g=>g[0]).filter(k=>!GRP_OFF.has(k)); }
+function grpAll(){ return GRP_OFF.size===0; }
+function currentRule(){ const r={chip:"", prov:FILT.prov, cty:FILT.cty, q:FILT.q}; if(!grpAll()) r.grp=grpSel(); return r; }
 function matchFilter(l){ return matchRule(currentRule(),l); }
-function filterActive(){ return !!(FILT.q||FILT.prov||FILT.cty); }
+function filterActive(){ return !!(FILT.q||FILT.prov||FILT.cty||!grpAll()); }
 function visible(){ return launches.filter(matchFilter); }

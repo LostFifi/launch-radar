@@ -31,7 +31,7 @@ export default {
         const id = await hash(sub.endpoint), old = (await env.LR.get("sub:" + id, "json")) || {};
         const r = {}; for (const k in rem || {}) { const x = rem[k]; if (x && x.net) r[k] = { net: x.net, name: String(x.name || "").slice(0, 120), kind: x.kind === "pass" ? "pass" : "launch", txt: String(x.txt || "").slice(0, 120), sent: old.rem?.[k]?.sent && old.rem[k].net === x.net } }
         const S = v => String(v || "").slice(0, 80);
-        const ru = (Array.isArray(rules) ? rules : []).slice(0, 20).map(x => ({ chip: ["spacex", "starship"].includes(x.chip) ? x.chip : "", prov: S(x.prov), cty: S(x.cty), q: S(x.q) }));
+        const ru = (Array.isArray(rules) ? rules : []).slice(0, 20).map(x => ({ chip: ["spacex", "starship"].includes(x.chip) ? x.chip : "", grp: (Array.isArray(x.grp) ? x.grp : []).filter(g => GROUPS.some(G => G[0] === g)), prov: S(x.prov), cty: S(x.cty), q: S(x.q) }));
         const of = (Array.isArray(off) ? off : []).slice(0, 300).map(S);
         await env.LR.put("sub:" + id, JSON.stringify({ sub, rem: r, rules: ru, off: of, lang: lang === "en" ? "en" : "de", pending: old.pending || [] }), { expirationTtl: 40 * 86400 });
         return json({ ok: true, n: Object.keys(r).length }, 200, cors);
@@ -188,10 +188,28 @@ function countryOf(l) {
   const cc = l.pad?.country?.alpha_2_code; if (cc && CC_DE[cc]) return CC_DE[cc];
   const c = l.pad?.country?.name || loc.split(",").pop().trim(); return CTY_DE[c] || c || "?";
 }
+// Anbieter-Gruppen für den Filter oben (gleiche Logik im Worker: worker/src/index.js → launchGroup)
+const GROUPS = [["starship","Starship"],["spacex","SpaceX (Falcon)"],["blue","Blue Origin"],["ula","ULA"],["rocketlab","Rocket Lab"],
+  ["europe","Europa"],["russia","Russland"],["china","China"],["india","Indien"],["japan","Japan"],["other","Andere"]];
+function launchGroup(l){
+  const p=(l.launch_service_provider?.name || "").toLowerCase(), r=(l.rocket?.configuration?.full_name||l.rocket?.configuration?.name||"").toLowerCase(), c=countryOf(l);
+  if(r.includes("starship")) return "starship";
+  if(p.includes("spacex")) return "spacex";
+  if(p.includes("blue origin")) return "blue";
+  if(p.includes("united launch alliance")||/ula/.test(p)) return "ula";
+  if(p.includes("rocket lab")) return "rocketlab";
+  if(/arianespace|european space agency|esa|avio|isar aerospace|rocket factory|orbex|skyrora|pld space/.test(p)||/ariane|vega/.test(r)) return "europe";
+  if(c==="Russland"||c==="Kasachstan"||/roscosmos|russian|glavkosmos|khrunichev|progress rocket/.test(p)) return "russia";
+  if(c==="China"||/china|chinese|galactic energy|landspace|ispace|expace|space pioneer|orienspace|cas space/.test(p)) return "china";
+  if(c==="Indien"||/indian space|isro|skyroot|agnikul/.test(p)) return "india";
+  if(c==="Japan"||/jaxa|mitsubishi|interstellar tech|space one/.test(p)) return "japan";
+  return "other";
+}
 export function matchRule(f, l) {
   const prov = l.launch_service_provider?.name || "?", p = prov.toLowerCase(), r = (l.rocket?.configuration?.full_name || l.rocket?.configuration?.name || "").toLowerCase();
   if (f.chip === "spacex" && !p.includes("spacex")) return false;
   if (f.chip === "starship" && !r.includes("starship")) return false;
+  if (Array.isArray(f.grp) && f.grp.length && !f.grp.includes(launchGroup(l))) return false;
   if (f.prov && prov !== f.prov) return false;
   if (f.cty && countryOf(l) !== f.cty) return false;
   if (f.q) { const hay = [l.name, r, p, l.pad?.name, l.pad?.location?.name, l.mission?.name, l.mission?.orbit?.name, l.mission?.type].join(" ").toLowerCase();

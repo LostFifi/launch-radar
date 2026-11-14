@@ -128,6 +128,13 @@ async function launchBrowser() {
       openDB(); const nm = document.querySelector('#dbT .rname'); nm.click(); const prof = !!document.getElementById('rThumbs');
       return { ok, lb: vis === 'flex' && i === 1, prof }; });
     check('[Raketen] Steckbrief, Name-Klick, Vollbild-Galerie', gal.ok && gal.lb && gal.prof, JSON.stringify(gal));
+    const grp = await page.evaluate(async () => { const all = visible().length, sxN = launches.filter(l => launchGroup(l) === 'spacex').length; document.getElementById('grpBtn').click();
+      const rows = document.querySelectorAll('#grpMenu input[data-g]').length, checked = document.querySelectorAll('#grpMenu input[data-g]:checked').length;
+      const sx = document.querySelector('#grpMenu input[data-g=spacex]'); sx.click(); const noSx = visible().length, lab = document.querySelector('#grpBtn .lbl').textContent;
+      const rule = currentRule(), ok = !rule.grp.includes('spacex') && visible().every(l => launchGroup(l) !== 'spacex');
+      document.querySelector('#grpMenu .gmh button').click(); const back = visible().length; document.body.click();
+      return { all, sxN, rows, checked, noSx, lab, ok, back, open: document.getElementById('grpMenu').style.display }; });
+    check('[Filter] Ein Knopf, alle Anbieter angehakt, einzeln abwählbar', grp.rows === 11 && grp.checked === 11 && grp.ok && grp.noSx === grp.all - grp.sxN && grp.back === grp.all && /ausser/.test(grp.lab) && grp.open === 'none', JSON.stringify(grp));
     check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     check('[Messung] auf der echten Seite aktiv, bei Do Not Track aus', fbr.live === true && fbr.dnt === false);
@@ -178,7 +185,7 @@ async function launchBrowser() {
       const api = await p2.evaluate(() => [i18n('Orbital Insertion Burn Start'), i18n('Payload Deployment Sequence Start'), i18n('3 Starts'), i18n('12 von 40')]);
       check('[Englisch] API-Texte bleiben unverändert, Zahlen-Muster greifen', api[0] === 'Orbital Insertion Burn Start' && api[1] === 'Payload Deployment Sequence Start' && api[2] === '3 launches' && api[3] === '12 of 40', api.join(' | '));
       check('[Englisch] kein deutscher Text übrig', left.length === 0, left.length ? left.slice(0, 8).join(' | ') + (left.length > 8 ? ` … (+${left.length - 8})` : '') : 'alle Ansichten geprüft');
-      await p2.goto(base + '?lang=de'); const de = await p2.evaluate(() => [LANG, document.querySelector('[data-f=all]').textContent]);
+      await p2.goto(base + '?lang=de'); const de = await p2.evaluate(() => [LANG, document.querySelector('#grpBtn .lbl').textContent]);
       check('[Englisch] Umschalten auf Deutsch (?lang=de)', de[0] === 'de' && de[1] === 'Alle');
       await ctx2.close();
     }

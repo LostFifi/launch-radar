@@ -251,3 +251,18 @@ button.btn{border:0;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
 @media (max-width:799px){.lbn{width:40px;height:40px;font-size:26px}.lbn.l{left:6px}.lbn.r{right:6px}}
 .gal .gimg{object-fit:contain!important;background:#000}
 #panel.wide .hero.gal{aspect-ratio:auto;height:min(46vh,380px)}
+
+/* Filter-Knopf oben + Anbieter-Liste */
+#grpBtn{display:inline-flex;align-items:center;gap:4px}
+#grpBtn .dd{opacity:.85;transition:transform .15s}#grpBtn[aria-expanded="true"] .dd{transform:rotate(180deg)}
+#grpBtn .lbl{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#grpMenu{position:fixed;z-index:1600;width:260px;max-height:calc(100dvh - 120px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 12px 40px #000b;display:none}
+#grpMenu .gmh{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+#grpMenu .gmh button,#grpMenu .gmf button{background:none;border:0;color:var(--acc);cursor:pointer;font:inherit;padding:0}
+#grpMenu .gmr{display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;cursor:pointer}
+#grpMenu .gmr:hover{background:#ffffff0d}
+#grpMenu .gmr span{flex:1}#grpMenu .gmr small{color:var(--mute);font-variant-numeric:tabular-nums}
+#grpMenu .gmr.empty span{color:var(--mute)}
+#grpMenu input{accent-color:var(--acc);width:16px;height:16px}
+#grpMenu .gmf{font-size:12px;color:var(--mute);padding:8px 6px 2px;border-top:1px solid var(--line);margin-top:4px}
+@media (max-width:560px){ header #grpBtn .lbl{display:inline;max-width:110px} }
