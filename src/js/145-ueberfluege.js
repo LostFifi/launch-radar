@@ -23,7 +23,7 @@ function locateHome(){
 }
 var homePick=false;
 function pickHome(){
-  if(G.on) document.getElementById("globeBtn").click();
+  if(G.on) setGlobe(false,false);   // zum Antippen auf die Karte wechseln (ohne die Ansichts-Wahl zu speichern)
   homePick=true; document.getElementById("panel").classList.add("min");
   toast("Tippe auf der Karte auf deinen Standort");
 }

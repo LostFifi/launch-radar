@@ -2,10 +2,10 @@
 // Quelltexte sind Deutsch. Für Englisch übersetzt eine Schicht alle angezeigten Texte (Textknoten + title/placeholder/
 // aria-label) über das Wörterbuch I18N_EN (006-i18n-en.js): exakte Treffer oder Muster mit Platzhaltern {0},{1} …
 // Texte ausserhalb des Fensters (Meldungen, Benachrichtigungen, Canvas) laufen über i18n().
-// Sprache: ?lang=en|de → gespeicherte Wahl (lr_lang) → Browser-Sprache (de* = Deutsch, sonst Englisch).
+// Sprache: ?lang=en|de → gespeicherte Wahl (lr_lang) → Standard Englisch (Umschalter im Ebenen-Menü).
 var LANG=(()=>{ const q=new URLSearchParams(location.search).get("lang"); if(q==="en"||q==="de"){ try{ localStorage.setItem("lr_lang",q); }catch(e){} return q; }
   try{ const s=localStorage.getItem("lr_lang"); if(s==="en"||s==="de") return s; }catch(e){}
-  return /^de\b/i.test(navigator.language||"de")?"de":"en"; })();
+  return "en"; })();
 const LOC=LANG==="en"?"en-GB":"de-CH";
 document.documentElement.lang=LANG;
 function setLang(l){ try{ localStorage.setItem("lr_lang",l); }catch(e){} const u=new URL(location.href); u.searchParams.delete("lang"); location.href=u.toString(); }

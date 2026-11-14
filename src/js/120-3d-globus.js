@@ -70,11 +70,17 @@ function gUp(e){ const d=G.drag; G.ptr.delete(e.pointerId); if(G.ptr.size<2) G.p
 gc.addEventListener("pointerup",gUp); gc.addEventListener("pointercancel",gUp);
 gc.addEventListener("wheel",e=>{ e.preventDefault(); G.scale=Math.max(80,Math.min(4000,G.scale*Math.exp(-e.deltaY*.0015))); },{passive:false});
 addEventListener("resize",gResize);
-document.getElementById("globeBtn").onclick=()=>{
+function setGlobe(on,remember){ if(G.on!==!!on) document.getElementById("globeBtn").onclick(remember); }
+document.getElementById("globeBtn").onclick=(remember)=>{
   G.on=!G.on; gc.style.display=G.on?"block":"none"; document.body.classList.toggle("globe-on",G.on);
+  if(remember!==false){ try{ localStorage.setItem("lr_view",G.on?"globe":"map"); }catch(e){} }   // Wahl merken
   document.getElementById("globeBtn").classList.toggle("on",G.on);
   document.getElementById("globeBtn").innerHTML=G.on?ICON.map+'<span class="lbl">Karte</span>':ICON.globe+'<span class="lbl">Globus</span>';
   if(G.on){ gResize(); G.auto=true; if(selected&&!follow) G.target=[-(+selected.pad.longitude),-(+selected.pad.latitude)]; }
   else { map.invalidateSize(); drawSatMap(); if(selected){ drawRoute(selected,curTrack); const s=document.getElementById("sim"); if(s) placeRocket(+s.value); } }
 };
 gLoop();
+// Startansicht: ?view=map|globe → gespeicherte Wahl (lr_view) → Standard Globus
+{ const q=new URLSearchParams(location.search).get("view"); let v=q==="map"||q==="globe"?q:null;
+  if(!v){ try{ v=localStorage.getItem("lr_view"); }catch(e){} }
+  if((v||"globe")==="globe") setGlobe(true,false); }

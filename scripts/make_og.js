@@ -1,4 +1,4 @@
-﻿// Erzeugt das Vorschaubild für geteilte Links (Open Graph, 1200×630) aus der echten App.
+// Erzeugt das Vorschaubild für geteilte Links (Open Graph, 1200×630) aus der echten App.
 //   node scripts/make_og.js      (nach npm run build; schreibt src/pwa/og-image.png)
 // Externe Server sind blockiert → eingebettete Weltkarte, damit das Bild immer gleich aussieht.
 const path = require('path');
@@ -9,7 +9,7 @@ const { startServer, launchBrowser } = require('./i18n-views.js');
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, serviceWorkers: 'block', locale: 'en-US' });
   await ctx.route(u => !u.href.startsWith(base), r => r.abort());
   const page = await ctx.newPage();
-  await page.goto(base + '?lang=en');
+  await page.goto(base + '?lang=en&view=map');
   await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0);
   await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));

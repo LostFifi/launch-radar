@@ -31,7 +31,7 @@ async function launchBrowser() {
       await ctx.route(u => !u.href.startsWith(base), r => r.abort());       // alles Externe blockieren
       const page = await ctx.newPage();
       page.on('pageerror', e => errors.push(`[${vp.name}] JS-Fehler: ${e.message}`));
-      await page.goto(base, { waitUntil: 'load' });
+      await page.goto(base + '?lang=de', { waitUntil: 'load' });
       await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
       const r = await page.evaluate(async () => {
         const out = {}, wait = ms => new Promise(r => setTimeout(r, ms));
@@ -51,7 +51,7 @@ async function launchBrowser() {
         out.filter = `${n0} alle, ${n1} Falcon, ${n2} China`; out.filterOk = n0 > 0 && n1 > 0 && n1 < n0 && n2 < n0;
         openStats(); await wait(200); out.stats = document.getElementById('panel').innerText.length > 100;
         openDB(); await wait(200); out.db = document.querySelectorAll('#panel table.db tr').length;
-        document.getElementById('globeBtn').click(); await wait(300); out.globe = G.on; document.getElementById('globeBtn').click();
+        const g0 = G.on; out.globeDefault = g0; document.getElementById('globeBtn').click(); await wait(300); out.globe = G.on !== g0; document.getElementById('globeBtn').click();
         document.getElementById('layerBtn').click(); await wait(100); out.layers = document.querySelectorAll('#layers input').length;
         // Mond/Mars (künstliche Starts) und Rückblick mit gespeicherter Messung
         const base = JSON.parse(JSON.stringify(launches.find(x => /falcon 9/i.test(x.rocket?.configuration?.name || '')) || launches[0]));
@@ -79,7 +79,7 @@ async function launchBrowser() {
       check(`[${vp.name}] Suche + Filter`, r.filterOk, r.filter);
       check(`[${vp.name}] Statistik`, r.stats);
       check(`[${vp.name}] Raketen-Datenbank`, r.db > 10, `${r.db} Zeilen`);
-      check(`[${vp.name}] Globus`, r.globe);
+      check(`[${vp.name}] Globus (Standard) + Karte umschalten`, r.globe && r.globeDefault);
       check(`[${vp.name}] Ebenen-Menü`, r.layers > 5);
       check(`[${vp.name}] ISS-Überflüge`, /\d/.test(r.passes), r.passes);
       check(`[${vp.name}] Start-Sichtbarkeit vom Standort`, r.view);
@@ -96,7 +96,7 @@ async function launchBrowser() {
     await ctx.route(u => !u.href.startsWith(base), r => r.abort());
     const page = await ctx.newPage();
     page.on('pageerror', e => errors.push(`[Offline-Datei] JS-Fehler: ${e.message}`));
-    await page.goto(base + 'launchradar-offline.html');
+    await page.goto(base + 'launchradar-offline.html?lang=de');
     await page.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0, null, { timeout: 30000 });
     const off = await page.evaluate(async () => ({ tle: !!TLE_SNAP, img: !!IMG_SNAP }));
     check('[Offline-Datei] lädt mit eingebetteten Reserve-Daten', off.tle && off.img);
@@ -115,7 +115,7 @@ async function launchBrowser() {
     {
       const ctx3 = await browser.newContext({ serviceWorkers: 'block', locale: 'de-CH' });
       await ctx3.route(u => !u.href.startsWith(base), r => r.abort());
-      const p3 = await ctx3.newPage(); await p3.goto(base);
+      const p3 = await ctx3.newPage(); await p3.goto(base + '?lang=de');
       await p3.waitForFunction(() => typeof launches !== 'undefined' && launches.length > 0);
       const og = await p3.evaluate(() => ({ img: document.querySelector('meta[property="og:image"]')?.content, url: document.querySelector('meta[property="og:url"]')?.content }));
       check('[Teilen] Vorschau-Angaben (og:image absolut)', /^https:\/\/.+\/og-image\.png$/.test(og.img || '') && /^https:\/\//.test(og.url || ''), og.img);

@@ -1010,7 +1010,7 @@ var I18N_EN = {
   // ---------- Info, Datenschutz ----------
   "Grösse ändern":"Resize","Was die App sieht":"What the app sees","Noch kein Bild.":"No image yet.","(kein Text erkannt)":"(no text recognised)",
   "{0} → Tempo {1} · Höhe {2}":"{0} → speed {1} · altitude {2}","{0} → keine Werte":"{0} → no values","keine Werte":"no values",
-  "Paar {0}: {1}":"pair {0}: {1}","Satelliten ausgesetzt: {n0} (gemessen)":"Satellites deployed: {0} (measured)","{0} · {n1} Satelliten ausgesetzt":"{0} · {1} satellites deployed","{0} · Tipp: Mini-Fenster grösser ziehen (mind. ~720 px) – kleine Ziffern werden schlecht erkannt.":"{0} · Tip: make the mini player bigger (at least ~720 px) – small digits are hard to read.","{0} → {1}":"{0} → {1}","{0} | {1}":"{0} | {1}",
+  "Paar {0}: {1}":"pair {0}: {1}","Startzeit war verschoben: ursprünglich {0} ({1})":"Launch time was changed: originally {0} ({1})","Satelliten ausgesetzt: {n0} (gemessen)":"Satellites deployed: {0} (measured)","{0} · {n1} Satelliten ausgesetzt":"{0} · {1} satellites deployed","{0} · Tipp: Mini-Fenster grösser ziehen (mind. ~720 px) – kleine Ziffern werden schlecht erkannt.":"{0} · Tip: make the mini player bigger (at least ~720 px) – small digits are hard to read.","{0} → {1}":"{0} → {1}","{0} | {1}":"{0} | {1}",
   "Ziehe in der Vorschau einen Rahmen um alle Tempo-/Höhen-Anzeigen (beide Stufen).":"In the preview, drag one frame around all speed/altitude readouts (both stages).","Ist gestartet (um T-0)":"It has launched (at T-0)","Gerade eben abgehoben":"Lifted off just now",
   "Start bestätigt – Abhebezeit auf jetzt gesetzt":"Launch confirmed – liftoff time set to now","Start bestätigt – die Rakete fliegt mit":"Launch confirmed – the rocket is now tracked","wartet auf den Start":"waiting for liftoff","Info":"Info","Datenschutz":"Privacy","Datenschutz & Impressum":"Privacy & legal notice","Alle meine Daten löschen":"Delete all my data",
   "Push-Nachrichten abmelden":"Turn off push notifications","Push-Nachrichten wieder einschalten":"Turn push notifications back on",
@@ -1024,10 +1024,10 @@ var I18N_EN = {
 // Quelltexte sind Deutsch. Für Englisch übersetzt eine Schicht alle angezeigten Texte (Textknoten + title/placeholder/
 // aria-label) über das Wörterbuch I18N_EN (006-i18n-en.js): exakte Treffer oder Muster mit Platzhaltern {0},{1} …
 // Texte ausserhalb des Fensters (Meldungen, Benachrichtigungen, Canvas) laufen über i18n().
-// Sprache: ?lang=en|de → gespeicherte Wahl (lr_lang) → Browser-Sprache (de* = Deutsch, sonst Englisch).
+// Sprache: ?lang=en|de → gespeicherte Wahl (lr_lang) → Standard Englisch (Umschalter im Ebenen-Menü).
 var LANG=(()=>{ const q=new URLSearchParams(location.search).get("lang"); if(q==="en"||q==="de"){ try{ localStorage.setItem("lr_lang",q); }catch(e){} return q; }
   try{ const s=localStorage.getItem("lr_lang"); if(s==="en"||s==="de") return s; }catch(e){}
-  return /^de\b/i.test(navigator.language||"de")?"de":"en"; })();
+  return "en"; })();
 const LOC=LANG==="en"?"en-GB":"de-CH";
 document.documentElement.lang=LANG;
 function setLang(l){ try{ localStorage.setItem("lr_lang",l); }catch(e){} const u=new URL(location.href); u.searchParams.delete("lang"); location.href=u.toString(); }
@@ -1278,9 +1278,12 @@ function fmtShift(ms){ const s=ms<0?"−":"+", m=Math.round(Math.abs(ms)/60e3), 
 // Letzte Verschiebung eines Starts (nur wenn sie in den letzten 7 Tagen erkannt wurde)
 function postponed(l){ const h=NETH[l.id]; if(!h||!h.prev||Date.now()-h.at>7*864e5) return null;
   return {prev:h.prev, net:h.net, shift:new Date(h.net)-new Date(h.prev), total:new Date(h.net)-new Date(h.first), n:h.n, at:h.at}; }
-function postponedPill(l){ const p=postponed(l); if(!p) return "";
+// Nach dem Start interessiert die Verschiebung kaum noch: dann nur eine kleine graue Notiz, keine gelbe Markierung
+const launchedYet=l=>{ const s=launchState(l); return s==="flying"||s==="done"; };
+function postponedPill(l){ const p=postponed(l); if(!p||launchedYet(l)) return "";
   return `<span class="pill shift" title="Vorher ${esc(fmtDate(p.prev))}">${p.shift>0?"verschoben":"vorgezogen"} ${fmtShift(p.shift)}</span>`; }
 function postponedNote(l){ const p=postponed(l); if(!p) return "";
+  if(launchedYet(l)) return `<div class="note">Startzeit war verschoben: ursprünglich ${esc(fmtDate(p.prev))} (${fmtShift(p.shift)})</div>`;
   return `<div class="warnbox" style="margin-top:8px"><b>${p.shift>0?"Verschoben":"Vorgezogen"}</b> um ${fmtShift(p.shift)}: vorher ${esc(fmtDate(p.prev))} → jetzt ${esc(fmtDate(p.net))}${p.n>1?` <span class="mute">(${p.n}× geändert, insgesamt ${fmtShift(p.total)})</span>`:""}<br><span class="mute" style="font-size:12px">Erkannt ${esc(new Date(p.at).toLocaleString(LOC,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</span></div>`; }
 // Meldung, wenn ein Start mit Erinnerung verschoben wurde
 function onPostponed(l,h){
@@ -2310,14 +2313,20 @@ function gUp(e){ const d=G.drag; G.ptr.delete(e.pointerId); if(G.ptr.size<2) G.p
 gc.addEventListener("pointerup",gUp); gc.addEventListener("pointercancel",gUp);
 gc.addEventListener("wheel",e=>{ e.preventDefault(); G.scale=Math.max(80,Math.min(4000,G.scale*Math.exp(-e.deltaY*.0015))); },{passive:false});
 addEventListener("resize",gResize);
-document.getElementById("globeBtn").onclick=()=>{
+function setGlobe(on,remember){ if(G.on!==!!on) document.getElementById("globeBtn").onclick(remember); }
+document.getElementById("globeBtn").onclick=(remember)=>{
   G.on=!G.on; gc.style.display=G.on?"block":"none"; document.body.classList.toggle("globe-on",G.on);
+  if(remember!==false){ try{ localStorage.setItem("lr_view",G.on?"globe":"map"); }catch(e){} }   // Wahl merken
   document.getElementById("globeBtn").classList.toggle("on",G.on);
   document.getElementById("globeBtn").innerHTML=G.on?ICON.map+'<span class="lbl">Karte</span>':ICON.globe+'<span class="lbl">Globus</span>';
   if(G.on){ gResize(); G.auto=true; if(selected&&!follow) G.target=[-(+selected.pad.longitude),-(+selected.pad.latitude)]; }
   else { map.invalidateSize(); drawSatMap(); if(selected){ drawRoute(selected,curTrack); const s=document.getElementById("sim"); if(s) placeRocket(+s.value); } }
 };
 gLoop();
+// Startansicht: ?view=map|globe → gespeicherte Wahl (lr_view) → Standard Globus
+{ const q=new URLSearchParams(location.search).get("view"); let v=q==="map"||q==="globe"?q:null;
+  if(!v){ try{ v=localStorage.getItem("lr_view"); }catch(e){} }
+  if((v||"globe")==="globe") setGlobe(true,false); }
 
 // ---- 130-simulierte-zeit.js ----
 // ===================== Simulierte Zeit (Zeitraffer) =====================
@@ -2511,7 +2520,7 @@ function locateHome(){
 }
 var homePick=false;
 function pickHome(){
-  if(G.on) document.getElementById("globeBtn").click();
+  if(G.on) setGlobe(false,false);   // zum Antippen auf die Karte wechseln (ohne die Ansichts-Wahl zu speichern)
   homePick=true; document.getElementById("panel").classList.add("min");
   toast("Tippe auf der Karte auf deinen Standort");
 }
