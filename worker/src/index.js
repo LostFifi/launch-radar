@@ -66,6 +66,23 @@ export default {
         await env.LR.put("fb:list", JSON.stringify(list.slice(0, 1000)));
         return json({ ok: true }, 200, cors);
       }
+      // ---- Live-Telemetrie: ein Sender (Passwort = STATS_KEY) misst, alle anderen lesen mit ----
+      if (url.pathname === "/tele/push" && req.method === "POST") {
+        const k = (env.STATS_KEY || "").trim(), got = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+        if (!k || got !== k) return json({ error: "Passwort falsch" }, 401, cors);
+        if (!env.TELE) return json({ error: "kein Telemetrie-Speicher" }, 503, cors);
+        const r = await teleHub(env).fetch("https://hub/push", { method: "POST", body: await req.text() });
+        return json(await r.json(), r.status, cors);
+      }
+      if (url.pathname === "/tele/live") {
+        if (!env.TELE) return json({ cur: null, hist: [] }, 200, cors);
+        const cache = globalThis.caches?.default, ck = new Request("https://cache.launchradar/tele-live");
+        let r = cache && await cache.match(ck);
+        if (!r) { const d = await (await teleHub(env).fetch("https://hub/live")).text();
+          r = new Response(d, { headers: { "content-type": "application/json", "cache-control": "public, max-age=2" } });
+          if (cache) ctx.waitUntil?.(cache.put(ck, r.clone())); }
+        return new Response(r.body, { status: 200, headers: { ...cors, "content-type": "application/json", "cache-control": "no-store" } });
+      }
       // ---- Statistik für Fionn (Passwort = Secret STATS_KEY) ----
       if (url.pathname === "/admin/stats") {
         const k = (env.STATS_KEY || "").trim(), got = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
@@ -259,4 +276,35 @@ async function rollup(env, day) {
   for (const v of V.values()) { if (v.t < 3) continue; s.v++; s.dur += v.t; s.b[bucketOf(v.t)]++;
     v.f.forEach(f => s.f[f] = (s.f[f] || 0) + 1); const L = v.l === "en" ? "en" : "de", D = v.m ? "mobile" : "desktop"; s.lang[L] = (s.lang[L] || 0) + 1; s.dev[D] = (s.dev[D] || 0) + 1; }
   return s;
+}
+
+// ---------- Live-Telemetrie-Verteiler (Durable Object, eine Instanz) ----------
+// Hält den neuesten Messwert + die letzten 10 Minuten im Arbeitsspeicher; alle 20 s gesichert (falls neu gestartet).
+const teleHub = env => env.TELE.get(env.TELE.idFromName("live"));
+const num = (x, max) => { x = Number(x); return Number.isFinite(x) && x >= 0 && x <= max ? Math.round(x * 10) / 10 : null; };
+export class TeleHub {
+  constructor(state) { this.state = state; this.cur = null; this.hist = []; this.saved = 0;
+    state.blockConcurrencyWhile?.(async () => { const s = await state.storage.get("live"); if (s) { this.cur = s.cur; this.hist = s.hist || []; } }); }
+  async fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === "/push") {
+      let d; try { d = JSON.parse(await req.text()); } catch (e) { return Response.json({ ok: false }, { status: 400 }); }
+      if (d.ping) return Response.json({ ok: true });
+      const st = x => x && { v: num(x.v, 40000), h: num(x.h, 5000) };
+      const now = Date.now(), c = { id: String(d.id || "").slice(0, 64), name: String(d.name || "").slice(0, 120), at: now,
+        ts: num(d.ts, 200000), s2: st(d.s2), s1: st(d.s1), d: num(d.d, 5e6), vh: num(d.vh, 20), pay: num(d.pay, 500) };
+      if (!c.id) return Response.json({ ok: false }, { status: 400 });
+      if (this.cur && this.cur.id !== c.id) this.hist = [];   // neuer Start → Verlauf neu
+      this.cur = c; const last = this.hist[this.hist.length - 1];
+      if (!last || now - last[0] >= 2000) this.hist.push([now, c.ts, c.s2?.h ?? null, c.s2?.v ?? null, c.s1?.h ?? null, c.s1?.v ?? null]);
+      this.hist = this.hist.filter(x => now - x[0] < 10 * 60e3);
+      if (now - this.saved > 20e3) { this.saved = now; await this.state.storage.put("live", { cur: this.cur, hist: this.hist }); }
+      return Response.json({ ok: true });
+    }
+    if (url.pathname === "/live") {
+      const fresh = this.cur && Date.now() - this.cur.at < 10 * 60e3;
+      return Response.json({ cur: fresh ? this.cur : null, hist: fresh ? this.hist : [], now: Date.now() });
+    }
+    return Response.json({ error: "?" }, { status: 404 });
+  }
 }

@@ -135,6 +135,16 @@ async function launchBrowser() {
       document.querySelector('#grpMenu .gmh button').click(); const back = visible().length; document.body.click();
       return { all, sxN, rows, checked, noSx, lab, ok, back, open: document.getElementById('grpMenu').style.display }; });
     check('[Filter] Ein Knopf, alle Anbieter angehakt, einzeln abwählbar', grp.rows === 11 && grp.checked === 11 && grp.ok && grp.noSx === grp.all - grp.sxN && grp.back === grp.all && /ausser/.test(grp.lab) && grp.open === 'none', JSON.stringify(grp));
+    const tel = await page.evaluate(async () => { const keep = selected; selected = null; TELE.S = { s1: teleStage(), s2: teleStage() }; TELE.t0 = Date.now() - 1000;
+      teleAccept('s2', 26450, 4, 'falsch'); const seq = [];
+      for (let i = 0; i < 4; i++) { await new Promise(r => setTimeout(r, 300)); teleAccept('s2', 26451, 256, 'ok'); seq.push(TELE.S.s2.h); }
+      const r = { seq, resync: TELE.S.s2.resync || 0 }; selected = keep; return r; });
+    check('[Telemetrie] falscher Erstwert blockiert nicht – rastet auf 256 km ein', tel.seq[tel.seq.length - 1] === 256 && tel.resync >= 1, JSON.stringify(tel));
+    const rt = await page.evaluate(async () => { const l = launches[0]; select(l);
+      RT.cur = { id: l.id, at: Date.now(), age: 1, ts: 600, s2: { v: 26451, h: 256 }, s1: null, d: 2000, vh: 7, pay: 5 }; RT.at = Date.now(); RT.hist = [];
+      rtRender(); const txt = document.getElementById('rtele').textContent, d = teleDist(); RT.cur = null; rtRender();
+      return { card: /26.451/.test(txt) && /256/.test(txt), d: d > 2000 && d < 2200, gone: document.getElementById('rtele').textContent === '' }; });
+    check('[Telemetrie] Werte vom Sender erscheinen ohne Einrichtung, Rakete folgt', rt.card && rt.d && rt.gone, JSON.stringify(rt));
     check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     check('[Messung] auf der echten Seite aktiv, bei Do Not Track aus', fbr.live === true && fbr.dnt === false);

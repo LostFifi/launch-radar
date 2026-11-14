@@ -1,6 +1,6 @@
 // Offline-Test des Workers ohne Cloudflare-Konto: simuliert KV und fetch.
 //   cd worker && node test.js
-import worker, { vapidJwt } from "./src/index.js";
+import worker, { vapidJwt, TeleHub } from "./src/index.js";
 import { generateKeyPairSync, createPublicKey, verify } from "node:crypto";
 
 let ok = 0, bad = 0; const check = (n, c, i = "") => { console.log(`${c ? "✓" : "✗"} ${n}${i ? " – " + i : ""}`); c ? ok++ : bad++; };
@@ -99,5 +99,18 @@ check("/status zeigt Sperre", j.launches.status === 429 && j.retryUntil > Date.n
   await worker.scheduled({ scheduledTime: Date.now() + 864e5 }, env, {});   // nächster Tag: Cron fasst gestern zusammen
   check("Cron fasst den Vortag zusammen", JSON.parse(store.get("st:" + new Date().toISOString().slice(0, 10)) || "{}").v === 2);
   check("Feedback in der Statistik", st.feedback.length === 1 && st.feedback[0].wish === "Mehr Raketen" && st.feedback[0].r === 5);
+}
+// 5) Live-Telemetrie: Sender schickt, alle lesen
+{ const mem = new Map(), hub = new TeleHub({ storage: { async get(k) { return mem.get(k); }, async put(k, v) { mem.set(k, v); } } });
+  env.TELE = { idFromName: () => "live", get: () => ({ fetch: (u, o) => hub.fetch(new Request(u, o)) }) };
+  const push = (body, key = "geheim") => worker.fetch(new Request("https://w.example/tele/push", { method: "POST", headers: { origin: "https://launch-radar.com", authorization: "Bearer " + key }, body: JSON.stringify(body) }), env, {});
+  const bad = await push({ id: "x", s2: { v: 1, h: 1 } }, "falsch");
+  check("Telemetrie senden nur mit Passwort", bad.status === 401);
+  await push({ id: "f15", name: "Starship Flight 15", ts: 35990, s2: { v: 26451, h: 256 }, s1: null, d: 123456, vh: 7.3, pay: 20 });
+  const live = await (await call("/tele/live")).json();
+  check("Alle bekommen den neuesten Wert", live.cur?.id === "f15" && live.cur.s2.v === 26451 && live.cur.s2.h === 256 && live.cur.pay === 20 && live.hist.length === 1, JSON.stringify(live.cur));
+  await push({ id: "f15", s2: { v: 99999999, h: -5 } });
+  const l2 = await (await call("/tele/live")).json();
+  check("Unsinnige Werte werden nicht verteilt", l2.cur.s2.v === null && l2.cur.s2.h === null);
 }
 console.log(bad ? `\n${bad} Fehler` : "\nAlles in Ordnung"); process.exit(bad ? 1 : 0);
