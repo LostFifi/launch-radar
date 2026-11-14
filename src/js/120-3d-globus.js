@@ -34,7 +34,10 @@ function gDraw(){
     gx.textAlign="center"; gx.textBaseline="middle";
     curTrack.landings.forEach(x=>{ if(vis(x.pos)){ const q=pt(x.pos); drawLandG(gx,q[0],q[1],x.kind); } });
   }
-  G.hits=[];
+  G.hits=[]; G.evHits=[];
+  if(curTrack?.events && LAYERS.events!==false) curTrack.events.forEach(e=>{ if(!vis(e.pos)) return; const q=pt(e.pos);
+    gx.beginPath(); gx.arc(q[0],q[1],4.5,0,7); gx.fillStyle=EVCOL[e.kind]||"#fff"; gx.fill(); gx.lineWidth=1.5; gx.strokeStyle="#0b0f17"; gx.stroke();
+    G.evHits.push({x:q[0],y:q[1],e}); });
   satDrawGlobe(gx,proj,path,vis,pt);
   padGroups.forEach(list=>{ const l=list[0], ll=list.site?list.site.ll:[+l.pad.latitude,+l.pad.longitude]; if(!vis(ll)) return; const q=pt(ll);
     gx.beginPath(); gx.arc(q[0],q[1],7,0,7); gx.fillStyle=statusHex(l); gx.fill(); gx.lineWidth=2.5; gx.strokeStyle="#fff"; gx.stroke();
@@ -57,6 +60,14 @@ function gLoop(){
 gc.addEventListener("pointerdown",e=>{ gc.setPointerCapture(e.pointerId); G.ptr.set(e.pointerId,[e.clientX,e.clientY]); G.target=null; G.auto=false;
   if(G.ptr.size===1) G.drag={x:e.clientX,y:e.clientY,r:[...G.rot],moved:false};
   if(G.ptr.size===2){ const [a,b]=[...G.ptr.values()]; G.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:G.scale}; G.drag=null; } });
+// Ereignis-Punkte: Name beim Darüberfahren (wie die Tooltips auf der Karte)
+const gtip=document.createElement("div"); gtip.id="gtip"; document.body.appendChild(gtip);
+gc.addEventListener("pointermove",e=>{ if(G.ptr.size){ gtip.style.display="none"; return; }
+  let best=null,bd=9; (G.evHits||[]).forEach(h=>{ const d=Math.hypot(h.x-e.clientX,h.y-e.clientY); if(d<bd){bd=d;best=h;} });
+  if(!best){ gtip.style.display="none"; gc.style.cursor=""; return; }
+  const v=best.e; gtip.innerHTML=`<b>${v.rel}</b> · <span>${esc(v.txt)}</span>${v.gen?` <span class="mute">(${v.note})</span>`:""}`;
+  gtip.style.display="block"; gtip.style.left=(e.clientX+12)+"px"; gtip.style.top=(e.clientY-28)+"px"; gc.style.cursor="help"; });
+gc.addEventListener("pointerleave",()=>{ gtip.style.display="none"; });
 gc.addEventListener("pointermove",e=>{ if(!G.ptr.has(e.pointerId)) return; G.ptr.set(e.pointerId,[e.clientX,e.clientY]);
   if(G.pinch && G.ptr.size===2){ const [a,b]=[...G.ptr.values()]; G.scale=Math.max(80,Math.min(4000,G.pinch.s*Math.hypot(a[0]-b[0],a[1]-b[1])/G.pinch.d)); return; }
   if(G.drag){ const dx=e.clientX-G.drag.x, dy=e.clientY-G.drag.y; if(Math.hypot(dx,dy)>4) G.drag.moved=true;
@@ -72,7 +83,7 @@ gc.addEventListener("wheel",e=>{ e.preventDefault(); G.scale=Math.max(80,Math.mi
 addEventListener("resize",gResize);
 function setGlobe(on,remember){ if(G.on!==!!on) document.getElementById("globeBtn").onclick(remember); }
 document.getElementById("globeBtn").onclick=(remember)=>{
-  G.on=!G.on; gc.style.display=G.on?"block":"none"; document.body.classList.toggle("globe-on",G.on);
+  G.on=!G.on; gc.style.display=G.on?"block":"none"; gtip.style.display="none"; document.body.classList.toggle("globe-on",G.on);
   if(remember!==false){ try{ localStorage.setItem("lr_view",G.on?"globe":"map"); }catch(e){} }   // Wahl merken
   document.getElementById("globeBtn").classList.toggle("on",G.on);
   document.getElementById("globeBtn").innerHTML=G.on?ICON.map+'<span class="lbl">Karte</span>':ICON.globe+'<span class="lbl">Globus</span>';

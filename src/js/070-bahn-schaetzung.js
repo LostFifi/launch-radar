@@ -53,6 +53,7 @@ function estimateProfile(l){
       tMax=Math.max(tMax,Tre+15*60);
     } else stage={mode:"orbit",label:["GTO","GEO","GSO","MEO"].includes(orb)?"Oberstufe bleibt in einer hohen Umlaufbahn (Weltraumschrott)":"Oberstufe bleibt vermutlich im Orbit und tritt erst nach Wochen bis Jahren wieder ein"};
   }
+  if(mp?.dock) tMax=Math.max(tMax,mp.dock+300);   // bis zum Andocken mitfliegen
   orbits=Math.max(orbits,Math.ceil(tMax/P-0.02));
   let track, retFit=null;
   const tlx=rx=>{ const v=(l.timeline||[]).filter(t=>rx.test(t.type?.abbrev||"")).map(t=>relSec(t.relative_time)).filter(x=>x!=null); return v.length?Math.max(...v):null; };
@@ -191,6 +192,8 @@ function pointAt(tr,cum,dist){
   const e=tr[tr.length-1]; return [e[0],e[1]];
 }
 
+const EVCOL={asc:"#9fb4d8",burn:"#ffd25a",pay:"#ff4fd8",land:"#ff6b3d",dock:"#7be07b"}, SHIFTS=[-360,0,360];
+map.createPane("evpane"); map.getPane("evpane").style.zIndex=640;   // über der Bahn und den Satelliten
 function drawRoute(l,est){
   routeLayer.clearLayers(); rocketMarker=null; curPos=null;
   const tr=est.track.map(p=>[p[0],p[1]]);
@@ -209,6 +212,12 @@ function drawRoute(l,est){
     pt.k=-1; });
   est.landings.forEach(x=> L.marker(x.pos,{icon:L.divIcon({className:"",html:landHtml(x.kind),iconSize:[16,16]})})
     .bindTooltip(x.label).addTo(routeLayer));
+  // Ereignisse (Max-Q, Stufentrennung, Aussetzen, Deorbit …) als Punkte auf der Bahn – Name beim Darüberfahren
+  est.events=[];
+  try{ est.events=launchEvents(l,est).filter(e=>e.s>0 && e.s<=est.tMax+1).map(e=>({...e,pos:pointAt(est.track,est.cum,distAt(e.s,est))})); }catch(e){}
+  if(LAYERS.events!==false) est.events.forEach(e=>{ if(e.kind==="land" && est.landings.some(x=>Math.hypot(x.pos[0]-e.pos[0],x.pos[1]-e.pos[1])<1)) return;   // Landesymbol steht schon da
+    SHIFTS.forEach(sh=>L.circleMarker([e.pos[0],norm(e.pos[1])+sh],{radius:4.5,weight:1.5,color:"#0b0f17",fillColor:EVCOL[e.kind]||"#fff",fillOpacity:1,pane:"evpane"})
+      .bindTooltip(`<b>${e.rel}</b> · <span>${esc(e.txt)}</span>${e.gen?` <span class="mute">(${e.note})</span>`:""}`,{direction:"top",offset:[0,-4]}).addTo(routeLayer)); });
   setupDeploy(l);
   rocketMarker=L.marker([+l.pad.latitude,+l.pad.longitude],{icon:L.divIcon({className:"",html:`<div class="rkw"><svg viewBox="0 0 24 24"><path d="${RK_PATH}" fill="#fff" stroke="#4ea1ff" stroke-width="1.3" stroke-linejoin="round"/></svg></div>`,iconSize:[28,28]}),zIndexOffset:1000}).addTo(routeLayer);
   curTrack=est;

@@ -116,6 +116,9 @@ async function launchBrowser() {
     const fbr = await page.evaluate(async () => { fbOpen(); document.querySelector('#fb .fbstars button[data-r="4"]').click();
       document.getElementById('fbWish').value = 'Mehr Raketen'; await fbSend(); await new Promise(r => setTimeout(r, 300));
       return { gone: !document.getElementById('fb'), use: USE.on, menu: infoMenuHtml().includes('fbOpen()') }; });
+    const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
+      const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length; return { n: ev.length, tl, pay: ev.some(e => e.kind === 'pay') }; });
+    check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     await ctx.close();
     // Teilen-Vorschau, Datenschutz-Seite, Suchmaschinen, „Alle Daten löschen“

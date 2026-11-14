@@ -20,7 +20,9 @@ function payloadPlan(l){
   let t0=f(/payload deployment sequence start|deploy.*start/i), t1=f(/payload deployment sequence end|deploy.*end/i), src="laut offizieller Timeline";
   if(t0==null){ const s=f(/payload separation|payload deploy|starlink deploy|spacecraft separation|dragon separation|satellite deploy/i); if(s!=null){ t0=s; t1=s; } }
   if(t0==null && mp?.deploy){ [t0,t1]=mp.deploy; src=mp.src; }
-  if(t0==null){ t0 = starlink ? 3700 : 3000; t1=t0; src="geschätzt"; }
+  if(t0==null){ // typische Trennzeit je Rakete/Bahn (geschätzt)
+    const k=profileKey(l), TYP={el:3300,lv:980,cz:660,so:3000,h3:1100};
+    t0 = starlink ? 3700 : ["GTO","GSO","SUB-GEO"].includes(orb) ? (k==="lv"?980:k==="cz"?1500:1950) : (TYP[k]??3000); t1=t0; src="geschätzt"; }
   if(t1==null||t1<t0) t1=t0;
   const times=Array.from({length:n},(_,i)=>n>1? t0+(t1-t0)*i/(n-1) : t0);
   return {n,label,times,t0,t1,src};

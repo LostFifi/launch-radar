@@ -65,15 +65,13 @@ function select(l){
       `<div class="mute">Noch keine COSPAR-Kennung vergeben – Bahndaten folgen meist 1–3 Tage nach dem Start.</div>`}<div id="objRes"></div></div>`;
   }
   // Timeline
-  const mtl=l.timeline?.length?[]:missionTimeline(l);   // keine API-Timeline → bekanntes Missionsprofil (069)
-  if(l.timeline?.length||mtl.length){
+  // Timeline: offizielle der API, sonst aus Missionsprofil bzw. typischem Ablauf erzeugt (069)
+  const evs=launchEvents(l,est), gen=evs.some(e=>e.gen), mp0=missionProfile(l);
+  if(evs.length){
     // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
     const t0=netOf(l);
-    const items=l.timeline?.length
-      ? l.timeline.map(t=>({s:relSec(t.relative_time)??0, rel:fmtRel(t.relative_time), txt:t.type?.abbrev||t.type?.description||""}))
-      : mtl.map(x=>({s:x.s, rel:"T+ "+mmss(x.s), txt:x.txt}));
-    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3>${mtl.length?`<div class="mute" style="margin-bottom:6px"><span>Aus dem Missionsprofil</span> · <span>${esc(missionProfile(l).src)}</span> · <span>Zeiten ungefähr</span></div>`:""}<ul class="tl" id="tlList">`+
-      items.sort((a,b)=>a.s-b.s).map(t=>`<li data-at="${t0+t.s*1000}"><span>${t.rel}</span><span>${esc(t.txt)}</span></li>`).join("")+`</ul></div>`;
+    html+=`<div class="sec"><h3>Ablauf (Timeline)</h3>${gen?`<div class="mute" style="margin-bottom:6px">${mp0?.events?`<span>Aus dem Missionsprofil</span> · <span>${esc(mp0.src)}</span> · <span>Zeiten ungefähr</span>`:`<span>Typischer Ablauf, keine offizielle Timeline</span> · <span>Zeiten geschätzt</span>`}</div>`:""}<ul class="tl" id="tlList">`+
+      evs.map(t=>`<li data-at="${t0+t.s*1000}"><span>${t.rel}</span><span><span class="evd ${t.kind}"></span>${esc(t.txt)}</span></li>`).join("")+`</ul></div>`;
   }
 
   // Live-Updates

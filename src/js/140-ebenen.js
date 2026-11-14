@@ -1,5 +1,5 @@
 // ===================== Ebenen (alles ausschaltbar) =====================
-var LAYERS = {pads:true, stations:true, starlink:false, gnss:false, weather:false, live:true, night:true, time:true, fresh:false, home:true};
+var LAYERS = {pads:true, events:true, stations:true, starlink:false, gnss:false, weather:false, live:true, night:true, time:true, fresh:false, home:true};
 try{ Object.assign(LAYERS, JSON.parse(localStorage.getItem("lr_layers")||"{}")); }catch(e){}
 const SAT_SRC={
   stations:{label:"Raumstationen (ISS, Tiangong)",color:"#ffffff",size:4,celestrak:"stations"},
@@ -21,7 +21,7 @@ map.on("zoomanim",e=>{ if(!satView) return;
 function buildLayerMenu(){
   const el=document.getElementById("layers");
   const row=(k,lab,dot)=>`<label><input type="checkbox" data-k="${k}" ${LAYERS[k]?"checked":""}>${dot?`<span class="dot" style="background:${dot}"></span>`:""}<span>${lab}</span></label>`;
-  el.innerHTML=`<h4>Starts</h4>${row("pads","Startplätze & Routen","#2ecc71")}${row("live","Live-Status bei laufenden Starts","#ff3b3b")}
+  el.innerHTML=`<h4>Starts</h4>${row("pads","Startplätze & Routen","#2ecc71")}${row("events","Ereignisse auf der Flugbahn","#ffd25a")}${row("live","Live-Status bei laufenden Starts","#ff3b3b")}
     <h4>Erde & Zeit</h4>${row("night","Tag/Nacht-Grenze","#4a5878")}${row("time","Zeitraffer-Leiste","#4ea1ff")}
     <h4>Satelliten</h4>`+Object.entries(SAT_SRC).map(([k,s])=>row(k,s.label+(SATS[k]?` <span class="mute">(${SATS[k].length})</span>`:""),s.color)).join("")
     +row("fresh","Neueste Starts hervorheben","#ff4fd8")
@@ -32,6 +32,7 @@ function buildLayerMenu(){
     LAYERS[i.dataset.k]=i.checked; try{localStorage.setItem("lr_layers",JSON.stringify(LAYERS));}catch(e){}
     if(i.dataset.k==="pads"){ if(!i.checked){ closeP(); } render(); }
     if(i.dataset.k==="live") livePoll(true);
+    if(i.dataset.k==="events" && selected) select(selected);
     if(i.dataset.k==="night") updateNight(true);
     if(i.dataset.k==="home") drawHome();
     if(i.dataset.k==="time"){ if(!i.checked) simReset(); updTimeUI(); }
