@@ -121,7 +121,7 @@ async function launchBrowser() {
         // auf der echten Seite (gleicher Host wie siteUrl, normaler Browser) muss die Messung an sein
         live: useAllowed({ host: new URL(CONFIG.siteUrl).host }, {}), dnt: useAllowed({ host: new URL(CONFIG.siteUrl).host }, { doNotTrack: '1' }) }; });
     const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
-      const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length; return { n: ev.length, tl, pay: ev.some(e => e.kind === 'pay') }; });
+      const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length, tip = [...document.querySelectorAll('#tlList li')].every(li => /\d{2}:\d{2}/.test(li.dataset.tip || '')); return { n: ev.length, tl, tip, pay: ev.some(e => e.kind === 'pay') }; });
     const gal = await page.evaluate(async () => { const r = ROCKETS.find(x => x.n === 'Falcon 9') || ROCKETS[0]; openRocket(r.id); await new Promise(z => setTimeout(z, 600));
       const tx = document.getElementById('panel').textContent, ok = /Bildergalerie/.test(tx) && /Flüge/.test(tx);
       openLightbox([{ src: 'a.jpg' }, { src: 'b.jpg' }], 0); lbStep(1); const lb = document.getElementById('lbox'), i = LB.i, vis = lb.style.display; closeLightbox();
@@ -140,7 +140,7 @@ async function launchBrowser() {
       for (let i = 0; i < 4; i++) { await new Promise(r => setTimeout(r, 300)); teleAccept('s2', 26451, 256, 'ok'); seq.push(TELE.S.s2.h); }
       const r = { seq, resync: TELE.S.s2.resync || 0 }; selected = keep; return r; });
     check('[Telemetrie] falscher Erstwert blockiert nicht – rastet auf 256 km ein', tel.seq[tel.seq.length - 1] === 256 && tel.resync >= 1, JSON.stringify(tel));
-    check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
+    check('[Flugbahn] Ereignis-Punkte + Timeline (mit Uhrzeit) auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay && evr.tip, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     check('[Messung] auf der echten Seite aktiv, bei Do Not Track aus', fbr.live === true && fbr.dnt === false);
     await ctx.close();

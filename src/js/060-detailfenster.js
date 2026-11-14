@@ -68,7 +68,9 @@ function select(l){
     // data-at = absolute Zeit des Schritts → timelineTick() färbt Vergangenes grün und hebt den nächsten Schritt hervor
     const t0=netOf(l);
     html+=`<div class="sec"><h3>Ablauf (Timeline)</h3>${gen?`<div class="mute" style="margin-bottom:6px">${mp0?.events?`<span>Aus dem Missionsprofil</span> · <span>${esc(mp0.src)}</span> · <span>Zeiten ungefähr</span>`:`<span>Typischer Ablauf, keine offizielle Timeline</span> · <span>Zeiten geschätzt</span>`}</div>`:""}<ul class="tl" id="tlList">`+
-      evs.map(t=>`<li data-at="${t0+t.s*1000}"><span>${t.rel}</span><span><span class="evd ${t.kind}"></span>${esc(t.txt)}</span></li>`).join("")+`</ul></div>`;
+      evs.map(t=>{ const d=new Date(t0+t.s*1000), day=d.toDateString()!==new Date(t0).toDateString();
+        const tip=d.toLocaleString(LOC,{...(day?{day:"2-digit",month:"2-digit"}:{}),hour:"2-digit",minute:"2-digit",second:t.s<600?"2-digit":undefined});
+        return `<li data-at="${t0+t.s*1000}" data-tip="${tip}"><span>${t.rel}</span><span><span class="evd ${t.kind}"></span>${esc(t.txt)}</span></li>`; }).join("")+`</ul></div>`;
   }
 
   // Live-Updates
