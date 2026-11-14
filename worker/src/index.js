@@ -82,9 +82,12 @@ export default {
 
   async scheduled(event, env, ctx) {
     const min = new Date(event.scheduledTime).getUTCMinutes();
-    await refresh(env, "launches");
+    // API-Kontingent (~15/h, Cloudflare-IPs geteilt): normal alle 10 Min, nur rund um einen Start (−3 h … +1 h) alle 5 Min
+    const cur = (await env.LR.get("launches", "json"))?.results || [], now = event.scheduledTime;
+    const busy = cur.some(l => { const d = now - new Date(l.net).getTime(); return d > -3600e3 && d < 3 * 3600e3; });
+    if (!cur.length || busy || min % 10 < 5) await refresh(env, "launches");
     { const y = dayStr(event.scheduledTime - 864e5); if (!(await env.LR.get("st:" + y))) { const r = await rollup(env, y); await env.LR.put("st:" + y, JSON.stringify(r), { expirationTtl: 400 * 86400 }); } }
-    if (min < 5) await refresh(env, "previous");      // stündlich
+    if (min >= 30 && min < 35) await refresh(env, "previous");      // stündlich, versetzt zur Startliste
     await sendReminders(env);
   }
 };

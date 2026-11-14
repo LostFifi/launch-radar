@@ -12,8 +12,13 @@ function reviewSection(l,est){
   if(l.mission?.orbit?.name) rows.push(["Zielbahn",esc(l.mission.orbit.name)+(ok?" – erreicht":"")]);
   (l.rocket?.launcher_stage||[]).forEach(s=>{ const ld=s.landing, la=s.launcher; if(!ld) return;
     const where=ld.landing_location?.name||ld.landing_location?.abbrev||"";
-    rows.push([/^booster/i.test(la?.serial_number||"")?esc(la.serial_number):`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">Landung erfolgreich</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
+    rows.push([/^booster/i.test(la?.serial_number||"")?esc(la.serial_number):`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">${isCatch(ld)?"Am Turm gefangen":"Landung erfolgreich"}</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
       :landAborted(ld)?`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`:ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>${where?" · "+esc(where):""}`:"Ergebnis noch offen"]); });
+  // 2. Stufe / Raumschiff (z.B. Starship-Ship, Dragon): Landung bzw. Rückkehr
+  (l.rocket?.spacecraft_stage||[]).forEach(x=>{ const ld=x.landing, sc=x.spacecraft||{}; if(!ld || ld.attempt==null && ld.success==null) return;
+    const where=ld.landing_location?.name||ld.landing_location?.abbrev||"";
+    rows.push([esc(sc.name||sc.serial_number||"Raumschiff"), ld.attempt===false?"keine Landung geplant":ld.success===true?`<span style="color:#7be07b">${isCatch(ld)?"Am Turm gefangen":"Landung erfolgreich"}</span>${where?" · "+esc(where):""}`
+      :landAborted(ld)?`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`:ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>`:"Ergebnis noch offen"]); });
   const vids=(l.vid_urls||[]).slice().sort((x,y)=>(x.priority||99)-(y.priority||99)), yt=vids.map(v=>ytId(v.url)).find(Boolean);
   const T=TELEST[l.id];
   return `<div class="sec review"><h3>Rückblick</h3>

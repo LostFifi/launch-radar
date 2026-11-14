@@ -777,7 +777,7 @@ var I18N_EN = {
   // ---------- Kopfzeile, Allgemeines ----------
   "Launch Radar – Raketenstarts live":"Launch Radar – live rocket launches",
   "Alle":"All","Liste":"List","Globus":"Globe","Karte":"Map","Ebenen":"Layers","Statistik":"Statistics","Raketen":"Rockets",
-  "Nächster:":"Next:","Nächster Start":"Next launch","Auch: ISS & Satelliten live verfolgen":"Also: track the ISS & satellites live","Satelliten & ISS":"Satellites & ISS","ISS jetzt verfolgen":"Track the ISS now","Tiangong jetzt verfolgen":"Track Tiangong now","Auf der Karte zeigen":"Show on map","Bahndaten nicht verfügbar":"Orbit data not available","Live berechnet aus Bahndaten (CelesTrak). Antippen eines Punkts auf der Karte zeigt Details.":"Calculated live from orbit data (CelesTrak). Tap a dot on the map for details.","Gerade gestartet":"Just launched","Verfolgen":"Follow","Keine Starts":"No launches","Lade Starts…":"Loading launches…","Schliessen":"Close","Grösse":"Size",
+  "Nächster:":"Next:","Nächster Start":"Next launch","Am Turm gefangen":"Caught by the tower","✓ Am Turm gefangen":"✓ Caught by the tower","keine Landung geplant":"no landing planned","Auch: ISS & Satelliten live verfolgen":"Also: track the ISS & satellites live","Satelliten & ISS":"Satellites & ISS","ISS jetzt verfolgen":"Track the ISS now","Tiangong jetzt verfolgen":"Track Tiangong now","Auf der Karte zeigen":"Show on map","Bahndaten nicht verfügbar":"Orbit data not available","Live berechnet aus Bahndaten (CelesTrak). Antippen eines Punkts auf der Karte zeigt Details.":"Calculated live from orbit data (CelesTrak). Tap a dot on the map for details.","Gerade gestartet":"Just launched","Verfolgen":"Follow","Keine Starts":"No launches","Lade Starts…":"Loading launches…","Schliessen":"Close","Grösse":"Size",
   "Ein-/ausklappen":"Collapse/expand","Teilen":"Share","löschen":"delete","ändern":"change","nein":"no","Jetzt":"Now",
   "Zoom in":"Zoom in","Zoom out":"Zoom out","Sprache":"Language","Aktiv":"Active","Inaktiv":"Inactive","aktiv":"active","inaktiv":"inactive",
   "Erfolg":"Success","Fehlschläge":"Failures","Fehlstarts":"Failures","Andere":"Other","Name":"Name","Status":"Status","Typ":"Type",
@@ -1655,8 +1655,13 @@ function reviewSection(l,est){
   if(l.mission?.orbit?.name) rows.push(["Zielbahn",esc(l.mission.orbit.name)+(ok?" – erreicht":"")]);
   (l.rocket?.launcher_stage||[]).forEach(s=>{ const ld=s.landing, la=s.launcher; if(!ld) return;
     const where=ld.landing_location?.name||ld.landing_location?.abbrev||"";
-    rows.push([/^booster/i.test(la?.serial_number||"")?esc(la.serial_number):`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">Landung erfolgreich</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
+    rows.push([/^booster/i.test(la?.serial_number||"")?esc(la.serial_number):`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">${isCatch(ld)?"Am Turm gefangen":"Landung erfolgreich"}</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
       :landAborted(ld)?`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`:ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>${where?" · "+esc(where):""}`:"Ergebnis noch offen"]); });
+  // 2. Stufe / Raumschiff (z.B. Starship-Ship, Dragon): Landung bzw. Rückkehr
+  (l.rocket?.spacecraft_stage||[]).forEach(x=>{ const ld=x.landing, sc=x.spacecraft||{}; if(!ld || ld.attempt==null && ld.success==null) return;
+    const where=ld.landing_location?.name||ld.landing_location?.abbrev||"";
+    rows.push([esc(sc.name||sc.serial_number||"Raumschiff"), ld.attempt===false?"keine Landung geplant":ld.success===true?`<span style="color:#7be07b">${isCatch(ld)?"Am Turm gefangen":"Landung erfolgreich"}</span>${where?" · "+esc(where):""}`
+      :landAborted(ld)?`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`:ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>`:"Ergebnis noch offen"]); });
   const vids=(l.vid_urls||[]).slice().sort((x,y)=>(x.priority||99)-(y.priority||99)), yt=vids.map(v=>ytId(v.url)).find(Boolean);
   const T=TELEST[l.id];
   return `<div class="sec review"><h3>Rückblick</h3>
@@ -2237,7 +2242,9 @@ function stageImg(im,fallbackUrl){
 function stageImgFail(el){ el.onerror=null;
   snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
     if(s && el.src!==s){ el.src=s; el.onerror=()=>el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; } else el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; }); }
-function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:landAborted(ld)?[["Ergebnis",`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`]]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
+// Fang am Startturm (Starship/Super Heavy „Catch“): Landeort ist der Turm / die Startrampe
+function isCatch(ld){ return /launch mount|olm|tower|chopstick|catch/i.test([ld?.landing_location?.name,ld?.landing_location?.abbrev,ld?.description].join(" ")); }
+function landResult(ld){ return ld.success===true?[["Ergebnis",`<span style="color:#7be07b">✓ ${isCatch(ld)?"Am Turm gefangen":"Landung erfolgreich"}</span>`]]:landAborted(ld)?[["Ergebnis",`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`]]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
 function stageCard(o){
   const g=rows=>rows.filter(r=>r&&r[1]!=null&&r[1]!=="").map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("");
   const D='<span class="mute">–</span>', v=x=>(x==null||x==="")?D:x;
