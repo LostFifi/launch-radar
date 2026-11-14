@@ -14,6 +14,8 @@ const up = read('data/upcoming.json'), past = read('data/previous.json');
 const STAND = new Date(up.ts);
 const write = (rel, html) => { const f = path.join(DIST, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); pages.push(rel); };
 const pages = [];
+let OG = []; try { OG = JSON.parse(fs.readFileSync(path.join(DIST, 'og/index.json'), 'utf8')); } catch (e) {}
+const ogImg = l => OG.includes(l.id.slice(0, 6)) ? `${SITE}og/${l.id.slice(0, 6)}.jpg` : null;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = l => String(l.name).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) + '-' + l.id.slice(0, 6);
 const short = l => (String(l.name).split('|')[1] || l.name).trim();
@@ -87,8 +89,23 @@ ${l.mission?.description ? `<h2>${t.mission}</h2><p>${esc(l.mission.description)
 ${vids.length ? `<h2>${t.streams}</h2><ul class="l">${vids.map(v => `<li><a href="${esc(v.url)}" rel="noopener">${esc(v.publisher || v.source || v.url)}</a></li>`).join('')}</ul>` : ''}
 ${!p ? `<p class="note">${t.est}</p>` : ''}
 ${lang === 'en' ? `<script>document.querySelectorAll(".lt").forEach(e=>e.textContent="your time: "+new Date(e.dataset.t).toLocaleString([], {weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}))</script>` : ''}`;
-    write(rel, page({ lang, rel, alt, title: t.titleL(l, p), desc: t.descL(l), h1: esc(l.name), body, jsonld: ld, img }));
+    write(rel, page({ lang, rel, alt, title: t.titleL(l, p), desc: t.descL(l), h1: esc(l.name), body, jsonld: ld, img: ogImg(l) || img }));
   }
+}
+// ---------- Kurze Teilen-Links s/<id6>.html: Vorschau (Bild, Titel) für WhatsApp, Discord, X …, dann sofort weiter in die App ----------
+const SHARE = [];
+for (const l of all) {
+  const i6 = l.id.slice(0, 6), og = ogImg(l) || l.image?.image_url || SITE + 'og-image.png', name = short(l), to = `../#start=${encodeURIComponent(l.id)}`;
+  const desc = `${rocket(l)} · ${fmt(l.net, 'en', DT)} UTC · ${l.pad?.location?.name || ''}. Track it live on the map and 3D globe.`;
+  fs.mkdirSync(path.join(DIST, 's'), { recursive: true });
+  fs.writeFileSync(path.join(DIST, 's', i6 + '.html'), `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">
+<title>${esc(name)} – LaunchRadar</title><link rel="canonical" href="${SITE}start/${slug(l)}.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="LaunchRadar"><meta property="og:title" content="${esc(name)} – live on LaunchRadar">
+<meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${SITE}s/${i6}.html"><meta property="og:image" content="${esc(og)}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="${esc(desc)}"><meta http-equiv="refresh" content="0;url=${to}"><style>html{background:#0b0f17;color:#e6ebf5;font:16px system-ui,sans-serif}a{color:#4ea1ff}</style>
+<script>location.replace(${JSON.stringify(to)}+(location.search||""))</script></head><body><p style="padding:20px"><a href="${to}">${esc(name)} – LaunchRadar</a></p></body></html>`);
+  SHARE.push(i6);
 }
 // ---------- Übersichten ----------
 const row = (l, lang, base) => `<tr><td>${esc(fmt(l.net, lang, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }))}</td><td><a href="${base}${slug(l)}.html">${esc(short(l))}</a><br><span class="mute">${esc(rocket(l))}</span></td><td>${esc(l.pad?.location?.name)}</td></tr>`;
@@ -149,7 +166,7 @@ write('iss/index.html', page({ lang: 'de', rel: 'iss/index.html', title: 'ISS si
 {
   const f = path.join(DIST, 'index.html'), nx = up.results.filter(l => !isPast(l)).sort((a, b) => new Date(a.net) - new Date(b.net)).slice(0, 15);
   const list = `<h2>Nächste Raketenstarts / Upcoming launches</h2><ul>${nx.map(l => `<li><a href="start/${slug(l)}.html">${esc(l.name)}</a> – ${esc(fmt(l.net, 'de', DT))}</li>`).join('')}</ul>`;
-  fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('<!--SEOLIST-->', list));
+  fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('<!--SEOLIST-->', list).replace('</head>', `<script>var SHARE_IDS=${JSON.stringify(SHARE)}</script></head>`));
 }
 // ---------- Sitemap ----------
 const day = new Date().toISOString().slice(0, 10);

@@ -122,6 +122,9 @@ async function launchBrowser() {
         live: useAllowed({ host: new URL(CONFIG.siteUrl).host }, {}), dnt: useAllowed({ host: new URL(CONFIG.siteUrl).host }, { doNotTrack: '1' }) }; });
     const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
       const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length, tip = [...document.querySelectorAll('#tlList li')].every(li => /\d{2}:\d{2}/.test(li.dataset.tip || '')); return { n: ev.length, tl, tip, pay: ev.some(e => e.kind === 'pay') }; });
+    const shr = await page.evaluate(async () => { const all = (await (await fetch('data/upcoming.json')).json()).results, l = all.find(x => typeof SHARE_IDS !== 'undefined' && SHARE_IDS.includes(x.id.slice(0, 6))); if (!l) return { u: 'keine SHARE_IDS' };
+      const u = launchUrl(l), r = await fetch(u), t = await r.text(); return { u, ok: /\/s\/[0-9a-f]{6}\.html$/.test(u) && r.ok && /og:image" content="[^"]*og\/[0-9a-f]{6}\.jpg/.test(t) && t.includes('#start=' + l.id) }; });
+    check('[Teilen] kurzer Link mit eigenem Vorschaubild', shr.ok, shr.u);
     const gal = await page.evaluate(async () => { const r = ROCKETS.find(x => x.n === 'Falcon 9') || ROCKETS[0]; openRocket(r.id); await new Promise(z => setTimeout(z, 600));
       const tx = document.getElementById('panel').textContent, ok = /Bildergalerie/.test(tx) && /Flüge/.test(tx);
       openLightbox([{ src: 'a.jpg' }, { src: 'b.jpg' }], 0); lbStep(1); const lb = document.getElementById('lbox'), i = LB.i, vis = lb.style.display; closeLightbox();
