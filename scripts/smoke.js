@@ -122,6 +122,12 @@ async function launchBrowser() {
         live: useAllowed({ host: new URL(CONFIG.siteUrl).host }, {}), dnt: useAllowed({ host: new URL(CONFIG.siteUrl).host }, { doNotTrack: '1' }) }; });
     const evr = await page.evaluate(() => { const l = launches.find(x => !x.timeline?.length) || launches[0]; select(l);
       const ev = curTrack.events || [], tl = document.querySelectorAll('#tlList li').length; return { n: ev.length, tl, pay: ev.some(e => e.kind === 'pay') }; });
+    const gal = await page.evaluate(async () => { const r = ROCKETS.find(x => x.n === 'Falcon 9') || ROCKETS[0]; openRocket(r.id); await new Promise(z => setTimeout(z, 600));
+      const tx = document.getElementById('panel').textContent, ok = /Bildergalerie/.test(tx) && /Flüge/.test(tx);
+      openLightbox([{ src: 'a.jpg' }, { src: 'b.jpg' }], 0); lbStep(1); const lb = document.getElementById('lbox'), i = LB.i, vis = lb.style.display; closeLightbox();
+      openDB(); const nm = document.querySelector('#dbT .rname'); nm.click(); const prof = !!document.getElementById('rThumbs');
+      return { ok, lb: vis === 'flex' && i === 1, prof }; });
+    check('[Raketen] Steckbrief, Name-Klick, Vollbild-Galerie', gal.ok && gal.lb && gal.prof, JSON.stringify(gal));
     check('[Flugbahn] Ereignis-Punkte + Timeline auch ohne API-Timeline', evr.n >= 3 && evr.tl >= 3 && evr.pay, evr.n + ' Punkte');
     check('[Feedback] Sterne + Wunsch gesendet, Messung in Tests aus', fbr.gone && fbBody && fbBody.r === 4 && fbBody.wish === 'Mehr Raketen' && !fbr.use && fbr.menu);
     check('[Messung] auf der echten Seite aktiv, bei Do Not Track aus', fbr.live === true && fbr.dnt === false);

@@ -17,10 +17,7 @@ function select(l){
   html+=reviewSection(l,est);   // Rückblick (nur nach dem Start) ganz oben
   html+="<!--SIM-->";
   // Bild + Missions-Patch
-  const im=l.image&&typeof l.image==="object"?l.image:null, patch=(l.mission_patches||[])[0];
-  if(im) html+=`<div class="hero">${imgTag(l,false)}
-     ${patch?`<img class="patch" src="${esc(patch.image_url)}" alt="" onerror="this.remove()">`:""}
-     ${im.credit?`<span class="cr">Bild: ${esc(im.credit)}</span>`:""}</div>`;
+  html+=launchGalHtml(l);   // Galerie: Startfoto, Raketenfoto, Wikipedia-Fotos der Rakete (225-galerie.js)
 
   // Livestream
   html+=`<div class="sec"><h3>Livestream</h3>`;

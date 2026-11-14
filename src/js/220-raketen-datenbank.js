@@ -5,7 +5,7 @@ function rVal(r,k){ switch(k){ case "rate": return r.tot? r.suc/r.tot : null; ca
   case "cost": return r.cost? r.cost/1e6 : null; case "act": return r.act?1:0; case "man": return r.mab||r.man||null; case "sl": return r.al? r.sl : null; default: return r[k]; } }
 function fmtCell(r,k){ const v=rVal(r,k); if(v==null||v==="") return '<span class="mute">–</span>';
   switch(k){
-    case "n": return `<b>${esc(r.n)}</b>${r.reu?' <span title="wiederverwendbar">'+ICON.reuse+'</span>':""}`;
+    case "n": return `<b class="rname" onmouseenter="rPrevShow(event,${r.id})" onmousemove="rPrevMove(event)" onmouseleave="rPrevHide()" onclick="event.stopPropagation();openRocket(${r.id})">${esc(r.n)}</b>${r.reu?' <span title="wiederverwendbar">'+ICON.reuse+'</span>':""}`;
     case "man": return esc(v)+(r.cty?` <span class="mute">${esc(r.cty)}</span>`:"");
     case "act": return r.act?'<span class="pill" style="background:#1f4d33;color:#7be07b">aktiv</span>':'<span class="pill" style="background:#33384a;color:#aab">inaktiv</span>';
     case "leo": case "gto": return v.toLocaleString(LOC,{maximumFractionDigits:1});
@@ -30,7 +30,7 @@ function openDB(){
      <label class="chip"><input type="checkbox" ${DB.flown?"checked":""} onchange="DB.flown=this.checked;renderDBTable()"> nur geflogene</label>
      <label class="chip"><input type="checkbox" ${DB.reu?"checked":""} onchange="DB.reu=this.checked;renderDBTable()"> wiederverwendbar</label>
      <button class="btn" id="cmpBtn" style="margin:0" onclick="openCompare()">Vergleichen (${DB.sel.length})</button></div>
-   <div class="note" style="padding:6px 14px">Bis zu 4 Raketen antippen (☑), dann „Vergleichen“. Spaltenkopf antippen = sortieren. <span id="dbN"></span></div>
+   <div class="note" style="padding:6px 14px">Name antippen = Steckbrief mit Bildern. Zeile antippen (☑) = für den Vergleich wählen (bis 4). Spaltenkopf antippen = sortieren. <span id="dbN"></span></div>
    <div class="tw"><table class="db" id="dbT"></table></div>`;
   P.style.display="block"; P.scrollTop=0;
   document.getElementById("dbQ").oninput=e=>{ DB.q=e.target.value; renderDBTable(); };
@@ -78,4 +78,4 @@ function openCompare(ids){
    </table></div><div class="note" style="padding:0 14px 14px">Balken = Wert im Verhältnis zum grössten der verglichenen Raketen. Quelle: The Space Devs, Stand ${esc(SNAP_TS)}.</div>`;
   P.style.display="block"; P.scrollTop=0; }
 function openRocketByName(name){ const nm=(name||"").toLowerCase(); const r=ROCKETS.find(x=>x.n.toLowerCase()===nm)||ROCKETS.find(x=>nm.includes(x.n.toLowerCase()));
-  if(r) openCompare([r.id]); else toast("Rakete nicht in der Datenbank gefunden"); }
+  if(r) openRocket(r.id); else toast("Rakete nicht in der Datenbank gefunden"); }

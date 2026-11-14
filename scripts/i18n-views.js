@@ -96,6 +96,8 @@ async function visitAll(page, all) {
     await step(() => { setSpeed(60); }); await step(() => simReset());
     await step(() => { PWA.prompt = {}; buildLayerMenu(); PWA.prompt = null; });
     await step(() => { CONFIG.worker = CONFIG.worker || 'https://w.example'; fbOpen(true); }); await step(() => fbClose(0));
+    await step(() => openRocket((ROCKETS.find(r => r.n === 'Falcon 9') || ROCKETS[0]).id));
+    await step(() => openLightbox([{ src: 'x.jpg', cap: 'Test', credit: 'Wikimedia Commons', page: 'https://en.wikipedia.org/wiki/File:x.jpg' }, { src: 'y.jpg' }], 0)); await step(() => closeLightbox());
     return [...found];
   }, !!all);
 }
