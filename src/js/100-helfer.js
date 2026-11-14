@@ -12,6 +12,8 @@ function countdown(net){
   const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
   return `${sign} ${d?d+"d ":""}${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`;
 }
+function agoText(net){ const m=Math.max(0,Math.round((Date.now()-new Date(net))/60e3));
+  return m<60?`vor ${m} Min`:m<48*60?`vor ${Math.round(m/60)} Std`:`vor ${Math.round(m/1440)} Tagen`; }
 function fmtRel(iso){ // z.B. "PT2M30S", "-PT45M"
   if(!iso) return ""; const neg=iso.startsWith("-");
   const m=iso.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?/); if(!m) return iso;

@@ -84,7 +84,7 @@ var I18N_EN = {
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
   "Landung fehlgeschlagen":"Landing failed","Landung abgebrochen":"Landing aborted",
-  "Live-Telemetrie":"Live telemetry","● gemessen":"● measured","Aus dem Livestream gelesen":"Read from the livestream","vor {n0} s":"{0} s ago",
+  "Live-Telemetrie":"Live telemetry","● gemessen":"● measured","Aus dem Livestream gelesen":"Read from the livestream","vor {n0} s":"{0} s ago","vor {n0} Min":"{0} min ago","vor {n0} Std":"{0} h ago","vor {n0} Tagen":"{0} days ago","Gestartet":"Launched",
   "Der Stream läuft etwas hinter der echten Zeit her.":"The stream runs slightly behind real time.","Satelliten ausgesetzt:":"Satellites deployed:",
   "An alle senden":"Send to everyone","Sender bereit":"Sender ready","An alle gesendet ✓":"Sent to everyone ✓","Senden fehlgeschlagen":"Sending failed",
   "Sender-Passwort falsch – auf der Statistik-Seite neu anmelden":"Sender password wrong – sign in again on the statistics page","Umlauf":"Orbit","gelesen":"read","verworfen":"rejected","teilweise":"partial","neu eingerastet":"re-synced","Noch im Flug":"Still in flight",

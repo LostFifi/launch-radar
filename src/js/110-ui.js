@@ -22,4 +22,4 @@ document.getElementById("grpBtn").onclick=e=>{ e.stopPropagation(); const m=docu
 document.addEventListener("click",e=>{ if(!e.target.closest("#grpMenu,#grpBtn")) grpMenuClose(); });
 { const b=document.getElementById("grpBtn"); b.querySelector(".lbl").textContent=grpLabel(); b.classList.toggle("part",!grpAll()); }
 document.getElementById("listBtn").onclick=()=>showStartList("up");
-setInterval(()=>{ updateNext(); if(selected){const c=document.getElementById("cd"); if(c) c.textContent=countdown(selected.net);} },1000);
+setInterval(()=>{ updateNext(); if(selected){const c=document.getElementById("cd"); if(c && !c.classList.contains("ago")) c.textContent=countdown(selected.net);} },1000);
