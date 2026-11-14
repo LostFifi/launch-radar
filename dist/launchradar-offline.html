@@ -854,7 +854,7 @@ var I18N_EN = {
   "Booster {0}":"Booster {0}","Booster-Steckbrief {0}":"Booster profile {0}","Ship-Steckbrief {0}":"Ship profile {0}","Raumschiff-Steckbrief {0}":"Spacecraft profile {0}",
   "Raumschiff":"Spacecraft","· 1. Stufe":"· 1st stage","· 2. Stufe":"· 2nd stage","· Capsule":"· Capsule","dieser Flug":"this flight","bisherige Flüge":"previous flights",
   "Flüge":"Flights","Landungen":"Landings","Landung":"Landing","Landung erfolgreich":"Landing successful","✓ Landung erfolgreich":"✓ Landing successful","✗ Landung fehlgeschlagen":"✗ Landing failed",
-  "Landung fehlgeschlagen":"Landing failed","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space","gerade im All":"in space now",
+  "Landung fehlgeschlagen":"Landing failed","Landung abgebrochen":"Landing aborted","Landungen ok / versucht":"Landings ok / attempted","schnellste Wende":"fastest turnaround","Zeit im All":"Time in space","gerade im All":"in space now",
   "Erstflug":"First flight","Letzter Flug":"Last flight","Höhe (m)":"Height (m)","(Gesamthöhe − Ship)":"(total height − Ship)","Durchmesser":"Diameter",
   "{0} · {1} Flug":"{0} · flight {1}","{0}. Flug":"flight {0}","Ergebnis noch offen":"Result pending","nicht geborgen (Einweg)":"not recovered (expendable)",
   // ---------- Rückblick ----------
@@ -1216,6 +1216,8 @@ function confirmLaunch(id,now){
   toast(now?"Start bestätigt – Abhebezeit auf jetzt gesetzt":"Start bestätigt – die Rakete fliegt mit");
   if(selected&&selected.id===id) select(selected); liveBanner&&liveBanner();
 }
+// Landung nicht erfolgreich, aber abgebrochen statt zerschellt (z.B. „abort … splashed down“ → kontrolliert ins Meer)
+function landAborted(ld){ return ld?.success===false && /abort|did not attempt|wave[ds]? ?off|scrub|divert/i.test(ld.description||"") && !/explo|crash|destroy|lost|anomal/i.test(ld.description||""); }
 // Ende des Flugs laut Modell (ms nach T-0), pro Start zwischengespeichert
 var FLY_END={};
 function flightEnd(l){ if(FLY_END[l.id]==null){ try{ FLY_END[l.id]=estimateProfile(l).tMax*1000; }catch(e){ FLY_END[l.id]=3*3600e3; } } return FLY_END[l.id]; }
@@ -1588,8 +1590,8 @@ function reviewSection(l,est){
   if(l.mission?.orbit?.name) rows.push(["Zielbahn",esc(l.mission.orbit.name)+(ok?" – erreicht":"")]);
   (l.rocket?.launcher_stage||[]).forEach(s=>{ const ld=s.landing, la=s.launcher; if(!ld) return;
     const where=ld.landing_location?.name||ld.landing_location?.abbrev||"";
-    rows.push([`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">Landung erfolgreich</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
-      :ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>${where?" · "+esc(where):""}`:"Ergebnis noch offen"]); });
+    rows.push([/^booster/i.test(la?.serial_number||"")?esc(la.serial_number):`Booster ${esc(la?.serial_number||"")}`, ld.attempt===false?"nicht geborgen (Einweg)":ld.success===true?`<span style="color:#7be07b">Landung erfolgreich</span>${where?" · "+esc(where):""}${la?.flights?` · ${la.flights}. Flug`:""}`
+      :landAborted(ld)?`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`:ld.success===false?`<span style="color:#ff8a8a">Landung fehlgeschlagen</span>${where?" · "+esc(where):""}`:"Ergebnis noch offen"]); });
   const vids=(l.vid_urls||[]).slice().sort((x,y)=>(x.priority||99)-(y.priority||99)), yt=vids.map(v=>ytId(v.url)).find(Boolean);
   const T=TELEST[l.id];
   return `<div class="sec review"><h3>Rückblick</h3>
@@ -2090,7 +2092,7 @@ function stageImg(im,fallbackUrl){
 function stageImgFail(el){ el.onerror=null;
   snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
     if(s && el.src!==s){ el.src=s; el.onerror=()=>el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; } else el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; }); }
-function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
+function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:landAborted(ld)?[["Ergebnis",`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`]]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
 function stageCard(o){
   const g=rows=>rows.filter(r=>r&&r[1]!=null&&r[1]!=="").map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("");
   const D='<span class="mute">–</span>', v=x=>(x==null||x==="")?D:x;
@@ -2914,7 +2916,7 @@ async function applyListFilter(keepFocus){
   render(); await showStartList(LIST_TAB);
   if(keepFocus){ const q=document.getElementById("lq"); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(e){} }
 }
-function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
+function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':landAborted(s.landing)?'<span class="pill" style="background:#4d3a1f;color:var(--tbd)">Landung abgebrochen</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
 function fmtDur(iso){ const m=/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso||""); if(!m) return iso; return [m[1]&&m[1]+" Tage",m[2]&&m[2]+" Std",!m[1]&&m[3]&&m[3]+" Min"].filter(Boolean).join(" "); }
 function fmtDay(d){ return new Date(d).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"}); }
 function boosterCard(s){ const la=s.launcher; if(!la||la.flights==null) return "";

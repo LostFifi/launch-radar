@@ -7,7 +7,7 @@ function stageImg(im,fallbackUrl){
 function stageImgFail(el){ el.onerror=null;
   snapData("img").then(m=>{ const s=m&&m[el.dataset.th];
     if(s && el.src!==s){ el.src=s; el.onerror=()=>el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; } else el.outerHTML=`<div class="stimg ph">${ICON.rocket}</div>`; }); }
-function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
+function landResult(ld){ return ld.success===true?[["Ergebnis",'<span style="color:#7be07b">✓ Landung erfolgreich</span>']]:landAborted(ld)?[["Ergebnis",`<span style="color:var(--tbd)" title="${esc(ld.description||"")}">Landung abgebrochen</span>`]]:ld.success===false?[["Ergebnis",'<span style="color:#ff8a8a">✗ Landung fehlgeschlagen</span>']]:[]; }
 function stageCard(o){
   const g=rows=>rows.filter(r=>r&&r[1]!=null&&r[1]!=="").map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("");
   const D='<span class="mute">–</span>', v=x=>(x==null||x==="")?D:x;

@@ -36,7 +36,7 @@ async function applyListFilter(keepFocus){
   render(); await showStartList(LIST_TAB);
   if(keepFocus){ const q=document.getElementById("lq"); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(e){} }
 }
-function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
+function landIcons(l){ return (l.rocket?.launcher_stage||[]).map(s=>s.landing?.success===true?'<span class="pill" style="background:#1f4d33;color:#7be07b">Landung ✓</span>':landAborted(s.landing)?'<span class="pill" style="background:#4d3a1f;color:var(--tbd)">Landung abgebrochen</span>':s.landing?.success===false?'<span class="pill" style="background:#4d1f26;color:#ff8a8a">Landung ✗</span>':"").join(""); }
 function fmtDur(iso){ const m=/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso||""); if(!m) return iso; return [m[1]&&m[1]+" Tage",m[2]&&m[2]+" Std",!m[1]&&m[3]&&m[3]+" Min"].filter(Boolean).join(" "); }
 function fmtDay(d){ return new Date(d).toLocaleDateString(LOC,{day:"2-digit",month:"2-digit",year:"numeric"}); }
 function boosterCard(s){ const la=s.launcher; if(!la||la.flights==null) return "";

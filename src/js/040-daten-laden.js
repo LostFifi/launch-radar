@@ -64,6 +64,8 @@ function confirmLaunch(id,now){
   toast(now?"Start bestätigt – Abhebezeit auf jetzt gesetzt":"Start bestätigt – die Rakete fliegt mit");
   if(selected&&selected.id===id) select(selected); liveBanner&&liveBanner();
 }
+// Landung nicht erfolgreich, aber abgebrochen statt zerschellt (z.B. „abort … splashed down“ → kontrolliert ins Meer)
+function landAborted(ld){ return ld?.success===false && /abort|did not attempt|wave[ds]? ?off|scrub|divert/i.test(ld.description||"") && !/explo|crash|destroy|lost|anomal/i.test(ld.description||""); }
 // Ende des Flugs laut Modell (ms nach T-0), pro Start zwischengespeichert
 var FLY_END={};
 function flightEnd(l){ if(FLY_END[l.id]==null){ try{ FLY_END[l.id]=estimateProfile(l).tMax*1000; }catch(e){ FLY_END[l.id]=3*3600e3; } } return FLY_END[l.id]; }
